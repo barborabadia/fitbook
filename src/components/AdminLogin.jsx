@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { signInWithGoogle, signInWithFacebook } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 
 const s = {
   wrap: {
@@ -12,10 +13,10 @@ const s = {
   },
   logo: { fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 8 },
   accent: { color: '#FF4D00' },
-  subtitle: { fontSize: 14, color: '#555', marginBottom: 40 },
+  subtitle: { fontSize: 14, color: '#555', marginBottom: 32 },
   divider: {
     display: 'flex', alignItems: 'center', gap: 12,
-    margin: '24px 0', color: '#333', fontSize: 12,
+    margin: '20px 0', color: '#333', fontSize: 12,
   },
   divLine: { flex: 1, height: 1, background: '#1E1E2E' },
   oauthBtn: (bg, border) => ({
@@ -25,10 +26,19 @@ const s = {
     justifyContent: 'center', gap: 10, marginBottom: 10, fontFamily: 'inherit',
     transition: 'opacity 0.15s',
   }),
+  input: {
+    width: '100%', background: '#0A0A0F', border: '1px solid #1E1E2E', borderRadius: 10,
+    padding: '12px 16px', color: '#F0EDE8', fontSize: 14, fontFamily: 'inherit',
+    outline: 'none', marginBottom: 10, boxSizing: 'border-box', textAlign: 'left',
+  },
   error: {
     background: 'rgba(255,77,0,0.1)', border: '1px solid rgba(255,77,0,0.3)',
     borderRadius: 10, padding: '10px 14px', fontSize: 13,
-    color: '#FF4D00', marginTop: 16,
+    color: '#FF4D00', marginTop: 12,
+  },
+  success: {
+    background: 'rgba(0,194,168,0.08)', border: '1px solid rgba(0,194,168,0.2)',
+    borderRadius: 12, padding: '20px', fontSize: 13, color: '#00C2A8',
   },
   denied: {
     background: 'rgba(255,77,0,0.08)', border: '1px solid rgba(255,77,0,0.2)',
@@ -39,6 +49,20 @@ const s = {
 export default function AdminLogin({ deniedUser, onSignOut }) {
   const [loading, setLoading] = useState(null)
   const [error, setError] = useState('')
+  const [email, setEmail] = useState('')
+  const [magicSent, setMagicSent] = useState(false)
+
+  async function handleMagicLink() {
+    if (!email.trim()) return
+    setLoading('magic'); setError('')
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { emailRedirectTo: window.location.origin }
+    })
+    if (error) setError('Nepodařilo se odeslat email. Zkontroluj adresu.')
+    else setMagicSent(true)
+    setLoading(null)
+  }
 
   async function handleGoogle() {
     setLoading('google'); setError('')
@@ -58,7 +82,6 @@ export default function AdminLogin({ deniedUser, onSignOut }) {
         <div style={s.logo}>FIT<span style={s.accent}>BOOK</span></div>
         <div style={s.subtitle}>Přihlaste se pro přístup do trenér panelu</div>
 
-        {/* Přihlášen, ale není admin */}
         {deniedUser ? (
           <div style={s.denied}>
             <div style={{ marginBottom: 8 }}>
@@ -71,8 +94,41 @@ export default function AdminLogin({ deniedUser, onSignOut }) {
               Odhlásit se
             </button>
           </div>
+        ) : magicSent ? (
+          <div style={s.success}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>📧</div>
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>Zkontroluj email!</div>
+            <div>Poslali jsme odkaz na <strong style={{ color: '#F0EDE8' }}>{email}</strong>. Klikni na něj a budeš přihlášen.</div>
+            <button
+              onClick={() => setMagicSent(false)}
+              style={{ ...s.oauthBtn('#1A1A28', '#2E2E3E'), marginTop: 16, marginBottom: 0 }}
+            >
+              Zadat jiný email
+            </button>
+          </div>
         ) : (
           <>
+            {/* Magic link - nejjednodušší způsob */}
+            <input
+              style={s.input}
+              type="email"
+              placeholder="tvuj@email.cz"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleMagicLink()}
+            />
+            <button
+              style={s.oauthBtn('#FF4D00', '#FF4D00')}
+              onClick={handleMagicLink}
+              disabled={!!loading || !email.trim()}
+            >
+              {loading === 'magic' ? 'Odesílám...' : '✉️ Přihlásit se přes email'}
+            </button>
+
+            <div style={s.divider}>
+              <div style={s.divLine} /><span>nebo</span><div style={s.divLine} />
+            </div>
+
             <button
               style={s.oauthBtn('#1A1A28', '#2E2E3E')}
               onClick={handleGoogle}
