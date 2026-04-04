@@ -58,7 +58,7 @@ export default function App() {
     <div style={s.root}>
       <div style={s.sidebar}>
         <div style={s.logo}>
-          <div style={s.logoText}>FIT<span style={s.logoAccent}>Cvičení pro ženy</span></div>
+          <div style={s.logoText}><span style={s.logoAccent}>Cvičení pro ženy</span></div>
           <div style={{ fontSize: 11, color: '#333', marginTop: 2 }}>trenér panel</div>
         </div>
         <nav style={s.nav}>
