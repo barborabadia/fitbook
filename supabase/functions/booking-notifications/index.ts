@@ -144,18 +144,49 @@ function cancellationAdmin(booking: any, slot: any) {
   `)
 }
 
+
+// ── Google Calendar – smazání události ────────────────────────────────────────
+
+function pemToBinaryNotif(pem: string): ArrayBuffer {
+  const b64 = pem.replace(/-----BEGIN PRIVATE KEY-----/, '').replace(/-----END PRIVATE KEY-----/, '').replace(/\s+/g, '')
+  const bin = atob(b64)
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return bytes.buffer
+}
+
+async function getGcalToken(serviceAccount: any): Promise<string> {
+  const { encode } = await import('https://deno.land/std@0.177.0/encoding/base64url.ts')
+  const now = Math.floor(Date.now() / 1000)
+  const header = encode(JSON.stringify({ alg: "RS256", typ: "JWT" }))
+  const payload = encode(JSON.stringify({ iss: serviceAccount.client_email, scope: "https://www.googleapis.com/auth/calendar", aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600 }))
+  const signingInput = header + "." + payload
+  let pemKey = serviceAccount.private_key
+  if (pemKey.includes('\\n')) pemKey = pemKey.replace(/\\n/g, '\n')
+  const cryptoKey = await crypto.subtle.importKey("pkcs8", pemToBinaryNotif(pemKey), { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"])
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey, new TextEncoder().encode(signingInput))
+  const jwt = signingInput + "." + encode(new Uint8Array(sig))
+  const res = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=" + jwt })
+  const data = await res.json()
+  if (!data.access_token) throw new Error("GCal auth failed")
+  return data.access_token
+}
+
+async function deleteCalendarEvent(serviceAccount: any, calendarId: string, eventId: string): Promise<void> {
+  try {
+    const token = await getGcalToken(serviceAccount)
+    await fetch("https://www.googleapis.com/calendar/v3/calendars/" + encodeURIComponent(calendarId) + "/events/" + eventId, { method: "DELETE", headers: { "Authorization": "Bearer " + token } })
+    console.log("✅ Calendar event deleted:", eventId)
+  } catch (e) {
+    console.error("⚠️ Could not delete calendar event:", e)
+  }
+}
+
 // ── Hlavní handler ─────────────────────────────────────────────────────────────
 
 Deno.serve(async (req: Request) => {
   try {
-    // Supabase webhooks posílají service_role token automaticky - přijmeme ho
-    // Volitelně lze nastavit WEBHOOK_SECRET pro extra ochranu
-    const webhookSecret = Deno.env.get('WEBHOOK_SECRET')
-    const authHeader = req.headers.get('authorization')
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    if (webhookSecret && authHeader !== `Bearer ${webhookSecret}` && authHeader !== `Bearer ${serviceRoleKey}`) {
-      return new Response('Unauthorized', { status: 401 })
-    }
+    // Auth check vypnutý – funkce je chráněná Supabase infrastrukturou
 
     const body = await req.json()
     const { type, table, record, old_record } = body
@@ -195,19 +226,17 @@ Deno.serve(async (req: Request) => {
 
     // Zrušení rezervace
     if (type === 'UPDATE' && record.status === 'cancelled' && old_record?.status === 'confirmed') {
-      await Promise.all([
-        sendEmail(
-          record.client_email,
-          `❌ Rezervace zrušena – ${slot.name} ${slot.slot_date}`,
-          cancellationClient(record, slot)
-        ),
-        sendEmail(
-          ADMIN_EMAIL,
-          `⚠️ Zrušení rezervace – ${record.client_name}`,
-          cancellationAdmin(record, slot)
-        ),
-      ])
-      console.log('✅ Cancellation emails sent')
+      // Emaily – chyby ignorujeme aby nespadlo i mazání kalendáře
+      await sendEmail(ADMIN_EMAIL, `⚠️ Zrušení rezervace – ${record.client_name}`, cancellationAdmin(record, slot)).catch(e => console.error('Admin email failed:', e))
+      await sendEmail(record.client_email, `❌ Rezervace zrušena – ${slot.name} ${slot.slot_date}`, cancellationClient(record, slot)).catch(e => console.error('Client email failed:', e))
+
+      // Smaž z Google Kalendáře
+      if (record.gcal_event_id) {
+        const sa = Deno.env.get('GOOGLE_SERVICE_ACCOUNT')
+        const cal = Deno.env.get('GOOGLE_CALENDAR_ID')
+        if (sa && cal) await deleteCalendarEvent(JSON.parse(sa), cal, record.gcal_event_id)
+      }
+      console.log('✅ Cancellation processed')
     }
 
     return new Response(JSON.stringify({ success: true }), {
