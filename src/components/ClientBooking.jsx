@@ -3,11 +3,6 @@ import { supabase } from '../lib/supabase'
 import BookingModal from './BookingModal'
 import ClientAuthBar from './ClientAuthBar'
 
-const DAYS = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne']
-const ICONS = {
-  'HIIT': '⚡', 'Silový': '🏋️', 'Kruhový': '🔄', 'Protah': '🧘', 'Víkend': '🏆', default: '💪'
-}
-
 function getMonday(d = new Date()) {
   const date = new Date(d)
   const day = date.getDay()
@@ -17,6 +12,19 @@ function getMonday(d = new Date()) {
   return date
 }
 
+function addDays(date, days) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + days)
+  return d
+}
+
+function toDateStr(date) {
+  return date.toISOString().split('T')[0]
+}
+
+const DAYS_FULL = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle']
+const ICONS = { 'XXL': '🏆', 'Funkční': '⚡', 'Osobní': '💪', default: '💪' }
+
 function getIcon(name) {
   for (const [key, icon] of Object.entries(ICONS)) {
     if (name.includes(key)) return icon
@@ -24,55 +32,64 @@ function getIcon(name) {
   return ICONS.default
 }
 
+function getDayName(dateStr) {
+  const date = new Date(dateStr)
+  const day = date.getDay()
+  const dayIndex = day === 0 ? 6 : day - 1
+  return DAYS_FULL[dayIndex]
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long' })
+}
+
 const s = {
   wrap: { maxWidth: 640, margin: '0 auto', padding: '40px 24px' },
   hero: { marginBottom: 24 },
   title: { fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px' },
   sub: { fontSize: 14, color: '#555', marginTop: 4 },
+  weekNav: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 },
+  weekLabel: { flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#666' },
+  navBtn: { background: '#111118', border: '1px solid #1E1E2E', borderRadius: 8, padding: '6px 12px', color: '#888', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' },
+  dateGroup: { marginBottom: 24 },
+  dateHeader: { fontSize: 12, fontWeight: 700, color: '#444', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 },
   card: (color, full) => ({
-    display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', borderRadius: 14,
+    display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', borderRadius: 12,
     border: `1px solid ${full ? '#1E1E2E' : color + '44'}`,
     background: full ? 'transparent' : `${color}08`,
-    cursor: full ? 'not-allowed' : 'pointer', opacity: full ? 0.45 : 1, marginBottom: 10,
-    transition: 'all 0.15s',
+    cursor: full ? 'not-allowed' : 'pointer', opacity: full ? 0.45 : 1, marginBottom: 8,
   }),
-  icon: (color) => ({
-    width: 48, height: 48, borderRadius: 12, background: `${color}20`,
-    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0,
-  }),
-  cardName: { fontWeight: 700, fontSize: 15 },
+  icon: (color) => ({ width: 40, height: 40, borderRadius: 10, background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }),
+  cardName: { fontWeight: 700, fontSize: 14 },
   cardMeta: { fontSize: 12, color: '#555', marginTop: 2 },
-  chip: (color) => ({
-    padding: '4px 14px', background: color, borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#fff',
-  }),
-  freeCount: (full) => ({ fontSize: 12, color: full ? '#FF4D00' : '#555', marginBottom: 4, textAlign: 'right' }),
+  chip: (color) => ({ padding: '3px 12px', background: color, borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#fff' }),
   empty: { textAlign: 'center', color: '#444', padding: '40px 0', fontSize: 14 },
 }
 
 export default function ClientBooking() {
-  const [trainings, setTrainings] = useState([])
+  const [monday, setMonday] = useState(getMonday())
+  const [slots, setSlots] = useState([])
   const [bookingCounts, setBookingCounts] = useState({})
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loggedInUser, setLoggedInUser] = useState(null)
 
-  const monday = getMonday()
-  const weekStart = monday.toISOString().split('T')[0]
+  const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => { loadData() }, [monday])
 
   async function loadData() {
-    const { data: tr } = await supabase.from('trainings').select('*').order('day_of_week').order('start_time')
-    if (tr) setTrainings(tr)
+    setLoading(true)
+    const { data: sl } = await supabase.from('training_slots').select('*').gte('slot_date', weekDates[0]).lte('slot_date', weekDates[6]).eq('is_cancelled', false).order('slot_date').order('start_time')
+    if (sl) setSlots(sl)
 
-    const { data: bk } = await supabase
-      .from('bookings').select('training_id')
-      .eq('week_start', weekStart).eq('status', 'confirmed')
-
-    if (bk) {
-      const counts = {}
-      bk.forEach(b => { counts[b.training_id] = (counts[b.training_id] || 0) + 1 })
-      setBookingCounts(counts)
+    if (sl && sl.length > 0) {
+      const { data: bk } = await supabase.from('bookings').select('slot_id').in('slot_id', sl.map(s => s.id)).eq('status', 'confirmed')
+      if (bk) {
+        const counts = {}
+        bk.forEach(b => { counts[b.slot_id] = (counts[b.slot_id] || 0) + 1 })
+        setBookingCounts(counts)
+      }
     }
     setLoading(false)
   }
@@ -82,12 +99,21 @@ export default function ClientBooking() {
     await loadData()
   }
 
-  // Předvyplněné údaje z přihlášeného účtu
   const prefill = loggedInUser ? {
     name: loggedInUser.user_metadata?.full_name || '',
     email: loggedInUser.email || '',
-    phone: loggedInUser.user_metadata?.phone || '',
+    phone: '',
   } : null
+
+  // Seskup sloty podle data
+  const slotsByDate = {}
+  slots.forEach(sl => {
+    if (!slotsByDate[sl.slot_date]) slotsByDate[sl.slot_date] = []
+    slotsByDate[sl.slot_date].push(sl)
+  })
+
+  const weekStart = `${getDayName(weekDates[0])}, ${formatDate(weekDates[0])}`
+  const weekEnd = `${getDayName(weekDates[6])}, ${formatDate(weekDates[6])}`
 
   return (
     <div style={s.wrap}>
@@ -98,38 +124,46 @@ export default function ClientBooking() {
 
       <ClientAuthBar onUserChange={setLoggedInUser} />
 
+      <div style={s.weekNav}>
+        <button style={s.navBtn} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}>←</button>
+        <div style={s.weekLabel}>{weekDates[0]} – {weekDates[6]}</div>
+        <button style={s.navBtn} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}>→</button>
+      </div>
+
       {loading && <div style={s.empty}>Načítám tréninky...</div>}
-      {!loading && trainings.length === 0 && (
-        <div style={s.empty}>Momentálně nejsou vypsány žádné tréninky.</div>
-      )}
+      {!loading && slots.length === 0 && <div style={s.empty}>Tento týden nejsou žádné termíny.<br />Zkus jiný týden.</div>}
 
-      {trainings.map(t => {
-        const booked = bookingCounts[t.id] || 0
-        const free = t.capacity - booked
-        const full = free <= 0
-        return (
-          <div key={t.id} style={s.card(t.color, full)}
-            onClick={() => !full && setSelected({ ...t, booked, weekStart })}>
-            <div style={s.icon(t.color)}>{getIcon(t.name)}</div>
-            <div style={{ flex: 1 }}>
-              <div style={s.cardName}>{t.name}</div>
-              <div style={s.cardMeta}>{DAYS[t.day_of_week]} • {t.start_time} • {t.duration_minutes} min</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={s.freeCount(full)}>{full ? 'Plno' : `${free} volných míst`}</div>
-              {!full && <div style={s.chip(t.color)}>Rezervovat</div>}
-            </div>
-          </div>
-        )
-      })}
+      {Object.entries(slotsByDate).map(([date, daySlots]) => (
+        <div key={date} style={s.dateGroup}>
+          <div style={s.dateHeader}>{getDayName(date)} – {formatDate(date)}</div>
+          {daySlots.map(sl => {
+            const booked = bookingCounts[sl.id] || 0
+            const free = sl.capacity - booked
+            const full = free <= 0
+            const isPersonal = sl.name === 'Osobní trénink'
+            return (
+              <div key={sl.id} style={s.card(sl.color, full)} onClick={() => !full && setSelected({ ...sl, booked })}>
+                <div style={s.icon(sl.color)}>{getIcon(sl.name)}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={s.cardName}>{sl.name}</div>
+                  <div style={s.cardMeta}>
+                    {sl.start_time} • {sl.duration_minutes} min
+                    {isPersonal && <span style={{ marginLeft: 8, color: '#FF4D00' }}>Sólo 200 Kč / Duo 300 Kč</span>}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  {full
+                    ? <span style={{ fontSize: 12, color: '#FF4D00' }}>Plno</span>
+                    : <div style={s.chip(sl.color)}>Rezervovat</div>
+                  }
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ))}
 
-      {selected && (
-        <BookingModal
-          training={selected}
-          prefill={prefill}
-          onClose={handleClose}
-        />
-      )}
+      {selected && <BookingModal slot={selected} prefill={prefill} onClose={handleClose} />}
     </div>
   )
 }
