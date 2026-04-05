@@ -158,7 +158,7 @@ export default function ClientBooking() {
                       <div style={s.cardName}>{sl.name}</div>
                       <div style={s.cardMeta}>
                         {sl.start_time} • {sl.duration_minutes} min
-                        {isPersonal && <span style={{ marginLeft: 8, color: '#FF4D00' }}>Sólo 200 Kč / Duo 300 Kč</span>}
+
                         {!isPersonal && free > 0 && !full && <span style={{ marginLeft: 8, color: '#666' }}>{free} volných míst</span>}
                       </div>
                     </div>
