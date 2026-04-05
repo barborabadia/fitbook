@@ -1,10 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
 function hoursUntilSlot(slotDate, startTime) {
-  const slotDateTime = new Date(`${slotDate}T${startTime}:00`)
-  const now = new Date()
-  return (slotDateTime - now) / (1000 * 60 * 60)
+  return (new Date(`${slotDate}T${startTime}:00`) - new Date()) / (1000 * 60 * 60)
 }
 
 function formatDate(dateStr) {
@@ -12,10 +10,10 @@ function formatDate(dateStr) {
 }
 
 const s = {
-  wrap: { maxWidth: 640, margin: '0 auto', padding: '40px 24px' },
-  title: { fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 4 },
-  sub: { fontSize: 14, color: '#555', marginBottom: 28 },
-  inputRow: { display: 'flex', gap: 10, marginBottom: 24 },
+  wrap: { maxWidth: 640, margin: '0 auto' },
+  title: { fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 4 },
+  sub: { fontSize: 14, color: '#555', marginBottom: 20 },
+  inputRow: { display: 'flex', gap: 10, marginBottom: 20 },
   input: { flex: 1, background: '#111118', border: '1px solid #1E1E2E', borderRadius: 10, padding: '12px 16px', color: '#F0EDE8', fontSize: 14, fontFamily: 'inherit', outline: 'none' },
   btn: (v = 'primary') => ({ padding: '12px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', background: v === 'primary' ? '#FF4D00' : '#1A1A28', color: v === 'primary' ? '#fff' : '#888', whiteSpace: 'nowrap' }),
   card: (cancelled) => ({ background: cancelled ? 'transparent' : '#111118', border: `1px solid ${cancelled ? '#1A1A28' : '#1E1E2E'}`, borderRadius: 14, padding: '18px 20px', marginBottom: 10, opacity: cancelled ? 0.5 : 1 }),
@@ -30,92 +28,91 @@ const s = {
   error: { background: 'rgba(255,77,0,0.1)', border: '1px solid rgba(255,77,0,0.3)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#FF4D00', marginBottom: 16 },
   success: { background: 'rgba(0,194,168,0.08)', border: '1px solid rgba(0,194,168,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#00C2A8', marginBottom: 16 },
   confirmBox: { background: '#0A0A0F', border: '1px solid rgba(255,77,0,0.3)', borderRadius: 12, padding: '16px', marginTop: 12 },
+  sectionLabel: { fontSize: 12, fontWeight: 700, color: '#444', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 },
 }
 
-export default function MyBookings() {
-  const [email, setEmail] = useState('')
+export default function MyBookings({ prefillEmail }) {
+  const [email, setEmail] = useState(prefillEmail || '')
   const [bookings, setBookings] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [confirmCancel, setConfirmCancel] = useState(null)
 
-  async function loadBookings() {
-    if (!email.trim()) return
+  // Pokud je email předvyplněný, načti rezervace automaticky
+  useEffect(() => {
+    if (prefillEmail) {
+      setEmail(prefillEmail)
+      fetchBookings(prefillEmail)
+    }
+  }, [prefillEmail])
+
+  async function fetchBookings(emailVal) {
+    if (!emailVal?.trim()) return
     setLoading(true); setError(''); setSuccess('')
     const { data, error: err } = await supabase
       .from('bookings')
       .select('*, training_slots(name, slot_date, start_time, duration_minutes, color, price)')
-      .eq('client_email', email.trim().toLowerCase())
+      .eq('client_email', emailVal.trim().toLowerCase())
       .order('created_at', { ascending: false })
-
-    if (err) { setError('Chyba při načítání. Zkus to znovu.'); setLoading(false); return }
+    if (err) { setError('Chyba při načítání.'); setLoading(false); return }
     setBookings(data || [])
     setLoading(false)
   }
 
   async function cancelBooking(booking) {
     const slot = booking.training_slots
-    const hours = hoursUntilSlot(slot.slot_date, slot.start_time)
-    if (hours < 24) {
+    if (hoursUntilSlot(slot.slot_date, slot.start_time) < 24) {
       setError('Rezervaci nelze zrušit méně než 24 hodin před tréninkem.')
       setConfirmCancel(null)
       return
     }
-
     await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', booking.id)
     setSuccess('Rezervace byla úspěšně zrušena.')
     setConfirmCancel(null)
-    loadBookings()
+    fetchBookings(email)
   }
 
-  const upcoming = bookings?.filter(b => {
-    if (!b.training_slots) return false
-    const slot = b.training_slots
-    return new Date(`${slot.slot_date}T${slot.start_time}:00`) > new Date()
-  }) || []
-
-  const past = bookings?.filter(b => {
-    if (!b.training_slots) return false
-    const slot = b.training_slots
-    return new Date(`${slot.slot_date}T${slot.start_time}:00`) <= new Date()
-  }) || []
+  const upcoming = bookings?.filter(b => b.training_slots && new Date(`${b.training_slots.slot_date}T${b.training_slots.start_time}:00`) > new Date()) || []
+  const past = bookings?.filter(b => b.training_slots && new Date(`${b.training_slots.slot_date}T${b.training_slots.start_time}:00`) <= new Date()) || []
 
   return (
     <div style={s.wrap}>
-      <div style={s.title}>Moje rezervace</div>
-      <div style={s.sub}>Zadej svůj e-mail a zobrazíme ti tvé rezervace</div>
+      {/* Pokud není přihlášen, zobraz emailové pole */}
+      {!prefillEmail && (
+        <>
+          <div style={s.title}>Moje rezervace</div>
+          <div style={s.sub}>Zadej svůj e-mail a zobrazíme ti tvé rezervace</div>
+          <div style={s.inputRow}>
+            <input style={s.input} type="email" placeholder="tvuj@email.cz" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchBookings(email)} />
+            <button style={s.btn()} onClick={() => fetchBookings(email)} disabled={loading}>{loading ? 'Načítám...' : 'Zobrazit'}</button>
+          </div>
+        </>
+      )}
 
-      <div style={s.inputRow}>
-        <input
-          style={s.input}
-          type="email"
-          placeholder="tvuj@email.cz"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && loadBookings()}
-        />
-        <button style={s.btn()} onClick={loadBookings} disabled={loading}>
-          {loading ? 'Načítám...' : 'Zobrazit'}
-        </button>
-      </div>
+      {/* Pokud je přihlášen, zobraz jméno */}
+      {prefillEmail && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={s.title}>Moje rezervace</div>
+          <div style={s.sub}>{prefillEmail}</div>
+        </div>
+      )}
 
       {error && <div style={s.error}>⚠️ {error}</div>}
       {success && <div style={s.success}>✓ {success}</div>}
+      {loading && <div style={s.empty}>Načítám...</div>}
 
-      {bookings !== null && (
+      {!loading && bookings !== null && (
         <>
-          {bookings.length === 0 && <div style={s.empty}>Na tomto e-mailu nejsou žádné rezervace.</div>}
+          {bookings.length === 0 && <div style={s.empty}>Žádné rezervace nenalezeny.</div>}
 
           {upcoming.length > 0 && (
             <>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#444', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>Nadcházející tréninky</div>
+              <div style={s.sectionLabel}>Nadcházející tréninky</div>
               {upcoming.map(b => {
                 const slot = b.training_slots
-                const hours = hoursUntilSlot(slot.slot_date, slot.start_time)
-                const canCancel = hours >= 24 && b.status === 'confirmed'
+                const canCancel = hoursUntilSlot(slot.slot_date, slot.start_time) >= 24 && b.status === 'confirmed'
                 const cancelled = b.status === 'cancelled'
-
                 return (
                   <div key={b.id} style={s.card(cancelled)}>
                     <div style={s.cardTop}>
@@ -128,13 +125,11 @@ export default function MyBookings() {
                         {b.booking_type === 'duo' && <div style={s.cardMeta}>Duo trénink</div>}
                         {b.price > 0 && <div style={s.cardPrice}>{b.price} Kč</div>}
                       </div>
-                      {!cancelled && (
-                        canCancel
-                          ? <button style={s.cancelBtn} onClick={() => setConfirmCancel(b)}>Zrušit</button>
-                          : <div style={s.disabledBtn} title="Nelze zrušit méně než 24h předem">Nelze zrušit</div>
+                      {!cancelled && (canCancel
+                        ? <button style={s.cancelBtn} onClick={() => setConfirmCancel(b)}>Zrušit</button>
+                        : <div style={s.disabledBtn}>Nelze zrušit</div>
                       )}
                     </div>
-
                     {confirmCancel?.id === b.id && (
                       <div style={s.confirmBox}>
                         <div style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>Opravdu chceš zrušit tuto rezervaci?</div>
@@ -152,7 +147,7 @@ export default function MyBookings() {
 
           {past.length > 0 && (
             <>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#333', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '24px 0 12px' }}>Historie</div>
+              <div style={{ ...s.sectionLabel, marginTop: 24 }}>Historie</div>
               {past.slice(0, 5).map(b => {
                 const slot = b.training_slots
                 return (

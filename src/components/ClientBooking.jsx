@@ -120,7 +120,7 @@ export default function ClientBooking() {
         <button style={s.tab(tab === 'my')} onClick={() => setTab('my')}>📋 Moje rezervace</button>
       </div>
 
-      {tab === 'my' && <MyBookings />}
+      {tab === 'my' && <MyBookings prefillEmail={loggedInUser?.email || null} />}
 
       {tab === 'book' && (
         <>
