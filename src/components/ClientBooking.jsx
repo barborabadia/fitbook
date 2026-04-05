@@ -144,8 +144,8 @@ export default function ClientBooking() {
                 const full = free <= 0
                 const isPersonal = sl.name === 'Osobní trénink'
                 const hours = hoursUntilSlot(sl.slot_date, sl.start_time)
-                // 24h limit platí pouze pro osobní tréninky
-                const tooLate = isPersonal && hours < 24
+                // Osobní: nelze rezervovat méně než 24h předem. Skupinové: nelze rezervovat po začátku.
+                const tooLate = isPersonal ? hours < 24 : hours < 0
                 const disabled = full || tooLate
 
                 return (
