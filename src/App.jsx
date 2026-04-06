@@ -4,6 +4,7 @@ import Clients from './components/Clients'
 import ClientBooking from './components/ClientBooking'
 import AdminLogin from './components/AdminLogin'
 import SlotDetailModal from './components/SlotDetailModal'
+import Statistics from './components/Statistics'
 
 const isClientView = window.location.pathname === '/book'
 
@@ -56,6 +57,7 @@ export default function App() {
       <div style={s.main}>
         {view === 'schedule' && <Schedule onSelectSlot={setSelectedSlot} />}
         {view === 'clients' && <Clients />}
+        {view === 'stats' && <Statistics />}
       </div>
       {selectedSlot && <SlotDetailModal slot={selectedSlot} onClose={() => setSelectedSlot(null)} />}
     </div>
