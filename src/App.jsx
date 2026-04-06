@@ -50,8 +50,13 @@ export default function App() {
         </nav>
         <div style={s.linkBox}>
           <div style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>Link pro klienty</div>
-          <div style={{ fontSize: 11, color: '#FF4D00', wordBreak: 'break-all', fontWeight: 600 }}>{bookingUrl}</div>
-          <button onClick={() => navigator.clipboard.writeText(bookingUrl)} style={{ marginTop: 8, width: '100%', padding: '6px', borderRadius: 6, border: 'none', background: 'rgba(255,77,0,0.15)', color: '#FF4D00', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'inherit' }}>📋 Kopírovat</button>
+          <div style={{ fontSize: 11, color: '#FF4D00', wordBreak: 'break-all', fontWeight: 600, marginBottom: 8 }}>{bookingUrl}</div>
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(bookingUrl)}&bgcolor=111118&color=FF4D00&margin=8`}
+            alt="QR kód"
+            style={{ width: '100%', borderRadius: 8, display: 'block', marginBottom: 8 }}
+          />
+          <button onClick={() => navigator.clipboard.writeText(bookingUrl)} style={{ width: '100%', padding: '6px', borderRadius: 6, border: 'none', background: 'rgba(255,77,0,0.15)', color: '#FF4D00', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'inherit' }}>📋 Kopírovat odkaz</button>
         </div>
         <div style={{ margin: '0 12px 20px' }}>
           <button onClick={() => { sessionStorage.removeItem('fitbook_admin'); setIsLoggedIn(false) }} style={{ width: '100%', padding: '8px', borderRadius: 8, border: 'none', background: '#1A1A28', color: '#555', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }}>Odhlásit se</button>
