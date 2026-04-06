@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import ClientDetailModal from './ClientDetailModal'
 import { supabase } from '../lib/supabase'
 
 const s = {
@@ -23,6 +24,7 @@ function getHue(str = '') {
 export default function Clients() {
   const [clients, setClients] = useState([])
   const [search, setSearch] = useState('')
+  const [selectedClient, setSelectedClient] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadClients() }, [])
@@ -83,7 +85,7 @@ export default function Clients() {
           const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
           const isNew = c.sessions <= 2
           return (
-            <div key={c.email} style={{ ...s.tRow, background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+            <div key={c.email} style={{ ...s.tRow, background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)', cursor: 'pointer' }} onClick={() => setSelectedClient(c)}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={s.avatar(hue)}>{initials}</div>
                 <div>
@@ -99,6 +101,7 @@ export default function Clients() {
           )
         })}
       </div>
+      {selectedClient && <ClientDetailModal client={selectedClient} onClose={() => setSelectedClient(null)} />}
     </div>
   )
 }
