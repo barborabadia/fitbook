@@ -39,7 +39,7 @@ export default function App() {
           <div style={{ fontSize: 11, color: '#333', marginTop: 2 }}>trenér panel</div>
         </div>
         <nav style={s.nav}>
-          {[{ id: 'schedule', label: 'Rozvrh', icon: '📅' }, { id: 'clients', label: 'Klienti', icon: '👥' }].map(item => (
+          [{ id: 'schedule', label: 'Rozvrh', icon: '📅' }, { id: 'clients', label: 'Klienti', icon: '👥' }, { id: 'stats', label: 'Statistiky', icon: '📊' }].map(item => (
             <div key={item.id} style={s.navItem(view === item.id)} onClick={() => setView(item.id)}>
               <span>{item.icon}</span><span>{item.label}</span>
             </div>
