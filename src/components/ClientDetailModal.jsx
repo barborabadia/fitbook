@@ -45,8 +45,37 @@ const s = {
 export default function ClientDetailModal({ client, onClose }) {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [notes, setNotes] = useState([])
+  const [newNote, setNewNote] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
 
-  useEffect(() => { loadBookings() }, [client.email])
+  useEffect(() => { loadBookings(); loadNotes() }, [client.email])
+
+  async function loadNotes() {
+    const { data } = await supabase
+      .from('client_notes')
+      .select('*')
+      .eq('client_email', client.email)
+      .order('created_at', { ascending: false })
+    if (data) setNotes(data)
+  }
+
+  async function addNote() {
+    if (!newNote.trim()) return
+    setSavingNote(true)
+    await supabase.from('client_notes').insert({
+      client_email: client.email,
+      note: newNote.trim(),
+    })
+    setNewNote('')
+    await loadNotes()
+    setSavingNote(false)
+  }
+
+  async function deleteNote(id) {
+    await supabase.from('client_notes').delete().eq('id', id)
+    loadNotes()
+  }
 
   async function loadBookings() {
     setLoading(true)
@@ -122,7 +151,35 @@ export default function ClientDetailModal({ client, onClose }) {
           </>
         )}
 
-        <div style={s.sectionLabel}>Historie rezervací</div>
+        <div style={{ ...s.sectionLabel, marginBottom: 10 }}>Poznámky</div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <input
+            style={{ flex: 1, background: '#0A0A0F', border: '1px solid #1E1E2E', borderRadius: 10, padding: '10px 14px', color: '#F0EDE8', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+            placeholder="Přidat poznámku..."
+            value={newNote}
+            onChange={e => setNewNote(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addNote()}
+          />
+          <button
+            onClick={addNote}
+            disabled={!newNote.trim() || savingNote}
+            style={{ padding: '10px 16px', borderRadius: 10, border: 'none', background: '#FF4D00', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: !newNote.trim() ? 0.5 : 1 }}
+          >
+            {savingNote ? '...' : '+ Přidat'}
+          </button>
+        </div>
+        {notes.map(n => (
+          <div key={n.id} style={{ background: '#0A0A0F', border: '1px solid #1E1E2E', borderRadius: 10, padding: '10px 14px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 13, color: '#F0EDE8', lineHeight: 1.5 }}>{n.note}</div>
+              <div style={{ fontSize: 11, color: '#444', marginTop: 4 }}>{new Date(n.created_at).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+            </div>
+            <button onClick={() => deleteNote(n.id)} style={{ background: 'none', border: 'none', color: '#333', cursor: 'pointer', fontSize: 16, lineHeight: 1, flexShrink: 0 }}>✕</button>
+          </div>
+        ))}
+        {notes.length === 0 && <div style={{ ...s.empty, padding: '12px 0' }}>Žádné poznámky</div>}
+
+        <div style={{ ...s.sectionLabel, marginTop: 20 }}>Historie rezervací</div>
 
         {loading && <div style={s.empty}>Načítám...</div>}
         {!loading && bookings.length === 0 && <div style={s.empty}>Žádné rezervace.</div>}
