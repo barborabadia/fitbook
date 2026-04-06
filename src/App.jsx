@@ -26,7 +26,6 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(sessionStorage.getItem('fitbook_admin') === '1')
 
   if (isClientView) return <div style={s.root}><ClientBooking /></div>
-
   if (!isLoggedIn) return <div style={s.root}><AdminLogin onLogin={() => setIsLoggedIn(true)} /></div>
 
   const bookingUrl = `${window.location.origin}/book`
@@ -39,7 +38,11 @@ export default function App() {
           <div style={{ fontSize: 11, color: '#333', marginTop: 2 }}>trenér panel</div>
         </div>
         <nav style={s.nav}>
-          {[{ id: 'schedule', label: 'Rozvrh', icon: '📅' }, { id: 'clients', label: 'Klienti', icon: '👥' }, { id: 'stats', label: 'Statistiky', icon: '📊' }].map(item => (
+          {[
+            { id: 'schedule', label: 'Rozvrh', icon: '📅' },
+            { id: 'clients', label: 'Klienti', icon: '👥' },
+            { id: 'stats', label: 'Statistiky', icon: '📊' },
+          ].map(item => (
             <div key={item.id} style={s.navItem(view === item.id)} onClick={() => setView(item.id)}>
               <span>{item.icon}</span><span>{item.label}</span>
             </div>
