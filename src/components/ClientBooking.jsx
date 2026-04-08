@@ -45,7 +45,8 @@ function getDayName(dateStr) {
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long' })
+  const [y, m, d] = dateStr.split('-')
+  return `${d}/${m}/${y.slice(2)}`
 }
 
 const s = {
