@@ -232,7 +232,7 @@ export default function Schedule({ onSelectSlot }) {
             <label style={s.label}>Typ tréninku</label>
             <select style={s.select} value={newSlot.name} onChange={e => {
               const name = e.target.value
-              setNewSlot({ ...newSlot, name, color: name === 'XXL cvičení' ? '#D4945A' : name === 'Funkční trénink' ? '#9B72CF' : '#C8516B', capacity: name === 'XXL cvičení' ? 12 : name === 'Funkční trénink' ? 8 : 1 })
+              setNewSlot({ ...newSlot, name, color: name === 'XXL cvičení' ? '#D4945A' : name === 'Funkční trénink' ? '#9B72CF' : '#C8516B', capacity: name === 'XXL cvičení' ? 10 : name === 'Funkční trénink' ? 10 : 1})
             }}>
               <option>Osobní trénink</option>
               <option>XXL cvičení</option>
