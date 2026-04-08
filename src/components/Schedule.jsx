@@ -76,7 +76,7 @@ const s = {
   select: { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 10 },
 }
 
-export default function Schedule({ onSelectSlot }) {
+export default function Schedule({ onSelectSlot, refreshKey }) {
   const [monday, setMonday] = useState(getMonday())
   const [slots, setSlots] = useState([])
   const [bookingCounts, setBookingCounts] = useState({})
@@ -86,11 +86,12 @@ export default function Schedule({ onSelectSlot }) {
   const [generating, setGenerating] = useState(false)
   const [templates, setTemplates] = useState([])
   const [bookingTypes, setBookingTypes] = useState({})
+  const [paidCounts, setPaidCounts] = useState({})
   const [newSlot, setNewSlot] = useState({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B' })
 
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
 
-  useEffect(() => { loadData() }, [monday])
+  useEffect(() => { loadData() }, [monday, refreshKey])
 
   async function loadData() {
     setLoading(true)
@@ -98,16 +99,19 @@ export default function Schedule({ onSelectSlot }) {
     if (sl) setSlots(sl)
 
     if (sl && sl.length > 0) {
-      const { data: bk } = await supabase.from('bookings').select('slot_id, booking_type').in('slot_id', sl.map(s => s.id)).eq('status', 'confirmed')
+      const { data: bk } = await supabase.from('bookings').select('slot_id, booking_type, paid').in('slot_id', sl.map(s => s.id)).eq('status', 'confirmed')
       if (bk) {
         const counts = {}
         const types = {}
+        const paid = {}
         bk.forEach(b => {
           counts[b.slot_id] = (counts[b.slot_id] || 0) + 1
           types[b.slot_id] = b.booking_type
+          if (b.paid) paid[b.slot_id] = (paid[b.slot_id] || 0) + 1
         })
         setBookingCounts(counts)
         setBookingTypes(types)
+        setPaidCounts(paid)
       }
     }
 
@@ -195,8 +199,11 @@ export default function Schedule({ onSelectSlot }) {
                 const booked = bookingCounts[sl.id] || 0
                 const ratio = booked / sl.capacity
                 const full = ratio >= 1
+                const allPaid = booked > 0 && (paidCounts[sl.id] || 0) >= booked
+                const cardBg = sl.is_cancelled ? 'transparent' : allPaid ? '#27AE60' : '#C8516B'
+                const cardBorder = sl.is_cancelled ? '#EBCFD8' : allPaid ? '#27AE60' : '#C8516B'
                 return (
-                  <div key={sl.id} style={s.card(sl.color, full, sl.is_cancelled)}>
+                  <div key={sl.id} style={{ ...s.card(sl.color, full, sl.is_cancelled), background: cardBg, border: `1px solid ${cardBorder}` }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ flex: 1 }} onClick={() => !sl.is_cancelled && onSelectSlot({ ...sl, booked })}>
                         <div style={s.cardTime}>{sl.start_time}</div>

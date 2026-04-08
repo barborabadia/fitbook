@@ -32,6 +32,7 @@ const s = {
 export default function App() {
   const [view, setView] = useState('schedule')
   const [selectedSlot, setSelectedSlot] = useState(null)
+  const [scheduleRefresh, setScheduleRefresh] = useState(0)
   const [isLoggedIn, setIsLoggedIn] = useState(sessionStorage.getItem('fitbook_admin') === '1')
 
   if (isClientView) return <div style={s.root}><ClientBooking /></div>
@@ -73,11 +74,11 @@ export default function App() {
         </div>
       </div>
       <div style={s.main}>
-        {view === 'schedule' && <Schedule onSelectSlot={setSelectedSlot} />}
+        {view === 'schedule' && <Schedule onSelectSlot={setSelectedSlot} refreshKey={scheduleRefresh} />}
         {view === 'clients' && <Clients />}
         {view === 'stats' && <Statistics />}
       </div>
-      {selectedSlot && <SlotDetailModal slot={selectedSlot} onClose={() => setSelectedSlot(null)} />}
+      {selectedSlot && <SlotDetailModal slot={selectedSlot} onClose={() => { setSelectedSlot(null); setScheduleRefresh(r => r + 1) }} />}
     </div>
   )
 }

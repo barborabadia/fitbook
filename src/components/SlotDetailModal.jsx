@@ -30,7 +30,7 @@ const s = {
   statLabel: { fontSize: 10, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px' },
   statVal: { fontSize: 18, fontWeight: 800, marginTop: 4, color: '#2C1A22' },
   sectionLabel: { fontSize: 11, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 },
-  clientCard: { background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 12, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 },
+  clientCard: (paid) => ({ background: paid ? 'rgba(39,174,96,0.08)' : '#FBF6F8', border: `1px solid ${paid ? 'rgba(39,174,96,0.35)' : '#EBCFD8'}`, borderRadius: 12, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, transition: 'all 0.2s' }),
   avatar: (hue) => ({ width: 36, height: 36, borderRadius: '50%', background: `hsl(${hue}, 60%, 88%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: `hsl(${hue}, 50%, 40%)`, flexShrink: 0 }),
   clientName: { fontWeight: 600, fontSize: 14, color: '#2C1A22' },
   clientMeta: { fontSize: 12, color: '#9B7E8A', marginTop: 2 },
@@ -39,11 +39,17 @@ const s = {
   cancelledBadge: { display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: 'rgba(200,81,107,0.1)', color: '#C8516B', border: '1px solid rgba(200,81,107,0.2)', marginLeft: 6 },
   bar: { height: 6, background: '#F0D9DF', borderRadius: 4, marginBottom: 24, overflow: 'hidden' },
   barFill: (color, ratio) => ({ height: '100%', width: `${Math.min(ratio, 1) * 100}%`, background: ratio >= 1 ? '#C8516B' : color, borderRadius: 4, transition: 'width 0.3s' }),
+  paidBtn: (paid) => ({ background: paid ? '#27AE60' : '#fff', border: `1px solid ${paid ? '#27AE60' : '#EBCFD8'}`, borderRadius: 8, padding: '5px 10px', color: paid ? '#fff' : '#9B7E8A', cursor: 'pointer', fontSize: 11, fontFamily: 'inherit', whiteSpace: 'nowrap', fontWeight: paid ? 700 : 400, transition: 'all 0.15s' }),
+  cancelBtn: { background: 'none', border: '1px solid #EBCFD8', borderRadius: 8, padding: '5px 10px', color: '#9B7E8A', cursor: 'pointer', fontSize: 11, fontFamily: 'inherit', whiteSpace: 'nowrap' },
+  textarea: { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', resize: 'vertical', minHeight: 80 },
+  saveBtn: { marginTop: 8, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#C8516B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
 }
 
 export default function SlotDetailModal({ slot, onClose }) {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [notes, setNotes] = useState(slot.notes || '')
+  const [notesSaved, setNotesSaved] = useState(false)
 
   useEffect(() => { loadBookings() }, [slot.id])
 
@@ -57,6 +63,17 @@ export default function SlotDetailModal({ slot, onClose }) {
   async function cancelBooking(bookingId) {
     await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId)
     loadBookings()
+  }
+
+  async function togglePaid(bookingId, currentPaid) {
+    await supabase.from('bookings').update({ paid: !currentPaid }).eq('id', bookingId)
+    loadBookings()
+  }
+
+  async function saveNotes() {
+    await supabase.from('training_slots').update({ notes }).eq('id', slot.id)
+    setNotesSaved(true)
+    setTimeout(() => setNotesSaved(false), 2000)
   }
 
   const confirmed = bookings.filter(b => b.status === 'confirmed')
@@ -107,7 +124,7 @@ export default function SlotDetailModal({ slot, onClose }) {
           const initials = b.client_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
           const isPersonal = slot.name === 'Osobní trénink'
           return (
-            <div key={b.id} style={s.clientCard}>
+            <div key={b.id} style={s.clientCard(b.paid)}>
               <div style={s.avatar(hue)}>{initials}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
@@ -120,12 +137,12 @@ export default function SlotDetailModal({ slot, onClose }) {
                   {b.client_phone && <span> · 📱 {b.client_phone}</span>}
                 </div>
               </div>
-              <button
-                onClick={() => cancelBooking(b.id)}
-                style={{ background: 'none', border: '1px solid #EBCFD8', borderRadius: 8, padding: '5px 10px', color: '#9B7E8A', cursor: 'pointer', fontSize: 11, fontFamily: 'inherit', whiteSpace: 'nowrap' }}
-              >
-                Zrušit
-              </button>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button style={s.paidBtn(b.paid)} onClick={() => togglePaid(b.id, b.paid)}>
+                  {b.paid ? '✓ Zaplaceno' : 'Zaplaceno?'}
+                </button>
+                <button style={s.cancelBtn} onClick={() => cancelBooking(b.id)}>Zrušit</button>
+              </div>
             </div>
           )
         })}
@@ -137,7 +154,7 @@ export default function SlotDetailModal({ slot, onClose }) {
               const hue = getHue(b.client_email)
               const initials = b.client_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
               return (
-                <div key={b.id} style={{ ...s.clientCard, opacity: 0.4 }}>
+                <div key={b.id} style={{ ...s.clientCard(false), opacity: 0.4 }}>
                   <div style={s.avatar(hue)}>{initials}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -151,6 +168,19 @@ export default function SlotDetailModal({ slot, onClose }) {
             })}
           </>
         )}
+
+        <div style={{ marginTop: 24, borderTop: '1px solid #F0D9DF', paddingTop: 20 }}>
+          <div style={s.sectionLabel}>Poznámka k tréninku</div>
+          <textarea
+            style={s.textarea}
+            placeholder="Co se cvičilo, poznámky k hodině..."
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+          />
+          <button style={s.saveBtn} onClick={saveNotes}>
+            {notesSaved ? '✓ Uloženo' : 'Uložit poznámku'}
+          </button>
+        </div>
       </div>
     </div>
   )
