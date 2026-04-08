@@ -90,6 +90,7 @@ export default function AdminLogin({ onLogin }) {
       <div style={s.box}>
         <div style={{ fontSize: 36, marginBottom: 12 }}>🌸</div>
         <div style={s.logo}>Barbora<span style={s.accent}> Knížková</span></div>
+        <div style={{ fontSize: 13, color: '#9B7E8A', marginBottom: 4 }}>Cvičení pro ženy</div>
         <div style={s.subtitle}>Přihlášení do trenér panelu</div>
 
         {isLocked ? (

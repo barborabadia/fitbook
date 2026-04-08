@@ -117,6 +117,7 @@ export default function ClientBooking() {
     <div style={s.wrap}>
       <div style={s.hero}>
         <div style={s.title}>Barbora Knížková 🌸</div>
+        <div style={{ fontSize: 13, color: '#C8516B', marginTop: 2, fontWeight: 600 }}>Cvičení pro ženy</div>
         <div style={s.sub}>Rezervace fitness tréninků</div>
       </div>
 

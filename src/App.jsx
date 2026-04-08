@@ -44,6 +44,7 @@ export default function App() {
       <div style={s.sidebar}>
         <div style={s.logo}>
           <div style={s.logoText}>Barbora<span style={s.logoAccent}> Knížková</span> 🌸</div>
+          <div style={s.logoSub}>Cvičení pro ženy</div>
           <div style={s.logoSub}>trenér panel</div>
         </div>
         <nav style={s.nav}>
