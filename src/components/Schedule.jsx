@@ -85,6 +85,7 @@ export default function Schedule({ onSelectSlot }) {
   const [showGenerateModal, setShowGenerateModal] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [templates, setTemplates] = useState([])
+  const [bookingTypes, setBookingTypes] = useState({})
   const [newSlot, setNewSlot] = useState({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B' })
 
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
@@ -97,11 +98,16 @@ export default function Schedule({ onSelectSlot }) {
     if (sl) setSlots(sl)
 
     if (sl && sl.length > 0) {
-      const { data: bk } = await supabase.from('bookings').select('slot_id').in('slot_id', sl.map(s => s.id)).eq('status', 'confirmed')
+      const { data: bk } = await supabase.from('bookings').select('slot_id, booking_type').in('slot_id', sl.map(s => s.id)).eq('status', 'confirmed')
       if (bk) {
         const counts = {}
-        bk.forEach(b => { counts[b.slot_id] = (counts[b.slot_id] || 0) + 1 })
+        const types = {}
+        bk.forEach(b => {
+          counts[b.slot_id] = (counts[b.slot_id] || 0) + 1
+          types[b.slot_id] = b.booking_type
+        })
         setBookingCounts(counts)
+        setBookingTypes(types)
       }
     }
 
@@ -195,7 +201,15 @@ export default function Schedule({ onSelectSlot }) {
                       <div style={{ flex: 1 }} onClick={() => !sl.is_cancelled && onSelectSlot({ ...sl, booked })}>
                         <div style={s.cardTime}>{sl.start_time}</div>
                         <div style={{ ...s.cardName, color: sl.is_cancelled ? '#BFA0AD' : '#fff' }}>{sl.name}</div>
-                        {!sl.is_cancelled && <><div style={s.bar}><div style={s.fill(sl.color, ratio)} /></div><div style={s.cardSub}>{full ? '🔴 plno' : `${booked}/${sl.capacity}`}</div></>}
+                        {!sl.is_cancelled && <>
+                          <div style={s.bar}><div style={s.fill(sl.color, ratio)} /></div>
+                          <div style={s.cardSub}>{full ? '🔴 plno' : `${booked}/${sl.capacity}`}</div>
+                          {sl.name === 'Osobní trénink' && booked > 0 && (
+                            <div style={{ marginTop: 4, display: 'inline-block', fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,0.25)', color: '#fff', borderRadius: 6, padding: '2px 6px' }}>
+                              {bookingTypes[sl.id] === 'duo' ? '👯 Duo' : '🧘 Sólo'}
+                            </div>
+                          )}
+                        </>}
                         {sl.is_cancelled && <div style={s.cardSub}>zrušeno</div>}
                       </div>
                       {!sl.is_cancelled && (
