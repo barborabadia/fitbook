@@ -47,7 +47,7 @@ function emailBase(content: string) {
         ${content}
       </div>
       <div style="padding: 16px 32px; border-top: 1px solid #1E1E2E; font-size: 12px; color: #555; text-align: center;">
-        Barbora Knížková · cviceni-pro-zeny.vercel.app
+        Barbora Knížková · barbora-knizkova.vercel.app
       </div>
     </div>
   `
@@ -80,7 +80,7 @@ function bookingConfirmationClient(booking: any, slot: any) {
 
     <p style="color: #666; font-size: 13px;">
       Pokud potřebuješ rezervaci zrušit, udělej to nejpozději 24 hodin předem na adrese:<br>
-      <a href="https://cviceni-pro-zeny.vercel.app/book" style="color: #FF4D00;">cviceni-pro-zeny.vercel.app/book</a>
+      <a href="https://barbora-knizkova.vercel.app/book" style="color: #FF4D00;">barbora-knizkova.vercel.app/book</a>
     </p>
   `)
 }
@@ -122,7 +122,7 @@ function cancellationClient(booking: any, slot: any) {
 
     <p style="color: #666; font-size: 13px;">
       Chceš se rezervovat na jiný termín?<br>
-      <a href="https://cviceni-pro-zeny.vercel.app/book" style="color: #FF4D00;">cviceni-pro-zeny.vercel.app/book</a>
+      <a href="https://barbora-knizkova.vercel.app/book" style="color: #FF4D00;">barbora-knizkova.vercel.app/book</a>
     </p>
   `)
 }
