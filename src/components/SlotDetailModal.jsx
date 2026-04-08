@@ -111,6 +111,19 @@ export default function SlotDetailModal({ slot, onClose }) {
           <div style={s.barFill(slot.color, ratio)} />
         </div>
 
+        <div style={{ marginBottom: 24 }}>
+          <div style={s.sectionLabel}>Poznámka k tréninku</div>
+          <textarea
+            style={s.textarea}
+            placeholder="Co se cvičilo, poznámky k hodině..."
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+          />
+          <button style={s.saveBtn} onClick={saveNotes}>
+            {notesSaved ? '✓ Uloženo' : 'Uložit poznámku'}
+          </button>
+        </div>
+
         <div style={s.sectionLabel}>Rezervace ({confirmed.length})</div>
 
         {loading && <div style={s.empty}>Načítám...</div>}
@@ -169,18 +182,6 @@ export default function SlotDetailModal({ slot, onClose }) {
           </>
         )}
 
-        <div style={{ marginTop: 24, borderTop: '1px solid #F0D9DF', paddingTop: 20 }}>
-          <div style={s.sectionLabel}>Poznámka k tréninku</div>
-          <textarea
-            style={s.textarea}
-            placeholder="Co se cvičilo, poznámky k hodině..."
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-          />
-          <button style={s.saveBtn} onClick={saveNotes}>
-            {notesSaved ? '✓ Uloženo' : 'Uložit poznámku'}
-          </button>
-        </div>
       </div>
     </div>
   )
