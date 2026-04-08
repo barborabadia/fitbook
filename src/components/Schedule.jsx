@@ -59,16 +59,16 @@ const s = {
     textTransform: 'uppercase', letterSpacing: '0.8px', textAlign: 'center', marginBottom: 10,
   }),
   card: (color, full, cancelled) => ({
-    background: cancelled ? 'transparent' : full ? 'rgba(200,81,107,0.05)' : `${color}12`,
-    border: `1px solid ${cancelled ? '#EBCFD8' : full ? 'rgba(200,81,107,0.2)' : color + '40'}`,
+    background: cancelled ? 'transparent' : color,
+    border: `1px solid ${cancelled ? '#EBCFD8' : color}`,
     borderRadius: 10, padding: '8px 10px', marginBottom: 6,
     cursor: cancelled ? 'default' : 'pointer', opacity: cancelled ? 0.4 : 1,
   }),
-  cardTime: { fontSize: 10, color: '#9B7E8A', fontWeight: 600 },
-  cardName: { fontSize: 12, fontWeight: 700, marginTop: 2 },
-  bar: { height: 3, background: '#F0D9DF', borderRadius: 2, marginTop: 6 },
-  fill: (color, ratio) => ({ height: '100%', width: `${Math.min(ratio, 1) * 100}%`, background: ratio >= 1 ? '#C8516B' : color, borderRadius: 2 }),
-  cardSub: { fontSize: 10, color: '#BFA0AD', marginTop: 4 },
+  cardTime: { fontSize: 10, color: 'rgba(255,255,255,0.75)', fontWeight: 600 },
+  cardName: { fontSize: 12, fontWeight: 700, marginTop: 2, color: '#fff' },
+  bar: { height: 3, background: 'rgba(255,255,255,0.3)', borderRadius: 2, marginTop: 6 },
+  fill: (color, ratio) => ({ height: '100%', width: `${Math.min(ratio, 1) * 100}%`, background: 'rgba(255,255,255,0.85)', borderRadius: 2 }),
+  cardSub: { fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
   modal: { position: 'fixed', inset: 0, background: 'rgba(44,26,34,0.55)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
   modalBox: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 20, padding: 32, width: 420, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(200,81,107,0.15)' },
   input: { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 10 },
@@ -194,7 +194,7 @@ export default function Schedule({ onSelectSlot }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ flex: 1 }} onClick={() => !sl.is_cancelled && onSelectSlot({ ...sl, booked })}>
                         <div style={s.cardTime}>{sl.start_time}</div>
-                        <div style={{ ...s.cardName, color: sl.is_cancelled ? '#BFA0AD' : sl.color }}>{sl.name}</div>
+                        <div style={{ ...s.cardName, color: sl.is_cancelled ? '#BFA0AD' : '#fff' }}>{sl.name}</div>
                         {!sl.is_cancelled && <><div style={s.bar}><div style={s.fill(sl.color, ratio)} /></div><div style={s.cardSub}>{full ? '🔴 plno' : `${booked}/${sl.capacity}`}</div></>}
                         {sl.is_cancelled && <div style={s.cardSub}>zrušeno</div>}
                       </div>

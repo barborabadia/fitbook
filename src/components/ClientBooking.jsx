@@ -62,16 +62,16 @@ const s = {
   dateHeader: { fontSize: 12, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 },
   card: (color, disabled) => ({
     display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', borderRadius: 12,
-    border: `1px solid ${disabled ? '#EBCFD8' : color + '44'}`,
-    background: disabled ? '#FAFAFA' : `${color}08`,
+    border: `1px solid ${disabled ? '#EBCFD8' : color}`,
+    background: disabled ? '#FAFAFA' : color,
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.5 : 1, marginBottom: 8,
     boxShadow: disabled ? 'none' : '0 2px 8px rgba(200,81,107,0.06)',
     transition: 'all 0.15s',
   }),
-  icon: (color) => ({ width: 40, height: 40, borderRadius: 10, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }),
-  cardName: { fontWeight: 700, fontSize: 14, color: '#2C1A22' },
-  cardMeta: { fontSize: 12, color: '#9B7E8A', marginTop: 2 },
+  icon: (color, disabled) => ({ width: 40, height: 40, borderRadius: 10, background: disabled ? `${color}18` : 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }),
+  cardName: { fontWeight: 700, fontSize: 14 },
+  cardMeta: { fontSize: 12, marginTop: 2 },
   chip: (color) => ({ padding: '3px 12px', background: color, borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#fff' }),
   disabledChip: { padding: '3px 12px', background: '#F5E8EC', borderRadius: 20, fontSize: 11, fontWeight: 600, color: '#BFA0AD', border: '1px solid #EBCFD8' },
   empty: { textAlign: 'center', color: '#BFA0AD', padding: '40px 0', fontSize: 14 },
@@ -155,18 +155,18 @@ export default function ClientBooking() {
 
                 return (
                   <div key={sl.id} style={s.card(sl.color, disabled)} onClick={() => !disabled && setSelected({ ...sl, booked })}>
-                    <div style={s.icon(sl.color)}>{getIcon(sl.name)}</div>
+                    <div style={s.icon(sl.color, disabled)}>{getIcon(sl.name)}</div>
                     <div style={{ flex: 1 }}>
-                      <div style={s.cardName}>{sl.name}</div>
-                      <div style={s.cardMeta}>
+                      <div style={{ ...s.cardName, color: disabled ? '#2C1A22' : '#fff' }}>{sl.name}</div>
+                      <div style={{ ...s.cardMeta, color: disabled ? '#9B7E8A' : 'rgba(255,255,255,0.8)' }}>
                         {sl.start_time} • {sl.duration_minutes} min
-                        {!isPersonal && free > 0 && !full && <span style={{ marginLeft: 8, color: '#BFA0AD' }}>{free} volných míst</span>}
+                        {!isPersonal && free > 0 && !full && <span style={{ marginLeft: 8, color: disabled ? '#BFA0AD' : 'rgba(255,255,255,0.6)' }}>{free} volných míst</span>}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       {full && <span style={{ fontSize: 12, color: '#C8516B', fontWeight: 600 }}>Plno</span>}
                       {!full && tooLate && <span style={s.disabledChip}>Uzavřeno</span>}
-                      {!full && !tooLate && <div style={s.chip(sl.color)}>Rezervovat</div>}
+                      {!full && !tooLate && <div style={{ ...s.chip(sl.color), background: '#fff', color: sl.color }}>Rezervovat</div>}
                     </div>
                   </div>
                 )
