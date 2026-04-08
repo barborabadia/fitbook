@@ -5,16 +5,16 @@ const MAX_ATTEMPTS = 5
 const LOCKOUT_MINUTES = 15
 
 const s = {
-  wrap: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0F' },
-  box: { background: '#111118', border: '1px solid #1E1E2E', borderRadius: 24, padding: '48px 40px', width: 400, maxWidth: '90vw', textAlign: 'center' },
-  logo: { fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 8 },
-  accent: { color: '#FF4D00' },
-  subtitle: { fontSize: 14, color: '#555', marginBottom: 32 },
-  input: { width: '100%', background: '#0A0A0F', border: '1px solid #1E1E2E', borderRadius: 10, padding: '12px 16px', color: '#F0EDE8', fontSize: 14, fontFamily: 'inherit', outline: 'none', marginBottom: 10, boxSizing: 'border-box' },
-  btn: (disabled) => ({ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: disabled ? '#1A1A28' : '#FF4D00', color: disabled ? '#444' : '#fff', fontSize: 14, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }),
-  error: { background: 'rgba(255,77,0,0.1)', border: '1px solid rgba(255,77,0,0.3)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#FF4D00', marginTop: 12 },
-  warning: { background: 'rgba(255,184,0,0.08)', border: '1px solid rgba(255,184,0,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#FFB800', marginTop: 12 },
-  lockout: { background: 'rgba(255,77,0,0.08)', border: '1px solid rgba(255,77,0,0.2)', borderRadius: 12, padding: '20px', fontSize: 14 },
+  wrap: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FBF6F8' },
+  box: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 24, padding: '48px 40px', width: 400, maxWidth: '90vw', textAlign: 'center', boxShadow: '0 8px 40px rgba(200,81,107,0.10)' },
+  logo: { fontSize: 28, fontWeight: 700, letterSpacing: '-0.3px', marginBottom: 8, fontFamily: "'Cormorant Garamond', serif" },
+  accent: { color: '#C8516B' },
+  subtitle: { fontSize: 14, color: '#9B7E8A', marginBottom: 32 },
+  input: { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '12px 16px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', marginBottom: 10, boxSizing: 'border-box' },
+  btn: (disabled) => ({ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: disabled ? '#F5E8EC' : '#C8516B', color: disabled ? '#C4ABB4' : '#fff', fontSize: 14, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background 0.15s' }),
+  error: { background: 'rgba(200,81,107,0.08)', border: '1px solid rgba(200,81,107,0.25)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#C8516B', marginTop: 12 },
+  warning: { background: 'rgba(212,148,90,0.08)', border: '1px solid rgba(212,148,90,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#D4945A', marginTop: 12 },
+  lockout: { background: 'rgba(200,81,107,0.05)', border: '1px solid rgba(200,81,107,0.15)', borderRadius: 12, padding: '20px', fontSize: 14 },
 }
 
 function getLockoutData() {
@@ -61,7 +61,6 @@ export default function AdminLogin({ onLogin }) {
 
   function handleLogin() {
     if (isLocked) return
-
     if (password === ADMIN_PASSWORD) {
       saveLockoutData({ attempts: 0, lockedUntil: null })
       sessionStorage.setItem('fitbook_admin', '1')
@@ -89,16 +88,17 @@ export default function AdminLogin({ onLogin }) {
   return (
     <div style={s.wrap}>
       <div style={s.box}>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>🌸</div>
         <div style={s.logo}>Cvičení<span style={s.accent}> pro ženy</span></div>
         <div style={s.subtitle}>Přihlášení do trenér panelu</div>
 
         {isLocked ? (
           <div style={s.lockout}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
-            <div style={{ fontWeight: 700, color: '#FF4D00', marginBottom: 8 }}>Přístup zablokován</div>
-            <div style={{ color: '#666', fontSize: 13, lineHeight: 1.6 }}>
+            <div style={{ fontWeight: 700, color: '#C8516B', marginBottom: 8 }}>Přístup zablokován</div>
+            <div style={{ color: '#9B7E8A', fontSize: 13, lineHeight: 1.6 }}>
               Po {MAX_ATTEMPTS} neúspěšných pokusech byl přístup dočasně zablokován.<br />
-              Zkus to znovu za <strong style={{ color: '#F0EDE8' }}>{timeLeft}</strong>.
+              Zkus to znovu za <strong style={{ color: '#2C1A22' }}>{timeLeft}</strong>.
             </div>
           </div>
         ) : (

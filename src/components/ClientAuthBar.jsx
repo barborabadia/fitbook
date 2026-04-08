@@ -3,26 +3,26 @@ import { supabase } from '../lib/supabase'
 
 const s = {
   bar: {
-    background: '#111118', border: '1px solid #1E1E2E', borderRadius: 14,
+    background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 14,
     padding: '14px 20px', marginBottom: 20,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-    flexWrap: 'wrap',
+    flexWrap: 'wrap', boxShadow: '0 2px 12px rgba(200,81,107,0.06)',
   },
-  left: { fontSize: 13, color: '#666' },
-  leftBold: { color: '#F0EDE8', fontWeight: 600 },
+  left: { fontSize: 13, color: '#9B7E8A' },
+  leftBold: { color: '#2C1A22', fontWeight: 600 },
   btnRow: { display: 'flex', gap: 8, flexShrink: 0 },
   btn: (bg, border) => ({
     padding: '7px 14px', borderRadius: 8, border: `1px solid ${border}`,
-    background: bg, color: '#F0EDE8', fontSize: 12, fontWeight: 600,
+    background: bg, color: '#2C1A22', fontSize: 12, fontWeight: 600,
     cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
     fontFamily: 'inherit', whiteSpace: 'nowrap',
   }),
   avatar: { width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' },
   avatarPlaceholder: (hue) => ({
     width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-    background: `hsl(${hue}, 50%, 20%)`, display: 'flex',
+    background: `hsl(${hue}, 60%, 88%)`, display: 'flex',
     alignItems: 'center', justifyContent: 'center',
-    fontSize: 11, fontWeight: 700, color: `hsl(${hue}, 70%, 65%)`,
+    fontSize: 11, fontWeight: 700, color: `hsl(${hue}, 50%, 40%)`,
   }),
 }
 
@@ -81,11 +81,11 @@ export default function ClientAuthBar({ onUserChange }) {
             : <div style={s.avatarPlaceholder(hue)}>{initials}</div>
           }
           <div style={s.left}>
-            Přihlášen jako <span style={s.leftBold}>{name}</span>
-            <div style={{ fontSize: 11, color: '#444', marginTop: 1 }}>Formulář je předvyplněn</div>
+            Přihlášena jako <span style={s.leftBold}>{name}</span>
+            <div style={{ fontSize: 11, color: '#C4ABB4', marginTop: 1 }}>Formulář je předvyplněn</div>
           </div>
         </div>
-        <button style={s.btn('#1A1A28', '#2E2E3E')} onClick={handleSignOut}>
+        <button style={s.btn('#F5E8EC', '#EBCFD8')} onClick={handleSignOut}>
           Odhlásit
         </button>
       </div>
@@ -98,7 +98,7 @@ export default function ClientAuthBar({ onUserChange }) {
         Přihlaste se pro rychlejší rezervaci – formulář se předvyplní automaticky.
       </div>
       <div style={s.btnRow}>
-        <button style={s.btn('#1A1A28', '#2E2E3E')} onClick={handleGoogle}>
+        <button style={s.btn('#F5E8EC', '#EBCFD8')} onClick={handleGoogle}>
           <GoogleIcon /> Google
         </button>
       </div>

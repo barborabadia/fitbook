@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
-const IBAN = 'CZ2403000000000260597819' // bez mezer pro QR
+const IBAN = 'CZ2403000000000260597819'
 
 function getPrice(slot, bookingType) {
   if (slot.name === 'Osobní trénink') return bookingType === 'duo' ? 300 : 200
@@ -10,36 +10,32 @@ function getPrice(slot, bookingType) {
 }
 
 function buildQrString(price, message) {
-  // Český platební QR - formát SPD
-  const iban = IBAN
-  const amount = price.toFixed(2)
-  const msg = encodeURIComponent(message).replace(/%20/g, '+')
-  return `SPD*1.0*ACC:${iban}*AM:${amount}*CC:CZK*MSG:${message}`
+  return `SPD*1.0*ACC:${IBAN}*AM:${price.toFixed(2)}*CC:CZK*MSG:${message}`
 }
 
 function QRCode({ value, size = 180 }) {
-  const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&bgcolor=111118&color=F0EDE8&margin=10`
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&bgcolor=FFF5F7&color=C8516B&margin=10`
   return <img src={url} alt="Platební QR kód" style={{ width: size, height: size, borderRadius: 12 }} />
 }
 
 const s = {
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  box: { background: '#111118', border: '1px solid #1E1E2E', borderRadius: 20, padding: 36, width: 460, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' },
-  closeBtn: { background: 'none', border: 'none', color: '#444', cursor: 'pointer', fontSize: 20 },
+  overlay: { position: 'fixed', inset: 0, background: 'rgba(44,26,34,0.55)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+  box: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 20, padding: 36, width: 460, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(200,81,107,0.15)' },
+  closeBtn: { background: 'none', border: 'none', color: '#BFA0AD', cursor: 'pointer', fontSize: 20 },
   tag: (color) => ({ fontSize: 11, color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }),
-  name: { fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' },
+  name: { fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#2C1A22' },
   typeRow: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, margin: '20px 0' },
-  typeCard: (selected, color) => ({ padding: '14px', borderRadius: 12, border: `1px solid ${selected ? color : '#1E1E2E'}`, background: selected ? `${color}15` : '#0A0A0F', cursor: 'pointer', textAlign: 'center' }),
-  typeLabel: { fontSize: 14, fontWeight: 700 },
-  typePrice: { fontSize: 12, color: '#666', marginTop: 4 },
-  label: { fontSize: 11, fontWeight: 600, color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6, marginTop: 14 },
-  input: (prefilled) => ({ width: '100%', background: prefilled ? 'rgba(0,194,168,0.05)' : '#0A0A0F', border: `1px solid ${prefilled ? 'rgba(0,194,168,0.3)' : '#1E1E2E'}`, borderRadius: 10, padding: '11px 14px', color: '#F0EDE8', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }),
+  typeCard: (selected, color) => ({ padding: '14px', borderRadius: 12, border: `1px solid ${selected ? color : '#EBCFD8'}`, background: selected ? `${color}12` : '#FBF6F8', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }),
+  typeLabel: { fontSize: 14, fontWeight: 700, color: '#2C1A22' },
+  typePrice: { fontSize: 12, color: '#9B7E8A', marginTop: 4 },
+  label: { fontSize: 11, fontWeight: 600, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6, marginTop: 14 },
+  input: (prefilled) => ({ width: '100%', background: prefilled ? 'rgba(91,158,152,0.05)' : '#FBF6F8', border: `1px solid ${prefilled ? 'rgba(91,158,152,0.4)' : '#EBCFD8'}`, borderRadius: 10, padding: '11px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }),
   btnRow: { display: 'flex', gap: 10, marginTop: 20 },
-  btn: (v) => ({ flex: v === 'primary' ? 2 : 1, padding: '12px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', background: v === 'primary' ? '#FF4D00' : '#1A1A28', color: v === 'primary' ? '#fff' : '#888' }),
-  error: { background: 'rgba(255,77,0,0.1)', border: '1px solid rgba(255,77,0,0.3)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#FF4D00', marginTop: 12 },
+  btn: (v) => ({ flex: v === 'primary' ? 2 : 1, padding: '12px', borderRadius: 10, border: v === 'secondary' ? '1px solid #EBCFD8' : 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', background: v === 'primary' ? '#C8516B' : '#F5E8EC', color: v === 'primary' ? '#fff' : '#9B7E8A' }),
+  error: { background: 'rgba(200,81,107,0.08)', border: '1px solid rgba(200,81,107,0.25)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#C8516B', marginTop: 12 },
   successWrap: { textAlign: 'center' },
-  successBox: (color) => ({ background: `${color}12`, border: `1px solid ${color}33`, borderRadius: 12, padding: '14px 16px', margin: '16px 0', textAlign: 'left' }),
-  qrBox: { background: '#0A0A0F', border: '1px solid #1E1E2E', borderRadius: 16, padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, margin: '16px 0' },
+  successBox: (color) => ({ background: `${color}10`, border: `1px solid ${color}30`, borderRadius: 12, padding: '14px 16px', margin: '16px 0', textAlign: 'left' }),
+  qrBox: { background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 16, padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, margin: '16px 0' },
 }
 
 function formatDate(dateStr) {
@@ -84,31 +80,29 @@ export default function BookingModal({ slot, prefill, onClose }) {
     setLoading(false)
   }
 
-  const qrMessage = `Rezervace ${slot.name} ${slot.slot_date}`
-  const qrString = buildQrString(price, qrMessage)
+  const qrString = buildQrString(price, `Rezervace ${slot.name} ${slot.slot_date}`)
 
   return (
     <div style={s.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={s.box}>
         {step === 3 ? (
           <div style={s.successWrap}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
-            <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>Rezervace potvrzena!</div>
-            <div style={{ fontSize: 14, color: '#555', marginBottom: 4 }}>Těšíme se na tebe, <strong style={{ color: '#F0EDE8' }}>{form.name}</strong>!</div>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🌸</div>
+            <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6, color: '#2C1A22' }}>Rezervace potvrzena!</div>
+            <div style={{ fontSize: 14, color: '#9B7E8A', marginBottom: 4 }}>Těšíme se na tebe, <strong style={{ color: '#2C1A22' }}>{form.name}</strong>!</div>
 
             <div style={s.successBox(slot.color)}>
-              <div style={{ fontWeight: 700 }}>{slot.name}{isPersonal && ` – ${bookingType === 'duo' ? 'Duo' : 'Sólo'}`}</div>
-              <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>{formatDate(slot.slot_date)} • {slot.start_time} • {slot.duration_minutes} min</div>
-              <div style={{ fontSize: 14, color: '#FF4D00', marginTop: 6, fontWeight: 700 }}>Cena: {price} Kč</div>
+              <div style={{ fontWeight: 700, color: '#2C1A22' }}>{slot.name}{isPersonal && ` – ${bookingType === 'duo' ? 'Duo' : 'Sólo'}`}</div>
+              <div style={{ fontSize: 13, color: '#9B7E8A', marginTop: 2 }}>{formatDate(slot.slot_date)} • {slot.start_time} • {slot.duration_minutes} min</div>
+              <div style={{ fontSize: 14, color: '#C8516B', marginTop: 6, fontWeight: 700 }}>Cena: {price} Kč</div>
             </div>
 
-            {/* QR kód pro platbu */}
             <div style={s.qrBox}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#F0EDE8' }}>Zaplať přes QR kód</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#2C1A22' }}>Zaplať přes QR kód</div>
               <QRCode value={qrString} size={180} />
-              <div style={{ fontSize: 12, color: '#555', textAlign: 'center', lineHeight: 1.5 }}>
+              <div style={{ fontSize: 12, color: '#9B7E8A', textAlign: 'center', lineHeight: 1.5 }}>
                 Naskenuj QR kód v mobilním bankovnictví.<br />
-                Částka <strong style={{ color: '#FF4D00' }}>{price} Kč</strong> bude předvyplněna.
+                Částka <strong style={{ color: '#C8516B' }}>{price} Kč</strong> bude předvyplněna.
               </div>
             </div>
 
@@ -128,7 +122,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
               <>
                 {isPersonal && (
                   <>
-                    <div style={{ fontSize: 13, color: '#666', marginBottom: 4 }}>Vyber typ tréninku:</div>
+                    <div style={{ fontSize: 13, color: '#9B7E8A', marginBottom: 4 }}>Vyber typ tréninku:</div>
                     <div style={s.typeRow}>
                       <div style={s.typeCard(bookingType === 'solo', slot.color)} onClick={() => setBookingType('solo')}>
                         <div style={{ fontSize: 24 }}>🧘</div>
@@ -144,9 +138,9 @@ export default function BookingModal({ slot, prefill, onClose }) {
                   </>
                 )}
                 {!isPersonal && (
-                  <div style={{ background: `${slot.color}12`, border: `1px solid ${slot.color}33`, borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
-                    <div style={{ fontSize: 13, color: '#888' }}>Délka: {slot.duration_minutes} min • Volná místa: {slot.capacity - slot.booked}</div>
-                    <div style={{ fontSize: 14, color: '#FF4D00', fontWeight: 700, marginTop: 4 }}>Cena: 120 Kč</div>
+                  <div style={{ background: `${slot.color}10`, border: `1px solid ${slot.color}30`, borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
+                    <div style={{ fontSize: 13, color: '#9B7E8A' }}>Délka: {slot.duration_minutes} min • Volná místa: {slot.capacity - slot.booked}</div>
+                    <div style={{ fontSize: 14, color: '#C8516B', fontWeight: 700, marginTop: 4 }}>Cena: 120 Kč</div>
                   </div>
                 )}
                 <button style={{ ...s.btn('primary'), flex: 'unset', width: '100%' }} onClick={() => setStep(2)}>
@@ -157,14 +151,14 @@ export default function BookingModal({ slot, prefill, onClose }) {
 
             {step === 2 && (
               <>
-                {prefill && <div style={{ background: 'rgba(0,194,168,0.06)', border: '1px solid rgba(0,194,168,0.15)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#00C2A8', marginBottom: 8 }}>✓ Formulář předvyplněn z tvého účtu</div>}
+                {prefill && <div style={{ background: 'rgba(91,158,152,0.06)', border: '1px solid rgba(91,158,152,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#5B9E98', marginBottom: 8 }}>✓ Formulář předvyplněn z tvého účtu</div>}
                 <label style={s.label}>Jméno a příjmení *</label>
                 <input style={s.input(!!prefill?.name)} placeholder="Jana Nováková" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                 <label style={s.label}>E-mail *</label>
                 <input style={s.input(!!prefill?.email)} placeholder="jana@email.cz" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
                 <label style={s.label}>Telefon (volitelné)</label>
                 <input style={s.input(false)} placeholder="+420 777 888 999" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-                <div style={{ fontSize: 13, color: '#FF4D00', fontWeight: 600, marginTop: 10 }}>
+                <div style={{ fontSize: 13, color: '#C8516B', fontWeight: 600, marginTop: 10 }}>
                   Cena: {price} Kč{isPersonal && ` – ${bookingType === 'duo' ? 'Duo' : 'Sólo'}`}
                 </div>
                 {error && <div style={s.error}>⚠️ {error}</div>}

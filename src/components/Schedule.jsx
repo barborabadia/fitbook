@@ -33,46 +33,47 @@ function formatWeekLabel(monday) {
 
 const s = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32, flexWrap: 'wrap', gap: 16 },
-  title: { fontSize: 32, fontWeight: 800, letterSpacing: '-1px', lineHeight: 1.1 },
-  subtitle: { fontSize: 14, color: '#666', marginTop: 4 },
+  title: { fontSize: 32, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.1, color: '#2C1A22', fontFamily: "'Cormorant Garamond', serif" },
+  subtitle: { fontSize: 14, color: '#9B7E8A', marginTop: 4 },
   btnRow: { display: 'flex', gap: 8, flexWrap: 'wrap' },
   btn: (v = 'secondary') => ({
-    padding: '10px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
-    fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
-    background: v === 'primary' ? '#FF4D00' : '#1A1A28',
-    color: v === 'primary' ? '#fff' : '#888',
+    padding: '10px 16px', borderRadius: 10, border: v === 'secondary' ? '1px solid #EBCFD8' : 'none',
+    cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+    background: v === 'primary' ? '#C8516B' : '#FFFFFF',
+    color: v === 'primary' ? '#fff' : '#9B7E8A',
   }),
   statsRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 },
-  stat: { background: '#111118', border: '1px solid #1E1E2E', borderRadius: 16, padding: '20px 24px' },
-  statLabel: { fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 },
-  statValue: { fontSize: 28, fontWeight: 800, letterSpacing: '-1px' },
-  statSub: { fontSize: 12, color: '#444', marginTop: 4 },
+  stat: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, padding: '20px 24px', boxShadow: '0 2px 12px rgba(200,81,107,0.05)' },
+  statLabel: { fontSize: 11, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 },
+  statValue: { fontSize: 28, fontWeight: 800, letterSpacing: '-1px', color: '#2C1A22' },
+  statSub: { fontSize: 12, color: '#BFA0AD', marginTop: 4 },
   weekGrid: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 10 },
   dayCol: (has) => ({
-    background: has ? '#111118' : 'transparent',
-    border: has ? '1px solid #1E1E2E' : '1px solid transparent',
+    background: has ? '#FFFFFF' : 'transparent',
+    border: has ? '1px solid #EBCFD8' : '1px solid transparent',
     borderRadius: 14, padding: '12px 8px', minHeight: 200,
+    boxShadow: has ? '0 2px 12px rgba(200,81,107,0.04)' : 'none',
   }),
   dayLabel: (active) => ({
-    fontSize: 11, fontWeight: 700, color: active ? '#FF4D00' : '#333',
+    fontSize: 11, fontWeight: 700, color: active ? '#C8516B' : '#C4ABB4',
     textTransform: 'uppercase', letterSpacing: '0.8px', textAlign: 'center', marginBottom: 10,
   }),
   card: (color, full, cancelled) => ({
-    background: cancelled ? 'transparent' : full ? 'rgba(255,77,0,0.05)' : `${color}15`,
-    border: `1px solid ${cancelled ? '#1E1E2E' : full ? 'rgba(255,77,0,0.2)' : color + '44'}`,
+    background: cancelled ? 'transparent' : full ? 'rgba(200,81,107,0.05)' : `${color}12`,
+    border: `1px solid ${cancelled ? '#EBCFD8' : full ? 'rgba(200,81,107,0.2)' : color + '40'}`,
     borderRadius: 10, padding: '8px 10px', marginBottom: 6,
     cursor: cancelled ? 'default' : 'pointer', opacity: cancelled ? 0.4 : 1,
   }),
-  cardTime: { fontSize: 10, color: '#666', fontWeight: 600 },
+  cardTime: { fontSize: 10, color: '#9B7E8A', fontWeight: 600 },
   cardName: { fontSize: 12, fontWeight: 700, marginTop: 2 },
-  bar: { height: 3, background: '#1E1E2E', borderRadius: 2, marginTop: 6 },
-  fill: (color, ratio) => ({ height: '100%', width: `${Math.min(ratio, 1) * 100}%`, background: ratio >= 1 ? '#FF4D00' : color, borderRadius: 2 }),
-  cardSub: { fontSize: 10, color: '#555', marginTop: 4 },
-  modal: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  modalBox: { background: '#111118', border: '1px solid #1E1E2E', borderRadius: 20, padding: 32, width: 420, maxWidth: '90vw' },
-  input: { width: '100%', background: '#0A0A0F', border: '1px solid #1E1E2E', borderRadius: 10, padding: '10px 14px', color: '#F0EDE8', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 10 },
-  label: { fontSize: 11, fontWeight: 600, color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6, marginTop: 12 },
-  select: { width: '100%', background: '#0A0A0F', border: '1px solid #1E1E2E', borderRadius: 10, padding: '10px 14px', color: '#F0EDE8', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 10 },
+  bar: { height: 3, background: '#F0D9DF', borderRadius: 2, marginTop: 6 },
+  fill: (color, ratio) => ({ height: '100%', width: `${Math.min(ratio, 1) * 100}%`, background: ratio >= 1 ? '#C8516B' : color, borderRadius: 2 }),
+  cardSub: { fontSize: 10, color: '#BFA0AD', marginTop: 4 },
+  modal: { position: 'fixed', inset: 0, background: 'rgba(44,26,34,0.55)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+  modalBox: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 20, padding: 32, width: 420, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(200,81,107,0.15)' },
+  input: { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 10 },
+  label: { fontSize: 11, fontWeight: 600, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6, marginTop: 12 },
+  select: { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 10 },
 }
 
 export default function Schedule({ onSelectSlot }) {
@@ -84,7 +85,7 @@ export default function Schedule({ onSelectSlot }) {
   const [showGenerateModal, setShowGenerateModal] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [templates, setTemplates] = useState([])
-  const [newSlot, setNewSlot] = useState({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#FF4D00' })
+  const [newSlot, setNewSlot] = useState({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B' })
 
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
 
@@ -132,7 +133,7 @@ export default function Schedule({ onSelectSlot }) {
     if (!newSlot.date || !newSlot.time) return
     await supabase.from('training_slots').insert({ name: newSlot.name, slot_date: newSlot.date, start_time: newSlot.time, duration_minutes: parseInt(newSlot.duration), capacity: parseInt(newSlot.capacity), color: newSlot.color, price: newSlot.name === 'Osobní trénink' ? 200 : 0 })
     setShowAddModal(false)
-    setNewSlot({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#FF4D00' })
+    setNewSlot({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B' })
     loadData()
   }
 
@@ -193,12 +194,12 @@ export default function Schedule({ onSelectSlot }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ flex: 1 }} onClick={() => !sl.is_cancelled && onSelectSlot({ ...sl, booked })}>
                         <div style={s.cardTime}>{sl.start_time}</div>
-                        <div style={{ ...s.cardName, color: sl.is_cancelled ? '#444' : sl.color }}>{sl.name}</div>
+                        <div style={{ ...s.cardName, color: sl.is_cancelled ? '#BFA0AD' : sl.color }}>{sl.name}</div>
                         {!sl.is_cancelled && <><div style={s.bar}><div style={s.fill(sl.color, ratio)} /></div><div style={s.cardSub}>{full ? '🔴 plno' : `${booked}/${sl.capacity}`}</div></>}
                         {sl.is_cancelled && <div style={s.cardSub}>zrušeno</div>}
                       </div>
                       {!sl.is_cancelled && (
-                        <button onClick={() => removeSlot(sl)} style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer', fontSize: 14, padding: '0 0 0 6px', lineHeight: 1 }} title="Odebrat termín">✕</button>
+                        <button onClick={() => removeSlot(sl)} style={{ background: 'none', border: 'none', color: '#C4ABB4', cursor: 'pointer', fontSize: 14, padding: '0 0 0 6px', lineHeight: 1 }} title="Odebrat termín">✕</button>
                       )}
                     </div>
                   </div>
@@ -212,9 +213,9 @@ export default function Schedule({ onSelectSlot }) {
       {showGenerateModal && (
         <div style={s.modal} onClick={e => e.target === e.currentTarget && setShowGenerateModal(false)}>
           <div style={s.modalBox}>
-            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>⚡ Generovat týden</div>
-            <div style={{ fontSize: 14, color: '#666', marginBottom: 24, lineHeight: 1.6 }}>
-              Vygeneruje všechny termíny pro <strong style={{ color: '#F0EDE8' }}>{formatWeekLabel(monday)}</strong> ze šablon. Termíny které už existují se nepřidají znovu.
+            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: '#2C1A22' }}>⚡ Generovat týden</div>
+            <div style={{ fontSize: 14, color: '#9B7E8A', marginBottom: 24, lineHeight: 1.6 }}>
+              Vygeneruje všechny termíny pro <strong style={{ color: '#2C1A22' }}>{formatWeekLabel(monday)}</strong> ze šablon.
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button style={{ ...s.btn(), flex: 1 }} onClick={() => setShowGenerateModal(false)}>Zrušit</button>
@@ -227,11 +228,11 @@ export default function Schedule({ onSelectSlot }) {
       {showAddModal && (
         <div style={s.modal} onClick={e => e.target === e.currentTarget && setShowAddModal(false)}>
           <div style={s.modalBox}>
-            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 20 }}>+ Přidat termín</div>
+            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 20, color: '#2C1A22' }}>+ Přidat termín</div>
             <label style={s.label}>Typ tréninku</label>
             <select style={s.select} value={newSlot.name} onChange={e => {
               const name = e.target.value
-              setNewSlot({ ...newSlot, name, color: name === 'XXL cvičení' ? '#FFB800' : name === 'Funkční trénink' ? '#7C3AED' : '#FF4D00', capacity: name === 'XXL cvičení' ? 12 : name === 'Funkční trénink' ? 8 : 1 })
+              setNewSlot({ ...newSlot, name, color: name === 'XXL cvičení' ? '#D4945A' : name === 'Funkční trénink' ? '#9B72CF' : '#C8516B', capacity: name === 'XXL cvičení' ? 12 : name === 'Funkční trénink' ? 8 : 1 })
             }}>
               <option>Osobní trénink</option>
               <option>XXL cvičení</option>

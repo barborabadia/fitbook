@@ -51,28 +51,30 @@ function formatDate(dateStr) {
 const s = {
   wrap: { maxWidth: 640, margin: '0 auto', padding: '40px 24px' },
   hero: { marginBottom: 24 },
-  title: { fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px' },
-  sub: { fontSize: 14, color: '#555', marginTop: 4 },
+  title: { fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', color: '#2C1A22', fontFamily: "'Cormorant Garamond', serif" },
+  sub: { fontSize: 14, color: '#9B7E8A', marginTop: 4 },
   tabRow: { display: 'flex', gap: 8, marginBottom: 24 },
-  tab: (active) => ({ padding: '8px 18px', borderRadius: 10, border: `1px solid ${active ? 'rgba(255,77,0,0.3)' : '#1E1E2E'}`, background: active ? 'rgba(255,77,0,0.08)' : 'transparent', color: active ? '#FF4D00' : '#555', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }),
+  tab: (active) => ({ padding: '8px 18px', borderRadius: 10, border: `1px solid ${active ? 'rgba(200,81,107,0.3)' : '#EBCFD8'}`, background: active ? 'rgba(200,81,107,0.08)' : '#FFFFFF', color: active ? '#C8516B' : '#9B7E8A', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }),
   weekNav: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 },
-  weekLabel: { flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#555' },
-  navBtn: { background: '#111118', border: '1px solid #1E1E2E', borderRadius: 8, padding: '6px 12px', color: '#888', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' },
+  weekLabel: { flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#9B7E8A' },
+  navBtn: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 8, padding: '6px 12px', color: '#9B7E8A', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' },
   dateGroup: { marginBottom: 24 },
-  dateHeader: { fontSize: 12, fontWeight: 700, color: '#444', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 },
+  dateHeader: { fontSize: 12, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 },
   card: (color, disabled) => ({
     display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', borderRadius: 12,
-    border: `1px solid ${disabled ? '#1E1E2E' : color + '44'}`,
-    background: disabled ? 'transparent' : `${color}08`,
+    border: `1px solid ${disabled ? '#EBCFD8' : color + '44'}`,
+    background: disabled ? '#FAFAFA' : `${color}08`,
     cursor: disabled ? 'not-allowed' : 'pointer',
-    opacity: disabled ? 0.45 : 1, marginBottom: 8,
+    opacity: disabled ? 0.5 : 1, marginBottom: 8,
+    boxShadow: disabled ? 'none' : '0 2px 8px rgba(200,81,107,0.06)',
+    transition: 'all 0.15s',
   }),
-  icon: (color) => ({ width: 40, height: 40, borderRadius: 10, background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }),
-  cardName: { fontWeight: 700, fontSize: 14 },
-  cardMeta: { fontSize: 12, color: '#555', marginTop: 2 },
+  icon: (color) => ({ width: 40, height: 40, borderRadius: 10, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }),
+  cardName: { fontWeight: 700, fontSize: 14, color: '#2C1A22' },
+  cardMeta: { fontSize: 12, color: '#9B7E8A', marginTop: 2 },
   chip: (color) => ({ padding: '3px 12px', background: color, borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#fff' }),
-  disabledChip: { padding: '3px 12px', background: '#1A1A28', borderRadius: 20, fontSize: 11, fontWeight: 600, color: '#444' },
-  empty: { textAlign: 'center', color: '#444', padding: '40px 0', fontSize: 14 },
+  disabledChip: { padding: '3px 12px', background: '#F5E8EC', borderRadius: 20, fontSize: 11, fontWeight: 600, color: '#BFA0AD', border: '1px solid #EBCFD8' },
+  empty: { textAlign: 'center', color: '#BFA0AD', padding: '40px 0', fontSize: 14 },
 }
 
 export default function ClientBooking() {
@@ -114,7 +116,7 @@ export default function ClientBooking() {
   return (
     <div style={s.wrap}>
       <div style={s.hero}>
-        <div style={s.title}>Cvičení pro ženy 💪</div>
+        <div style={s.title}>Cvičení pro ženy 🌸</div>
         <div style={s.sub}>Rezervace fitness tréninků</div>
       </div>
 
@@ -147,7 +149,6 @@ export default function ClientBooking() {
                 const full = free <= 0
                 const isPersonal = sl.name === 'Osobní trénink'
                 const hours = hoursUntilSlot(sl.slot_date, sl.start_time)
-                // Osobní: nelze rezervovat méně než 24h předem. Skupinové: nelze rezervovat po začátku.
                 const tooLate = isPersonal ? hours < 24 : hours < 0
                 const disabled = full || tooLate
 
@@ -158,12 +159,11 @@ export default function ClientBooking() {
                       <div style={s.cardName}>{sl.name}</div>
                       <div style={s.cardMeta}>
                         {sl.start_time} • {sl.duration_minutes} min
-
-                        {!isPersonal && free > 0 && !full && <span style={{ marginLeft: 8, color: '#666' }}>{free} volných míst</span>}
+                        {!isPersonal && free > 0 && !full && <span style={{ marginLeft: 8, color: '#BFA0AD' }}>{free} volných míst</span>}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      {full && <span style={{ fontSize: 12, color: '#FF4D00' }}>Plno</span>}
+                      {full && <span style={{ fontSize: 12, color: '#C8516B', fontWeight: 600 }}>Plno</span>}
                       {!full && tooLate && <span style={s.disabledChip}>Uzavřeno</span>}
                       {!full && !tooLate && <div style={s.chip(sl.color)}>Rezervovat</div>}
                     </div>

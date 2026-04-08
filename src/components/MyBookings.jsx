@@ -11,24 +11,24 @@ function formatDate(dateStr) {
 
 const s = {
   wrap: { maxWidth: 640, margin: '0 auto' },
-  title: { fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 4 },
-  sub: { fontSize: 14, color: '#555', marginBottom: 20 },
+  title: { fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', marginBottom: 4, color: '#2C1A22', fontFamily: "'Cormorant Garamond', serif" },
+  sub: { fontSize: 14, color: '#9B7E8A', marginBottom: 20 },
   inputRow: { display: 'flex', gap: 10, marginBottom: 20 },
-  input: { flex: 1, background: '#111118', border: '1px solid #1E1E2E', borderRadius: 10, padding: '12px 16px', color: '#F0EDE8', fontSize: 14, fontFamily: 'inherit', outline: 'none' },
-  btn: (v = 'primary') => ({ padding: '12px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', background: v === 'primary' ? '#FF4D00' : '#1A1A28', color: v === 'primary' ? '#fff' : '#888', whiteSpace: 'nowrap' }),
-  card: (cancelled) => ({ background: cancelled ? 'transparent' : '#111118', border: `1px solid ${cancelled ? '#1A1A28' : '#1E1E2E'}`, borderRadius: 14, padding: '18px 20px', marginBottom: 10, opacity: cancelled ? 0.5 : 1 }),
+  input: { flex: 1, background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 10, padding: '12px 16px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none' },
+  btn: (v = 'primary') => ({ padding: '12px 20px', borderRadius: 10, border: v === 'secondary' ? '1px solid #EBCFD8' : 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', background: v === 'primary' ? '#C8516B' : '#F5E8EC', color: v === 'primary' ? '#fff' : '#9B7E8A', whiteSpace: 'nowrap' }),
+  card: (cancelled) => ({ background: cancelled ? 'transparent' : '#FFFFFF', border: `1px solid ${cancelled ? '#F0D9DF' : '#EBCFD8'}`, borderRadius: 14, padding: '18px 20px', marginBottom: 10, opacity: cancelled ? 0.5 : 1, boxShadow: cancelled ? 'none' : '0 2px 12px rgba(200,81,107,0.06)' }),
   cardTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
-  cardName: { fontSize: 16, fontWeight: 700 },
-  cardMeta: { fontSize: 13, color: '#555', marginTop: 4 },
-  cardPrice: { fontSize: 13, color: '#FF4D00', fontWeight: 600, marginTop: 4 },
-  cancelBtn: { padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(255,77,0,0.3)', background: 'rgba(255,77,0,0.08)', color: '#FF4D00', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 },
-  disabledBtn: { padding: '7px 14px', borderRadius: 8, border: '1px solid #1E1E2E', background: 'transparent', color: '#333', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 },
-  badge: (type) => ({ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: type === 'cancelled' ? 'rgba(255,77,0,0.1)' : 'rgba(0,194,168,0.1)', color: type === 'cancelled' ? '#FF4D00' : '#00C2A8', border: `1px solid ${type === 'cancelled' ? 'rgba(255,77,0,0.2)' : 'rgba(0,194,168,0.2)'}` }),
-  empty: { textAlign: 'center', color: '#444', padding: '40px 0', fontSize: 14 },
-  error: { background: 'rgba(255,77,0,0.1)', border: '1px solid rgba(255,77,0,0.3)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#FF4D00', marginBottom: 16 },
-  success: { background: 'rgba(0,194,168,0.08)', border: '1px solid rgba(0,194,168,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#00C2A8', marginBottom: 16 },
-  confirmBox: { background: '#0A0A0F', border: '1px solid rgba(255,77,0,0.3)', borderRadius: 12, padding: '16px', marginTop: 12 },
-  sectionLabel: { fontSize: 12, fontWeight: 700, color: '#444', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 },
+  cardName: { fontSize: 16, fontWeight: 700, color: '#2C1A22' },
+  cardMeta: { fontSize: 13, color: '#9B7E8A', marginTop: 4 },
+  cardPrice: { fontSize: 13, color: '#C8516B', fontWeight: 600, marginTop: 4 },
+  cancelBtn: { padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(200,81,107,0.3)', background: 'rgba(200,81,107,0.06)', color: '#C8516B', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 },
+  disabledBtn: { padding: '7px 14px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#C4ABB4', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 },
+  badge: (type) => ({ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: type === 'cancelled' ? 'rgba(200,81,107,0.1)' : 'rgba(91,158,152,0.1)', color: type === 'cancelled' ? '#C8516B' : '#5B9E98', border: `1px solid ${type === 'cancelled' ? 'rgba(200,81,107,0.2)' : 'rgba(91,158,152,0.2)'}` }),
+  empty: { textAlign: 'center', color: '#BFA0AD', padding: '40px 0', fontSize: 14 },
+  error: { background: 'rgba(200,81,107,0.08)', border: '1px solid rgba(200,81,107,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#C8516B', marginBottom: 16 },
+  success: { background: 'rgba(91,158,152,0.08)', border: '1px solid rgba(91,158,152,0.2)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#5B9E98', marginBottom: 16 },
+  confirmBox: { background: '#FBF6F8', border: '1px solid rgba(200,81,107,0.2)', borderRadius: 12, padding: '16px', marginTop: 12 },
+  sectionLabel: { fontSize: 12, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 },
 }
 
 export default function MyBookings({ prefillEmail }) {
@@ -39,22 +39,14 @@ export default function MyBookings({ prefillEmail }) {
   const [success, setSuccess] = useState('')
   const [confirmCancel, setConfirmCancel] = useState(null)
 
-  // Pokud je email předvyplněný, načti rezervace automaticky
   useEffect(() => {
-    if (prefillEmail) {
-      setEmail(prefillEmail)
-      fetchBookings(prefillEmail)
-    }
+    if (prefillEmail) { setEmail(prefillEmail); fetchBookings(prefillEmail) }
   }, [prefillEmail])
 
   async function fetchBookings(emailVal) {
     if (!emailVal?.trim()) return
     setLoading(true); setError(''); setSuccess('')
-    const { data, error: err } = await supabase
-      .from('bookings')
-      .select('*, training_slots(name, slot_date, start_time, duration_minutes, color, price)')
-      .eq('client_email', emailVal.trim().toLowerCase())
-      .order('created_at', { ascending: false })
+    const { data, error: err } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, duration_minutes, color, price)').eq('client_email', emailVal.trim().toLowerCase()).order('created_at', { ascending: false })
     if (err) { setError('Chyba při načítání.'); setLoading(false); return }
     setBookings(data || [])
     setLoading(false)
@@ -78,7 +70,6 @@ export default function MyBookings({ prefillEmail }) {
 
   return (
     <div style={s.wrap}>
-      {/* Pokud není přihlášen, zobraz emailové pole */}
       {!prefillEmail && (
         <>
           <div style={s.title}>Moje rezervace</div>
@@ -90,7 +81,6 @@ export default function MyBookings({ prefillEmail }) {
         </>
       )}
 
-      {/* Pokud je přihlášen, zobraz jméno */}
       {prefillEmail && (
         <div style={{ marginBottom: 20 }}>
           <div style={s.title}>Moje rezervace</div>
@@ -132,7 +122,7 @@ export default function MyBookings({ prefillEmail }) {
                     </div>
                     {confirmCancel?.id === b.id && (
                       <div style={s.confirmBox}>
-                        <div style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>Opravdu chceš zrušit tuto rezervaci?</div>
+                        <div style={{ fontSize: 13, color: '#9B7E8A', marginBottom: 12 }}>Opravdu chceš zrušit tuto rezervaci?</div>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button style={{ ...s.btn('secondary'), padding: '8px 16px' }} onClick={() => setConfirmCancel(null)}>Ne, zpět</button>
                           <button style={{ ...s.btn('primary'), padding: '8px 16px' }} onClick={() => cancelBooking(b)}>Ano, zrušit</button>
@@ -160,7 +150,7 @@ export default function MyBookings({ prefillEmail }) {
                         </div>
                         <div style={s.cardMeta}>{formatDate(slot.slot_date)} • {slot.start_time}</div>
                       </div>
-                      {b.price > 0 && <div style={{ fontSize: 13, color: '#555', fontWeight: 600 }}>{b.price} Kč</div>}
+                      {b.price > 0 && <div style={{ fontSize: 13, color: '#9B7E8A', fontWeight: 600 }}>{b.price} Kč</div>}
                     </div>
                   </div>
                 )
