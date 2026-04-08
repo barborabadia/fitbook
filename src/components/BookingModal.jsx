@@ -112,7 +112,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
               <div>
-                <div style={s.tag(slot.color)}>{formatDate(slot.slot_date)} • {slot.start_time}</div>
+                <div style={s.tag('#C8516B')}>{formatDate(slot.slot_date)} • {slot.start_time}</div>
                 <div style={s.name}>{slot.name}</div>
               </div>
               <button style={s.closeBtn} onClick={onClose}>✕</button>
