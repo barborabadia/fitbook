@@ -59,8 +59,8 @@ const s = {
     textTransform: 'uppercase', letterSpacing: '0.8px', textAlign: 'center', marginBottom: 10,
   }),
   card: (color, full, cancelled) => ({
-    background: cancelled ? 'transparent' : color,
-    border: `1px solid ${cancelled ? '#EBCFD8' : color}`,
+    background: cancelled ? 'transparent' : '#C8516B',
+    border: `1px solid ${cancelled ? '#EBCFD8' : '#C8516B'}`,
     borderRadius: 10, padding: '8px 10px', marginBottom: 6,
     cursor: cancelled ? 'default' : 'pointer', opacity: cancelled ? 0.4 : 1,
   }),
