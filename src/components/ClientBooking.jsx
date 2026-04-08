@@ -116,7 +116,7 @@ export default function ClientBooking() {
   return (
     <div style={s.wrap}>
       <div style={s.hero}>
-        <div style={s.title}>Cvičení pro ženy 🌸</div>
+        <div style={s.title}>Barbora Knížková 🌸</div>
         <div style={s.sub}>Rezervace fitness tréninků</div>
       </div>
 

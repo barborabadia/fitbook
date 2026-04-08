@@ -6,7 +6,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
 const ADMIN_EMAIL = Deno.env.get('ADMIN_EMAIL')!
-const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'rezervace@cviceniprozeny.cz'
+const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'rezervace@barbaraknizkova.cz'
 
 const DAYS_CZ = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle']
 
@@ -41,13 +41,13 @@ function emailBase(content: string) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #0A0A0F; color: #F0EDE8; border-radius: 16px; overflow: hidden;">
       <div style="background: #FF4D00; padding: 24px 32px;">
-        <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">Cvičení pro ženy</div>
+        <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">Barbora Knížková</div>
       </div>
       <div style="padding: 32px;">
         ${content}
       </div>
       <div style="padding: 16px 32px; border-top: 1px solid #1E1E2E; font-size: 12px; color: #555; text-align: center;">
-        Cvičení pro ženy · cviceni-pro-zeny.vercel.app
+        Barbora Knížková · barbora-knizkova.vercel.app
       </div>
     </div>
   `
@@ -80,7 +80,7 @@ function bookingConfirmationClient(booking: any, slot: any) {
 
     <p style="color: #666; font-size: 13px;">
       Pokud potřebuješ rezervaci zrušit, udělej to nejpozději 24 hodin předem na adrese:<br>
-      <a href="https://cviceni-pro-zeny.vercel.app/book" style="color: #FF4D00;">cviceni-pro-zeny.vercel.app/book</a>
+      <a href="https://barbora-knizkova.vercel.app/book" style="color: #FF4D00;">barbora-knizkova.vercel.app/book</a>
     </p>
   `)
 }
@@ -122,7 +122,7 @@ function cancellationClient(booking: any, slot: any) {
 
     <p style="color: #666; font-size: 13px;">
       Chceš se rezervovat na jiný termín?<br>
-      <a href="https://cviceni-pro-zeny.vercel.app/book" style="color: #FF4D00;">cviceni-pro-zeny.vercel.app/book</a>
+      <a href="https://barbora-knizkova.vercel.app/book" style="color: #FF4D00;">barbora-knizkova.vercel.app/book</a>
     </p>
   `)
 }
