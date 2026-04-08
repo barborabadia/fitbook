@@ -45,6 +45,10 @@ function getDayName(dateStr) {
 }
 
 function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long' })
+}
+
+function formatDateShort(dateStr) {
   const [y, m, d] = dateStr.split('-')
   return `${d}/${m}/${y.slice(2)}`
 }
@@ -135,7 +139,7 @@ export default function ClientBooking() {
 
           <div style={s.weekNav}>
             <button style={s.navBtn} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}>←</button>
-            <div style={s.weekLabel}>{weekDates[0]} – {weekDates[6]}</div>
+            <div style={s.weekLabel}>{formatDateShort(weekDates[0])} – {formatDateShort(weekDates[6])}</div>
             <button style={s.navBtn} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}>→</button>
           </div>
 
