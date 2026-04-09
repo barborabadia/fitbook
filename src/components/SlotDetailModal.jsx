@@ -20,7 +20,7 @@ function getHue(str = '') {
 
 const s = {
   overlay: { position: 'fixed', inset: 0, background: 'rgba(44,26,34,0.55)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  box: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 20, padding: 36, width: 480, maxWidth: '90vw', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(200,81,107,0.15)' },
+  box: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 20, padding: 'clamp(16px, 4vw, 36px)', width: 480, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(200,81,107,0.15)' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
   tag: (color) => ({ fontSize: 11, color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }),
   title: { fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#2C1A22' },
@@ -50,6 +50,7 @@ export default function SlotDetailModal({ slot, onClose }) {
   const [loading, setLoading] = useState(true)
   const [notes, setNotes] = useState(slot.notes || '')
   const [notesSaved, setNotesSaved] = useState(false)
+  const isMobile = window.innerWidth < 768
 
   useEffect(() => { loadBookings() }, [slot.id])
 
@@ -137,24 +138,24 @@ export default function SlotDetailModal({ slot, onClose }) {
           const initials = b.client_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
           const isPersonal = slot.name === 'Osobní trénink'
           return (
-            <div key={b.id} style={s.clientCard(b.paid)}>
+            <div key={b.id} style={{ ...s.clientCard(b.paid), flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
               <div style={s.avatar(hue)}>{initials}</div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
                   <span style={s.clientName}>{b.client_name}</span>
                   {isPersonal && <span style={s.badge(b.booking_type)}>{b.booking_type === 'duo' ? 'Duo' : 'Sólo'}</span>}
                   {b.price > 0 && <span style={{ fontSize: 11, color: '#C8516B', fontWeight: 600, marginLeft: 4 }}>{b.price} Kč</span>}
                 </div>
-                <div style={s.clientMeta}>
+                <div style={{ ...s.clientMeta, wordBreak: 'break-all' }}>
                   📧 {b.client_email}
                   {b.client_phone && <span> · 📱 {b.client_phone}</span>}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button style={s.paidBtn(b.paid)} onClick={() => togglePaid(b.id, b.paid)}>
+              <div style={{ display: 'flex', gap: 6, width: isMobile ? '100%' : 'auto', marginTop: isMobile ? 10 : 0 }}>
+                <button style={{ ...s.paidBtn(b.paid), flex: isMobile ? 1 : 'unset' }} onClick={() => togglePaid(b.id, b.paid)}>
                   {b.paid ? '✓ Zaplaceno' : 'Zaplaceno?'}
                 </button>
-                <button style={s.cancelBtn} onClick={() => cancelBooking(b.id)}>Zrušit</button>
+                <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset' }} onClick={() => cancelBooking(b.id)}>Zrušit</button>
               </div>
             </div>
           )

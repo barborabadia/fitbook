@@ -26,6 +26,7 @@ export default function Clients() {
   const [search, setSearch] = useState('')
   const [selectedClient, setSelectedClient] = useState(null)
   const [loading, setLoading] = useState(true)
+  const isMobile = window.innerWidth < 768
 
   useEffect(() => { loadClients() }, [])
 
@@ -57,41 +58,72 @@ export default function Clients() {
 
   return (
     <div>
-      <div style={s.header}>
-        <div>
-          <div style={s.title}>Klienti</div>
-          <div style={s.subtitle}>Celkem {clients.length} klientů</div>
-        </div>
-        <input style={s.searchInput} placeholder="🔍 Hledat..." value={search} onChange={e => setSearch(e.target.value)} />
+      <div style={{ marginBottom: 20 }}>
+        <div style={s.title}>Klienti</div>
+        <div style={s.subtitle}>Celkem {clients.length} klientů</div>
+        <input style={{ ...s.searchInput, width: '100%', marginTop: 12, boxSizing: 'border-box' }} placeholder="🔍 Hledat..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
-      <div style={s.table}>
-        <div style={s.tHead}>
-          <span>Jméno</span><span>E-mail</span><span>Tréninků</span><span>Utraceno</span><span>Status</span>
-        </div>
-        {loading && <div style={s.empty}>Načítám...</div>}
-        {!loading && filtered.length === 0 && <div style={s.empty}>{search ? 'Žádný klient nenalezen.' : 'Zatím žádné rezervace.'}</div>}
-        {filtered.map((c, i) => {
-          const hue = getHue(c.email)
-          const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-          const isNew = c.sessions <= 2
-          return (
-            <div key={c.email} style={{ ...s.tRow, background: i % 2 === 0 ? 'transparent' : 'rgba(200,81,107,0.015)', cursor: 'pointer' }} onClick={() => setSelectedClient(c)}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={s.avatar(hue)}>{initials}</div>
-                <div>
-                  <div style={{ fontWeight: 600, color: '#2C1A22' }}>{c.name}</div>
-                  {c.phone && <div style={{ fontSize: 11, color: '#9B7E8A' }}>{c.phone}</div>}
+      {loading && <div style={s.empty}>Načítám...</div>}
+      {!loading && filtered.length === 0 && <div style={s.empty}>{search ? 'Žádný klient nenalezen.' : 'Zatím žádné rezervace.'}</div>}
+
+      {isMobile ? (
+        <div>
+          {filtered.map(c => {
+            const hue = getHue(c.email)
+            const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+            const isNew = c.sessions <= 2
+            return (
+              <div key={c.email} style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '14px 16px', marginBottom: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(200,81,107,0.05)' }} onClick={() => setSelectedClient(c)}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                  <div style={s.avatar(hue)}>{initials}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, color: '#2C1A22', fontSize: 15 }}>{c.name}</div>
+                    <div style={{ fontSize: 12, color: '#9B7E8A', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
+                  </div>
+                  <span style={s.badge(isNew ? 'new' : 'active')}>{isNew ? 'Nová' : 'Aktivní'}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ flex: 1, background: '#FBF6F8', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 10, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Tréninků</div>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: '#2C1A22', marginTop: 2 }}>{c.sessions}</div>
+                  </div>
+                  <div style={{ flex: 1, background: '#FBF6F8', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 10, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Utraceno</div>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: '#D4945A', marginTop: 2 }}>{c.totalSpent > 0 ? `${c.totalSpent} Kč` : '–'}</div>
+                  </div>
                 </div>
               </div>
-              <span style={{ color: '#9B7E8A', fontSize: 13 }}>{c.email}</span>
-              <span style={{ fontWeight: 700, color: '#2C1A22' }}>{c.sessions}</span>
-              <span style={{ fontWeight: 600, color: '#D4945A' }}>{c.totalSpent > 0 ? `${c.totalSpent} Kč` : '–'}</span>
-              <span style={s.badge(isNew ? 'new' : 'active')}>{isNew ? 'Nová' : 'Aktivní'}</span>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div style={s.table}>
+          <div style={s.tHead}>
+            <span>Jméno</span><span>E-mail</span><span>Tréninků</span><span>Utraceno</span><span>Status</span>
+          </div>
+          {filtered.map((c, i) => {
+            const hue = getHue(c.email)
+            const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+            const isNew = c.sessions <= 2
+            return (
+              <div key={c.email} style={{ ...s.tRow, background: i % 2 === 0 ? 'transparent' : 'rgba(200,81,107,0.015)', cursor: 'pointer' }} onClick={() => setSelectedClient(c)}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={s.avatar(hue)}>{initials}</div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#2C1A22' }}>{c.name}</div>
+                    {c.phone && <div style={{ fontSize: 11, color: '#9B7E8A' }}>{c.phone}</div>}
+                  </div>
+                </div>
+                <span style={{ color: '#9B7E8A', fontSize: 13 }}>{c.email}</span>
+                <span style={{ fontWeight: 700, color: '#2C1A22' }}>{c.sessions}</span>
+                <span style={{ fontWeight: 600, color: '#D4945A' }}>{c.totalSpent > 0 ? `${c.totalSpent} Kč` : '–'}</span>
+                <span style={s.badge(isNew ? 'new' : 'active')}>{isNew ? 'Nová' : 'Aktivní'}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
       {selectedClient && <ClientDetailModal client={selectedClient} onClose={() => setSelectedClient(null)} />}
     </div>
   )
