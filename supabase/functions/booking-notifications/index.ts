@@ -175,7 +175,11 @@ async function getGcalToken(serviceAccount: any): Promise<string> {
 async function deleteCalendarEvent(serviceAccount: any, calendarId: string, eventId: string): Promise<void> {
   try {
     const token = await getGcalToken(serviceAccount)
-    await fetch("https://www.googleapis.com/calendar/v3/calendars/" + encodeURIComponent(calendarId) + "/events/" + eventId, { method: "DELETE", headers: { "Authorization": "Bearer " + token } })
+    const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/" + encodeURIComponent(calendarId) + "/events/" + eventId, { method: "DELETE", headers: { "Authorization": "Bearer " + token } })
+    if (!res.ok) {
+      const body = await res.text()
+      throw new Error(`GCal DELETE failed (${res.status}): ${body}`)
+    }
     console.log("✅ Calendar event deleted:", eventId)
   } catch (e) {
     console.error("⚠️ Could not delete calendar event:", e)
