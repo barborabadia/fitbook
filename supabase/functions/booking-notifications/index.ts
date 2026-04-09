@@ -225,7 +225,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Zrušení rezervace
-    if (type === 'UPDATE' && record.status === 'cancelled' && old_record?.status === 'confirmed') {
+    if (type === 'UPDATE' && record.status === 'cancelled' && old_record?.status !== 'cancelled') {
       // Emaily – chyby ignorujeme aby nespadlo i mazání kalendáře
       await sendEmail(ADMIN_EMAIL, `⚠️ Zrušení rezervace – ${record.client_name}`, cancellationAdmin(record, slot)).catch(e => console.error('Admin email failed:', e))
       await sendEmail(record.client_email, `❌ Rezervace zrušena – ${slot.name} ${slot.slot_date}`, cancellationClient(record, slot)).catch(e => console.error('Client email failed:', e))
