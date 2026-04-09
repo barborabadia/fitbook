@@ -231,6 +231,11 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                           {bookingTypes[sl.id] === 'duo' ? '👯 Duo' : '🧘 Sólo'}
                         </div>
                       )}
+                      {!sl.is_cancelled && sl.notes && (
+                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 5, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                          📝 {sl.notes}
+                        </div>
+                      )}
                     </div>
                     {!sl.is_cancelled && (
                       <button onClick={() => removeSlot(sl)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13, padding: '6px 10px', marginLeft: 8 }}>✕</button>
@@ -345,6 +350,11 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                           )}
                         </>}
                         {sl.is_cancelled && <div style={s.cardSub}>zrušeno</div>}
+                        {!sl.is_cancelled && sl.notes && (
+                          <div style={{ marginTop: 5, fontSize: 10, color: 'rgba(255,255,255,0.8)', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                            📝 {sl.notes}
+                          </div>
+                        )}
                       </div>
                       {!sl.is_cancelled && (
                         <button onClick={() => removeSlot(sl)} style={{ background: 'none', border: 'none', color: '#C4ABB4', cursor: 'pointer', fontSize: 14, padding: '0 0 0 6px', lineHeight: 1 }} title="Odebrat termín">✕</button>
