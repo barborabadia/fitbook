@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Schedule from './components/Schedule'
 import Clients from './components/Clients'
 import ClientBooking from './components/ClientBooking'
@@ -29,16 +29,58 @@ const s = {
   main: { marginLeft: 224, padding: '40px 48px', minHeight: '100vh' },
 }
 
+const NAV_ITEMS = [
+  { id: 'schedule', label: 'Rozvrh', icon: '📅' },
+  { id: 'clients', label: 'Klienti', icon: '👥' },
+  { id: 'stats', label: 'Statistiky', icon: '📊' },
+]
+
 export default function App() {
   const [view, setView] = useState('schedule')
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [scheduleRefresh, setScheduleRefresh] = useState(0)
   const [isLoggedIn, setIsLoggedIn] = useState(sessionStorage.getItem('fitbook_admin') === '1')
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
 
   if (isClientView) return <div style={s.root}><ClientBooking /></div>
   if (!isLoggedIn) return <div style={s.root}><AdminLogin onLogin={() => setIsLoggedIn(true)} /></div>
 
   const bookingUrl = `${window.location.origin}/book`
+  const logout = () => { sessionStorage.removeItem('fitbook_admin'); setIsLoggedIn(false) }
+
+  if (isMobile) {
+    return (
+      <div style={s.root}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: '#fff', borderBottom: '1px solid #EBCFD8', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 50, boxShadow: '0 2px 12px rgba(200,81,107,0.06)' }}>
+          <div>
+            <div style={{ ...s.logoText, fontSize: 17 }}>Barbora<span style={s.logoAccent}> Knížková</span> 🌸</div>
+            <div style={{ ...s.logoSub, fontSize: 10 }}>trenér panel</div>
+          </div>
+          <button onClick={logout} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#BFA0AD', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' }}>Odhlásit</button>
+        </div>
+        <div style={{ padding: '68px 12px 76px' }}>
+          {view === 'schedule' && <Schedule onSelectSlot={setSelectedSlot} refreshKey={scheduleRefresh} isMobile />}
+          {view === 'clients' && <Clients />}
+          {view === 'stats' && <Statistics />}
+        </div>
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #EBCFD8', display: 'flex', zIndex: 50 }}>
+          {NAV_ITEMS.map(item => (
+            <div key={item.id} style={{ flex: 1, textAlign: 'center', padding: '8px 0', cursor: 'pointer', color: view === item.id ? '#C8516B' : '#BFA0AD' }} onClick={() => setView(item.id)}>
+              <div style={{ fontSize: 22 }}>{item.icon}</div>
+              <div style={{ fontSize: 10, fontWeight: 600, marginTop: 2 }}>{item.label}</div>
+            </div>
+          ))}
+        </div>
+        {selectedSlot && <SlotDetailModal slot={selectedSlot} onClose={() => { setSelectedSlot(null); setScheduleRefresh(r => r + 1) }} />}
+      </div>
+    )
+  }
 
   return (
     <div style={s.root}>
@@ -49,11 +91,7 @@ export default function App() {
           <div style={s.logoSub}>trenér panel</div>
         </div>
         <nav style={s.nav}>
-          {[
-            { id: 'schedule', label: 'Rozvrh', icon: '📅' },
-            { id: 'clients', label: 'Klienti', icon: '👥' },
-            { id: 'stats', label: 'Statistiky', icon: '📊' },
-          ].map(item => (
+          {NAV_ITEMS.map(item => (
             <div key={item.id} style={s.navItem(view === item.id)} onClick={() => setView(item.id)}>
               <span>{item.icon}</span><span>{item.label}</span>
             </div>
@@ -70,7 +108,7 @@ export default function App() {
           <button onClick={() => navigator.clipboard.writeText(bookingUrl)} style={{ width: '100%', padding: '6px', borderRadius: 6, border: 'none', background: 'rgba(200,81,107,0.1)', color: '#C8516B', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'inherit' }}>📋 Kopírovat odkaz</button>
         </div>
         <div style={{ margin: '0 12px 20px' }}>
-          <button onClick={() => { sessionStorage.removeItem('fitbook_admin'); setIsLoggedIn(false) }} style={{ width: '100%', padding: '8px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#BFA0AD', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }}>Odhlásit se</button>
+          <button onClick={logout} style={{ width: '100%', padding: '8px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#BFA0AD', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }}>Odhlásit se</button>
         </div>
       </div>
       <div style={s.main}>

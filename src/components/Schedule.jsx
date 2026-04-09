@@ -76,7 +76,9 @@ const s = {
   select: { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 10 },
 }
 
-export default function Schedule({ onSelectSlot, refreshKey }) {
+const DAYS_FULL = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle']
+
+export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
   const [monday, setMonday] = useState(getMonday())
   const [slots, setSlots] = useState([])
   const [bookingCounts, setBookingCounts] = useState({})
@@ -157,6 +159,131 @@ export default function Schedule({ onSelectSlot, refreshKey }) {
   const activeSlots = slots.filter(s => !s.is_cancelled)
   const totalBookings = Object.values(bookingCounts).reduce((a, b) => a + b, 0)
   const totalCapacity = activeSlots.reduce((a, s) => a + s.capacity, 0)
+
+  const slotsByDate = {}
+  slots.forEach(sl => {
+    if (!slotsByDate[sl.slot_date]) slotsByDate[sl.slot_date] = []
+    slotsByDate[sl.slot_date].push(sl)
+  })
+
+  if (isMobile) {
+    return (
+      <div>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: '#2C1A22', fontFamily: "'Cormorant Garamond', serif" }}>Týdenní rozvrh</div>
+          <div style={{ fontSize: 13, color: '#9B7E8A', marginTop: 2 }}>{formatWeekLabel(monday)}</div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 16 }}>
+          {[
+            { label: 'Termínů', value: activeSlots.length },
+            { label: 'Rezervací', value: totalBookings },
+            { label: 'Obsazenost', value: totalCapacity ? `${Math.round(totalBookings / totalCapacity * 100)}%` : '0%' },
+            { label: 'Volná místa', value: totalCapacity - totalBookings },
+          ].map((st, i) => (
+            <div key={i} style={s.stat}>
+              <div style={s.statLabel}>{st.label}</div>
+              <div style={{ ...s.statValue, fontSize: 22 }}>{loading ? '…' : st.value}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <button style={s.btn()} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}>←</button>
+          <button style={{ ...s.btn(), flex: 1 }} onClick={() => setMonday(getMonday())}>Tento týden</button>
+          <button style={s.btn()} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}>→</button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+          <button style={{ ...s.btn('primary'), flex: 1 }} onClick={() => setShowGenerateModal(true)}>⚡ Generovat</button>
+          <button style={{ ...s.btn('primary'), flex: 1 }} onClick={() => setShowAddModal(true)}>+ Přidat termín</button>
+        </div>
+
+        {loading && <div style={{ textAlign: 'center', color: '#BFA0AD', padding: '24px 0' }}>Načítám...</div>}
+        {!loading && Object.keys(slotsByDate).length === 0 && <div style={{ textAlign: 'center', color: '#BFA0AD', padding: '24px 0', fontSize: 14 }}>Tento týden nejsou žádné termíny.</div>}
+
+        {weekDates.map((date, i) => {
+          const daySlots = slotsByDate[date]
+          if (!daySlots?.length) return null
+          return (
+            <div key={date} style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>
+                {DAYS_FULL[i]} — {new Date(date).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long' })}
+              </div>
+              {daySlots.map(sl => {
+                const booked = bookingCounts[sl.id] || 0
+                const ratio = booked / sl.capacity
+                const full = ratio >= 1
+                const allPaid = booked > 0 && (paidCounts[sl.id] || 0) >= booked
+                const cardBg = sl.is_cancelled ? '#f5f5f5' : allPaid ? '#27AE60' : '#C8516B'
+                const cardBorder = sl.is_cancelled ? '#EBCFD8' : allPaid ? '#27AE60' : '#C8516B'
+                return (
+                  <div key={sl.id} style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 12, padding: '12px 14px', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: sl.is_cancelled ? 0.4 : 1 }}>
+                    <div style={{ flex: 1 }} onClick={() => !sl.is_cancelled && onSelectSlot({ ...sl, booked })}>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: sl.is_cancelled ? '#9B7E8A' : '#fff' }}>{sl.name}</div>
+                      <div style={{ fontSize: 12, color: sl.is_cancelled ? '#BFA0AD' : 'rgba(255,255,255,0.8)', marginTop: 2 }}>
+                        {sl.start_time} • {sl.duration_minutes} min
+                        {!sl.is_cancelled && ` • ${full ? '🔴 plno' : `${booked}/${sl.capacity}`}`}
+                        {sl.is_cancelled && ' • zrušeno'}
+                      </div>
+                      {!sl.is_cancelled && sl.name === 'Osobní trénink' && booked > 0 && (
+                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 4 }}>
+                          {bookingTypes[sl.id] === 'duo' ? '👯 Duo' : '🧘 Sólo'}
+                        </div>
+                      )}
+                    </div>
+                    {!sl.is_cancelled && (
+                      <button onClick={() => removeSlot(sl)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13, padding: '6px 10px', marginLeft: 8 }}>✕</button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
+
+        {showGenerateModal && (
+          <div style={s.modal} onClick={e => e.target === e.currentTarget && setShowGenerateModal(false)}>
+            <div style={s.modalBox}>
+              <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: '#2C1A22' }}>⚡ Generovat týden</div>
+              <div style={{ fontSize: 14, color: '#9B7E8A', marginBottom: 24, lineHeight: 1.6 }}>
+                Vygeneruje termíny pro <strong style={{ color: '#2C1A22' }}>{formatWeekLabel(monday)}</strong> ze šablon.
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button style={{ ...s.btn(), flex: 1 }} onClick={() => setShowGenerateModal(false)}>Zrušit</button>
+                <button style={{ ...s.btn('primary'), flex: 2 }} onClick={generateWeek} disabled={generating}>{generating ? 'Generuji...' : '⚡ Generovat'}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAddModal && (
+          <div style={s.modal} onClick={e => e.target === e.currentTarget && setShowAddModal(false)}>
+            <div style={s.modalBox}>
+              <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 20, color: '#2C1A22' }}>+ Přidat termín</div>
+              <label style={s.label}>Typ tréninku</label>
+              <select style={s.select} value={newSlot.name} onChange={e => {
+                const name = e.target.value
+                setNewSlot({ ...newSlot, name, color: name === 'XXL cvičení' ? '#D4945A' : name === 'Funkční trénink' ? '#9B72CF' : '#C8516B', capacity: name === 'XXL cvičení' ? 10 : name === 'Funkční trénink' ? 10 : 1 })
+              }}>
+                <option>Osobní trénink</option>
+                <option>XXL cvičení</option>
+                <option>Funkční trénink</option>
+              </select>
+              <label style={s.label}>Datum</label>
+              <input style={s.input} type="date" value={newSlot.date} onChange={e => setNewSlot({ ...newSlot, date: e.target.value })} />
+              <label style={s.label}>Čas začátku</label>
+              <input style={s.input} type="time" value={newSlot.time} onChange={e => setNewSlot({ ...newSlot, time: e.target.value })} />
+              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                <button style={{ ...s.btn(), flex: 1 }} onClick={() => setShowAddModal(false)}>Zrušit</button>
+                <button style={{ ...s.btn('primary'), flex: 2 }} onClick={addSlot} disabled={!newSlot.date || !newSlot.time}>Přidat termín</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div>
