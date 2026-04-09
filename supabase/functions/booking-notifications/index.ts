@@ -213,19 +213,9 @@ Deno.serve(async (req: Request) => {
 
     // Nová rezervace
     if (type === 'INSERT' && record.status === 'confirmed') {
-      await Promise.all([
-        sendEmail(
-          record.client_email,
-          `✅ Rezervace potvrzena – ${slot.name} ${slot.slot_date}`,
-          bookingConfirmationClient(record, slot)
-        ),
-        sendEmail(
-          ADMIN_EMAIL,
-          `🆕 Nová rezervace – ${record.client_name}`,
-          bookingNotificationAdmin(record, slot)
-        ),
-      ])
-      console.log('✅ Confirmation emails sent')
+      await sendEmail(record.client_email, `✅ Rezervace potvrzena – ${slot.name} ${slot.slot_date}`, bookingConfirmationClient(record, slot)).catch(e => console.error('Client email failed:', e))
+      await sendEmail(ADMIN_EMAIL, `🆕 Nová rezervace – ${record.client_name}`, bookingNotificationAdmin(record, slot)).catch(e => console.error('Admin email failed:', e))
+      console.log('✅ Confirmation processed')
     }
 
     // Zrušení rezervace
