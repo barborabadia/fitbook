@@ -94,6 +94,7 @@ export default function Statistics() {
   const [slots, setSlots] = useState([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('month')
+  const [showUnpaidTooltip, setShowUnpaidTooltip] = useState(false)
   const isMobile = window.innerWidth < 768
 
   useEffect(() => { loadData() }, [])
@@ -128,6 +129,7 @@ export default function Statistics() {
 
   const paidRevenue = periodConfirmed.filter(b => b.paid).reduce((a, b) => a + (b.price || 0), 0)
   const unpaidRevenue = totalRevenue - paidRevenue
+  const unpaidBookings = periodConfirmed.filter(b => !b.paid && b.price > 0)
 
   const groupSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name === 'XXL cvičení' || b.training_slots?.name === 'Funkční trénink').map(b => b.slot_id))
   const salonCosts = groupSlotIds.size * 200
@@ -271,14 +273,35 @@ export default function Statistics() {
                 <div style={{ height: '100%', width: `${totalRevenue > 0 ? Math.round(paidRevenue / totalRevenue * 100) : 0}%`, background: '#27AE60', borderRadius: 5, transition: 'width 0.5s' }} />
               </div>
             </div>
-            <div style={{ flex: 1, minWidth: 120 }}>
+            <div style={{ flex: 1, minWidth: 120, position: 'relative' }}
+              onMouseEnter={() => unpaidBookings.length > 0 && setShowUnpaidTooltip(true)}
+              onMouseLeave={() => setShowUnpaidTooltip(false)}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
-                <span style={{ color: '#C8516B', fontWeight: 600 }}>⏳ Čeká na platbu</span>
+                <span style={{ color: '#C8516B', fontWeight: 600, cursor: unpaidBookings.length > 0 ? 'pointer' : 'default' }}>
+                  ⏳ Čeká na platbu {unpaidBookings.length > 0 && <span style={{ fontSize: 10, background: 'rgba(200,81,107,0.12)', border: '1px solid rgba(200,81,107,0.25)', borderRadius: 10, padding: '1px 6px', marginLeft: 4 }}>{unpaidBookings.length}</span>}
+                </span>
                 <span style={{ fontWeight: 700 }}>{unpaidRevenue.toLocaleString('cs-CZ')} Kč</span>
               </div>
               <div style={{ height: 10, background: '#F0D9DF', borderRadius: 5, overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${totalRevenue > 0 ? Math.round(unpaidRevenue / totalRevenue * 100) : 0}%`, background: '#C8516B', borderRadius: 5, transition: 'width 0.5s' }} />
               </div>
+              {showUnpaidTooltip && unpaidBookings.length > 0 && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 10px)', left: 0, zIndex: 50, background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, boxShadow: '0 8px 32px rgba(200,81,107,0.15)', padding: '14px 16px', minWidth: 260, maxWidth: 320, maxHeight: 320, overflowY: 'auto' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>Nezaplacené rezervace</div>
+                  {unpaidBookings.map(b => (
+                    <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '7px 0', borderBottom: '1px solid #FAF0F3' }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#2C1A22' }}>{b.client_name}</div>
+                        <div style={{ fontSize: 11, color: '#9B7E8A', marginTop: 2 }}>
+                          {b.training_slots?.name} · {b.training_slots?.slot_date ? new Date(b.training_slots.slot_date).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' }) : '–'}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#C8516B', flexShrink: 0, marginLeft: 10 }}>{b.price} Kč</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
