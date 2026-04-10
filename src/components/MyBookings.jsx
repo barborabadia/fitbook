@@ -104,26 +104,63 @@ export default function MyBookings({ prefillEmail }) {
         <>
           {bookings.length === 0 && <div style={s.empty}>Žádné rezervace nenalezeny.</div>}
 
-          {pastConfirmed.length > 0 && (
-            <div style={{ background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, padding: '20px', marginBottom: 28, boxShadow: '0 2px 12px rgba(200,81,107,0.05)' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#2C1A22', marginBottom: 4 }}>Absolvované tréninky</div>
-              <div style={{ fontSize: 12, color: '#BFA0AD', marginBottom: 16 }}>celkem {pastConfirmed.length} {pastConfirmed.length === 1 ? 'trénink' : pastConfirmed.length < 5 ? 'tréninky' : 'tréninků'}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(Object.keys(byType).length, 3)}, 1fr)`, gap: 10 }}>
-                {Object.entries(byType).sort((a, b) => b[1] - a[1]).map(([name, count]) => {
-                  const color = TYPE_COLORS[name] || '#9B7E8A'
-                  const pct = Math.round(count / pastConfirmed.length * 100)
-                  return (
-                    <div key={name} style={{ background: `${color}08`, border: `1px solid ${color}28`, borderRadius: 12, padding: '14px 16px' }}>
-                      <div style={{ fontSize: 11, color: '#9B7E8A', marginBottom: 6, lineHeight: 1.3 }}>{name}</div>
-                      <div style={{ fontSize: 26, fontWeight: 800, color, lineHeight: 1 }}>{count}×</div>
-                      <div style={{ marginTop: 10, height: 4, background: `${color}20`, borderRadius: 2, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2 }} />
+          {(pastConfirmed.length > 0 || upcoming.filter(b => b.status === 'confirmed').length > 0) && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 28 }}>
+
+              <div style={{ background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, padding: '20px', boxShadow: '0 2px 12px rgba(200,81,107,0.05)' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#2C1A22', marginBottom: 4 }}>Absolvované tréninky</div>
+                <div style={{ fontSize: 12, color: '#BFA0AD', marginBottom: 16 }}>celkem {pastConfirmed.length} {pastConfirmed.length === 1 ? 'trénink' : pastConfirmed.length < 5 ? 'tréninky' : 'tréninků'}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {Object.entries(byType).sort((a, b) => b[1] - a[1]).map(([name, count]) => {
+                    const color = TYPE_COLORS[name] || '#9B7E8A'
+                    const pct = Math.round(count / pastConfirmed.length * 100)
+                    return (
+                      <div key={name} style={{ background: `${color}08`, border: `1px solid ${color}28`, borderRadius: 10, padding: '10px 14px' }}>
+                        <div style={{ fontSize: 11, color: '#9B7E8A', marginBottom: 4 }}>{name}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1 }}>{count}×</div>
+                          <div style={{ fontSize: 10, color: '#BFA0AD' }}>{pct} %</div>
+                        </div>
+                        <div style={{ marginTop: 8, height: 3, background: `${color}20`, borderRadius: 2, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2 }} />
+                        </div>
                       </div>
-                      <div style={{ fontSize: 10, color: '#BFA0AD', marginTop: 5 }}>{pct} % z celku</div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
+
+              {(() => {
+                const upcomingConfirmed = upcoming.filter(b => b.status === 'confirmed')
+                const nextSlot = upcomingConfirmed[0]?.training_slots
+                return (
+                  <div style={{ background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, padding: '20px', boxShadow: '0 2px 12px rgba(200,81,107,0.05)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#2C1A22', marginBottom: 4 }}>Nadcházející tréninky</div>
+                    <div style={{ fontSize: 12, color: '#BFA0AD', marginBottom: 16 }}>rezervované termíny</div>
+                    {upcomingConfirmed.length === 0 ? (
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#BFA0AD', fontSize: 13, textAlign: 'center', gap: 8 }}>
+                        <div style={{ fontSize: 28 }}>🗓️</div>
+                        <div>Žádné nadcházející<br />rezervace</div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ background: 'rgba(200,81,107,0.06)', border: '1px solid rgba(200,81,107,0.15)', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}>
+                          <div style={{ fontSize: 11, color: '#BFA0AD', marginBottom: 2 }}>Příští trénink</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: '#2C1A22' }}>{nextSlot?.name}</div>
+                          <div style={{ fontSize: 12, color: '#9B7E8A', marginTop: 4 }}>
+                            {nextSlot ? new Date(nextSlot.slot_date).toLocaleDateString('cs-CZ', { weekday: 'short', day: 'numeric', month: 'long' }) : ''} • {nextSlot?.start_time}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: 36, fontWeight: 800, color: '#C8516B', lineHeight: 1 }}>{upcomingConfirmed.length}</div>
+                          <div style={{ fontSize: 12, color: '#BFA0AD', marginTop: 4 }}>{upcomingConfirmed.length === 1 ? 'rezervace' : upcomingConfirmed.length < 5 ? 'rezervace' : 'rezervací'}</div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )
+              })()}
+
             </div>
           )}
 
