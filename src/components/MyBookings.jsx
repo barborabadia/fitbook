@@ -68,6 +68,14 @@ export default function MyBookings({ prefillEmail }) {
   const upcoming = bookings?.filter(b => b.training_slots && new Date(`${b.training_slots.slot_date}T${b.training_slots.start_time}:00`) > new Date()) || []
   const past = bookings?.filter(b => b.training_slots && new Date(`${b.training_slots.slot_date}T${b.training_slots.start_time}:00`) <= new Date()) || []
 
+  const TYPE_COLORS = { 'Osobní trénink': '#C8516B', 'XXL cvičení': '#D4945A', 'Funkční trénink': '#9B72CF' }
+  const pastConfirmed = past.filter(b => b.status === 'confirmed')
+  const byType = {}
+  pastConfirmed.forEach(b => {
+    const name = b.training_slots?.name || 'Jiný'
+    byType[name] = (byType[name] || 0) + 1
+  })
+
   return (
     <div style={s.wrap}>
       {!prefillEmail && (
@@ -95,6 +103,30 @@ export default function MyBookings({ prefillEmail }) {
       {!loading && bookings !== null && (
         <>
           {bookings.length === 0 && <div style={s.empty}>Žádné rezervace nenalezeny.</div>}
+
+          {pastConfirmed.length > 0 && (
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 }}>
+              {Object.entries(byType).sort((a, b) => b[1] - a[1]).map(([name, count]) => {
+                const color = TYPE_COLORS[name] || '#9B7E8A'
+                return (
+                  <div key={name} style={{ background: `${color}10`, border: `1px solid ${color}30`, borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: 12, color: '#9B7E8A' }}>{name}</div>
+                      <div style={{ fontSize: 20, fontWeight: 800, color, lineHeight: 1.2 }}>{count}×</div>
+                    </div>
+                  </div>
+                )
+              })}
+              <div style={{ background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#BFA0AD', flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 12, color: '#9B7E8A' }}>Celkem</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#2C1A22', lineHeight: 1.2 }}>{pastConfirmed.length}×</div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {upcoming.length > 0 && (
             <>
