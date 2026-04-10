@@ -105,25 +105,24 @@ export default function MyBookings({ prefillEmail }) {
           {bookings.length === 0 && <div style={s.empty}>Žádné rezervace nenalezeny.</div>}
 
           {pastConfirmed.length > 0 && (
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 }}>
-              {Object.entries(byType).sort((a, b) => b[1] - a[1]).map(([name, count]) => {
-                const color = TYPE_COLORS[name] || '#9B7E8A'
-                return (
-                  <div key={name} style={{ background: `${color}10`, border: `1px solid ${color}30`, borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                    <div>
-                      <div style={{ fontSize: 12, color: '#9B7E8A' }}>{name}</div>
-                      <div style={{ fontSize: 20, fontWeight: 800, color, lineHeight: 1.2 }}>{count}×</div>
+            <div style={{ background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, padding: '20px', marginBottom: 28, boxShadow: '0 2px 12px rgba(200,81,107,0.05)' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#2C1A22', marginBottom: 4 }}>Absolvované tréninky</div>
+              <div style={{ fontSize: 12, color: '#BFA0AD', marginBottom: 16 }}>celkem {pastConfirmed.length} {pastConfirmed.length === 1 ? 'trénink' : pastConfirmed.length < 5 ? 'tréninky' : 'tréninků'}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(Object.keys(byType).length, 3)}, 1fr)`, gap: 10 }}>
+                {Object.entries(byType).sort((a, b) => b[1] - a[1]).map(([name, count]) => {
+                  const color = TYPE_COLORS[name] || '#9B7E8A'
+                  const pct = Math.round(count / pastConfirmed.length * 100)
+                  return (
+                    <div key={name} style={{ background: `${color}08`, border: `1px solid ${color}28`, borderRadius: 12, padding: '14px 16px' }}>
+                      <div style={{ fontSize: 11, color: '#9B7E8A', marginBottom: 6, lineHeight: 1.3 }}>{name}</div>
+                      <div style={{ fontSize: 26, fontWeight: 800, color, lineHeight: 1 }}>{count}×</div>
+                      <div style={{ marginTop: 10, height: 4, background: `${color}20`, borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2 }} />
+                      </div>
+                      <div style={{ fontSize: 10, color: '#BFA0AD', marginTop: 5 }}>{pct} % z celku</div>
                     </div>
-                  </div>
-                )
-              })}
-              <div style={{ background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#BFA0AD', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: 12, color: '#9B7E8A' }}>Celkem</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#2C1A22', lineHeight: 1.2 }}>{pastConfirmed.length}×</div>
-                </div>
+                  )
+                })}
               </div>
             </div>
           )}
