@@ -147,7 +147,7 @@ export default function ClientBooking() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, borderTop: '1px solid #EBCFD8', paddingTop: 16 }}>
             <span style={{ fontSize: 18 }}>📍</span>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#2C1A22' }}>Fitness Phoenix Stod</div>
+              <a href="https://phoenix-gym.cz/" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 700, color: '#C8516B', textDecoration: 'none' }}>Fitness Phoenix Stod</a>
               <div style={{ fontSize: 13, color: '#9B7E8A', marginTop: 2 }}>U Elektrárny 902, 333 01 Stod</div>
             </div>
           </div>
