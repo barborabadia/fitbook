@@ -129,9 +129,30 @@ export default function ClientBooking() {
       <div style={s.tabRow}>
         <button style={s.tab(tab === 'book')} onClick={() => setTab('book')}>📅 Rezervovat trénink</button>
         <button style={s.tab(tab === 'my')} onClick={() => setTab('my')}>📋 Moje rezervace</button>
+        <button style={s.tab(tab === 'info')} onClick={() => setTab('info')}>ℹ️ O tréninku</button>
       </div>
 
       {tab === 'my' && <MyBookings prefillEmail={loggedInUser?.email || null} />}
+
+      {tab === 'info' && (
+        <div style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '24px 22px' }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#2C1A22', marginBottom: 12, fontFamily: "'Cormorant Garamond', serif" }}>O tréninku</div>
+          <p style={{ fontSize: 14, color: '#5C3D4A', lineHeight: 1.65, margin: '0 0 16px' }}>
+            Osobní tréninky ve Fitness Phoenix Stod s certifikovanou fitness instruktorkou Barčou.
+            Zaměříme se na správné pohybové vzorce, kvalitní techniku i zdravotní cvičení.
+          </p>
+          <p style={{ fontSize: 14, color: '#5C3D4A', lineHeight: 1.65, margin: '0 0 20px' }}>
+            Pro vstup do fitness je potřeba mít členskou kartu – o jejím založení se informujte na recepci.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, borderTop: '1px solid #EBCFD8', paddingTop: 16 }}>
+            <span style={{ fontSize: 18 }}>📍</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#2C1A22' }}>Fitness Phoenix Stod</div>
+              <div style={{ fontSize: 13, color: '#9B7E8A', marginTop: 2 }}>U Elektrárny 902, 333 01 Stod</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {tab === 'book' && (
         <>
