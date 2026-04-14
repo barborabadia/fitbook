@@ -82,6 +82,45 @@ const s = {
   empty: { textAlign: 'center', color: '#BFA0AD', padding: '40px 0', fontSize: 14 },
 }
 
+const CERTIFIKATY = [
+  'Fitness instruktor.pdf',
+  'Instruktor zdravotní tělesné výchovy.pdf',
+  'Metodika závodní přípravy bikini fitness.pdf',
+  'Posilování s vlastní vahou.pdf',
+  'Sestavováno fitness tréninku.pdf',
+  'Tejpování.pdf',
+  'Dosáhni naturálního maxima.pdf',
+]
+
+function CertifikatyModal({ onClose }) {
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,34,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: '28px 24px', maxWidth: 420, width: '100%', boxShadow: '0 8px 32px rgba(200,81,107,0.15)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22', fontFamily: "'Cormorant Garamond', serif" }}>🎓 Certifikáty</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9B7E8A', lineHeight: 1 }}>×</button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {CERTIFIKATY.map(name => (
+            <a
+              key={name}
+              href={`/certifikaty/${encodeURIComponent(name)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, border: '1px solid #EBCFD8', color: '#2C1A22', textDecoration: 'none', fontSize: 13, fontWeight: 600, transition: 'background 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,81,107,0.06)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <span style={{ fontSize: 20 }}>📄</span>
+              <span>{name.replace('.pdf', '')}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ClientBooking() {
   const [tab, setTab] = useState('book')
   const [monday, setMonday] = useState(getMonday())
@@ -90,6 +129,7 @@ export default function ClientBooking() {
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loggedInUser, setLoggedInUser] = useState(null)
+  const [showCerts, setShowCerts] = useState(false)
 
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
 
@@ -138,7 +178,12 @@ export default function ClientBooking() {
         <div style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '24px 22px' }}>
           <div style={{ fontSize: 17, fontWeight: 700, color: '#2C1A22', marginBottom: 12, fontFamily: "'Cormorant Garamond', serif" }}>O tréninku</div>
           <p style={{ fontSize: 14, color: '#5C3D4A', lineHeight: 1.65, margin: '0 0 16px' }}>
-            Osobní tréninky ve Fitness Phoenix Stod s certifikovanou fitness instruktorkou Barčou.
+            Osobní tréninky ve Fitness Phoenix Stod s{' '}
+            <span
+              onClick={() => setShowCerts(true)}
+              style={{ color: '#C8516B', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}
+            >certifikovanou</span>{' '}
+            fitness instruktorkou Barčou.
             Zaměříme se na správné pohybové vzorce, kvalitní techniku i zdravotní cvičení.
           </p>
           <p style={{ fontSize: 14, color: '#5C3D4A', lineHeight: 1.65, margin: '0 0 20px' }}>
@@ -203,6 +248,7 @@ export default function ClientBooking() {
       )}
 
       {selected && <BookingModal slot={selected} prefill={prefill} onClose={async () => { setSelected(null); await loadData() }} />}
+      {showCerts && <CertifikatyModal onClose={() => setShowCerts(false)} />}
     </div>
   )
 }
