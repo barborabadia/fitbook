@@ -32,7 +32,7 @@ function hoursUntilSlot(slotDate, startTime) {
 }
 
 const DAYS_FULL = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle']
-const ICONS = { 'XXL': '🏆', 'Funkční': '⚡', 'Osobní': '💪', default: '💪' }
+const ICONS = { 'XXL': '🏆', 'Funkční': '⚡', 'Osobní': '💪', 'Posilování': '🎵', 'Orient': '🥋', default: '💪' }
 
 function getIcon(name) {
   for (const [key, icon] of Object.entries(ICONS)) { if (name.includes(key)) return icon }

@@ -50,6 +50,11 @@ export default function SlotDetailModal({ slot, onClose }) {
   const [loading, setLoading] = useState(true)
   const [notes, setNotes] = useState(slot.notes || '')
   const [notesSaved, setNotesSaved] = useState(false)
+  const [showAddBooking, setShowAddBooking] = useState(false)
+  const [allClients, setAllClients] = useState([])
+  const [clientSearch, setClientSearch] = useState('')
+  const [addError, setAddError] = useState('')
+  const [addLoading, setAddLoading] = useState(false)
   const isMobile = window.innerWidth < 768
 
   useEffect(() => { loadBookings() }, [slot.id])
@@ -75,6 +80,39 @@ export default function SlotDetailModal({ slot, onClose }) {
     await supabase.from('training_slots').update({ notes }).eq('id', slot.id)
     setNotesSaved(true)
     setTimeout(() => setNotesSaved(false), 2000)
+  }
+
+  async function openAddBooking() {
+    setShowAddBooking(true)
+    setClientSearch('')
+    setAddError('')
+    const { data: bk } = await supabase.from('bookings').select('client_name, client_email, client_phone').eq('status', 'confirmed')
+    const { data: mc } = await supabase.from('manual_clients').select('*').order('name')
+    const map = {}
+    bk?.forEach(b => { if (b.client_email && !map[b.client_email]) map[b.client_email] = { name: b.client_name, email: b.client_email, phone: b.client_phone } })
+    mc?.forEach(c => { if (!map[c.email]) map[c.email] = { name: c.name, email: c.email, phone: c.phone } })
+    setAllClients(Object.values(map).sort((a, b) => a.name.localeCompare(b.name, 'cs')))
+  }
+
+  async function addManualBooking(client) {
+    setAddLoading(true); setAddError('')
+    const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_email', client.email).eq('status', 'confirmed')
+    if (existing?.length > 0) { setAddError(`${client.name} má na tento termín již rezervaci.`); setAddLoading(false); return }
+    const confirmed = bookings.filter(b => b.status === 'confirmed')
+    if (confirmed.length >= slot.capacity) { setAddError('Termín je plný.'); setAddLoading(false); return }
+    const { error } = await supabase.from('bookings').insert({
+      slot_id: slot.id,
+      client_name: client.name,
+      client_email: client.email,
+      client_phone: client.phone || null,
+      booking_type: 'solo',
+      price: slot.price || 0,
+      status: 'confirmed',
+    })
+    if (error) { setAddError('Chyba při ukládání.'); setAddLoading(false); return }
+    setShowAddBooking(false)
+    loadBookings()
+    setAddLoading(false)
   }
 
   const confirmed = bookings.filter(b => b.status === 'confirmed')
@@ -125,7 +163,42 @@ export default function SlotDetailModal({ slot, onClose }) {
           </button>
         </div>
 
-        <div style={s.sectionLabel}>Rezervace ({confirmed.length})</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={s.sectionLabel}>Rezervace ({confirmed.length})</div>
+          <button onClick={openAddBooking} style={{ background: '#C8516B', border: 'none', borderRadius: 8, padding: '6px 12px', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Přidat ručně</button>
+        </div>
+
+        {showAddBooking && (
+          <div style={{ background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#2C1A22', marginBottom: 10 }}>Vybrat klienta</div>
+            <input
+              style={{ width: '100%', background: '#fff', border: '1px solid #EBCFD8', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
+              placeholder="🔍 Hledat klienta..."
+              value={clientSearch}
+              onChange={e => setClientSearch(e.target.value)}
+            />
+            <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #EBCFD8', borderRadius: 8, background: '#fff' }}>
+              {allClients.filter(c => c.name.toLowerCase().includes(clientSearch.toLowerCase()) || c.email.toLowerCase().includes(clientSearch.toLowerCase())).slice(0, 20).map(c => (
+                <div
+                  key={c.email}
+                  onClick={() => addManualBooking(c)}
+                  style={{ padding: '10px 12px', borderBottom: '1px solid #FAF0F3', cursor: 'pointer', fontSize: 13 }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,81,107,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div style={{ fontWeight: 600, color: '#2C1A22' }}>{c.name}</div>
+                  <div style={{ fontSize: 11, color: '#9B7E8A' }}>{c.email}{c.phone ? ` · ${c.phone}` : ''}</div>
+                </div>
+              ))}
+              {allClients.filter(c => c.name.toLowerCase().includes(clientSearch.toLowerCase()) || c.email.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
+                <div style={{ padding: '16px', textAlign: 'center', color: '#BFA0AD', fontSize: 13 }}>Žádný klient nenalezen</div>
+              )}
+            </div>
+            {addError && <div style={{ fontSize: 12, color: '#C8516B', marginTop: 8, fontWeight: 600 }}>⚠️ {addError}</div>}
+            {addLoading && <div style={{ fontSize: 12, color: '#9B7E8A', marginTop: 8 }}>Ukládám...</div>}
+            <button onClick={() => setShowAddBooking(false)} style={{ marginTop: 10, background: 'none', border: '1px solid #EBCFD8', borderRadius: 8, padding: '6px 12px', color: '#9B7E8A', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' }}>Zrušit</button>
+          </div>
+        )}
 
         {loading && <div style={s.empty}>Načítám...</div>}
 

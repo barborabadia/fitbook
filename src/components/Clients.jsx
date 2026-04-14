@@ -21,34 +21,61 @@ function getHue(str = '') {
   return h
 }
 
+const modalStyle = { position: 'fixed', inset: 0, background: 'rgba(44,26,34,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }
+const inputStyle = { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 10 }
+const labelStyle = { fontSize: 11, fontWeight: 600, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6, marginTop: 12 }
+
 export default function Clients() {
   const [clients, setClients] = useState([])
   const [search, setSearch] = useState('')
   const [selectedClient, setSelectedClient] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newClient, setNewClient] = useState({ name: '', email: '', phone: '' })
+  const [addLoading, setAddLoading] = useState(false)
+  const [addError, setAddError] = useState('')
   const isMobile = window.innerWidth < 768
 
   useEffect(() => { loadClients() }, [])
 
   async function loadClients() {
     setLoading(true)
-    const { data } = await supabase.from('bookings').select('client_name, client_email, client_phone, booking_type, price, status, created_at, slot_id, training_slots(name, slot_date, start_time)').eq('status', 'confirmed').order('created_at', { ascending: false })
+    const [{ data }, { data: mc }] = await Promise.all([
+      supabase.from('bookings').select('client_name, client_email, client_phone, booking_type, price, status, created_at, slot_id, training_slots(name, slot_date, start_time)').eq('status', 'confirmed').order('created_at', { ascending: false }),
+      supabase.from('manual_clients').select('*').order('name'),
+    ])
 
-    if (data) {
-      const map = {}
-      data.forEach(b => {
-        const key = b.client_email
-        if (!map[key]) map[key] = { name: b.client_name, email: b.client_email, phone: b.client_phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null }
-        map[key].sessions++
-        map[key].totalSpent += b.price || 0
-        if (!map[key].lastDate || b.created_at > map[key].lastDate) {
-          map[key].lastDate = b.created_at
-          map[key].lastSlot = b.training_slots
-        }
-      })
-      setClients(Object.values(map))
-    }
+    const map = {}
+    data?.forEach(b => {
+      const key = b.client_email
+      if (!map[key]) map[key] = { name: b.client_name, email: b.client_email, phone: b.client_phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null }
+      map[key].sessions++
+      map[key].totalSpent += b.price || 0
+      if (!map[key].lastDate || b.created_at > map[key].lastDate) {
+        map[key].lastDate = b.created_at
+        map[key].lastSlot = b.training_slots
+      }
+    })
+    mc?.forEach(c => {
+      if (!map[c.email]) map[c.email] = { name: c.name, email: c.email, phone: c.phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null, isManual: true }
+    })
+    setClients(Object.values(map))
     setLoading(false)
+  }
+
+  async function addClient() {
+    if (!newClient.name.trim() || !newClient.email.trim()) return
+    setAddLoading(true); setAddError('')
+    const { error } = await supabase.from('manual_clients').insert({
+      name: newClient.name.trim(),
+      email: newClient.email.trim().toLowerCase(),
+      phone: newClient.phone.trim() || null,
+    })
+    if (error) { setAddError('Chyba – email možná již existuje.'); setAddLoading(false); return }
+    setShowAddModal(false)
+    setNewClient({ name: '', email: '', phone: '' })
+    setAddLoading(false)
+    loadClients()
   }
 
   const filtered = clients.filter(c =>
@@ -59,8 +86,13 @@ export default function Clients() {
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
-        <div style={s.title}>Klienti</div>
-        <div style={s.subtitle}>Celkem {clients.length} klientů</div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <div style={s.title}>Klienti</div>
+            <div style={s.subtitle}>Celkem {clients.length} klientů</div>
+          </div>
+          <button onClick={() => { setShowAddModal(true); setAddError('') }} style={{ padding: '10px 16px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>+ Přidat klienta</button>
+        </div>
         <input style={{ ...s.searchInput, width: '100%', marginTop: 12, boxSizing: 'border-box' }} placeholder="🔍 Hledat..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
@@ -125,6 +157,30 @@ export default function Clients() {
         </div>
       )}
       {selectedClient && <ClientDetailModal client={selectedClient} onClose={() => setSelectedClient(null)} />}
+
+      {showAddModal && (
+        <div style={modalStyle} onClick={e => e.target === e.currentTarget && setShowAddModal(false)}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: '28px 24px', maxWidth: 400, width: '100%', boxShadow: '0 8px 32px rgba(200,81,107,0.15)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22' }}>Přidat klienta</div>
+              <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9B7E8A' }}>×</button>
+            </div>
+            <label style={labelStyle}>Jméno a příjmení *</label>
+            <input style={inputStyle} placeholder="Jana Nováková" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
+            <label style={labelStyle}>E-mail *</label>
+            <input style={inputStyle} type="email" placeholder="jana@email.cz" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
+            <label style={labelStyle}>Telefon (volitelné)</label>
+            <input style={inputStyle} placeholder="+420 777 888 999" value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} />
+            {addError && <div style={{ fontSize: 13, color: '#C8516B', fontWeight: 600, marginBottom: 8 }}>⚠️ {addError}</div>}
+            <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+              <button onClick={() => setShowAddModal(false)} style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1px solid #EBCFD8', background: '#fff', color: '#9B7E8A', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušit</button>
+              <button onClick={addClient} disabled={!newClient.name || !newClient.email || addLoading} style={{ flex: 2, padding: '11px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: (!newClient.name || !newClient.email || addLoading) ? 0.5 : 1 }}>
+                {addLoading ? 'Ukládám...' : 'Přidat klienta'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

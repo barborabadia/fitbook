@@ -5,8 +5,9 @@ const IBAN = 'CZ2403000000000260597819'
 
 function getPrice(slot, bookingType) {
   if (slot.name === 'Osobní trénink') return bookingType === 'duo' ? 300 : 200
-  if (slot.name === 'XXL cvičení' || slot.name === 'Funkční trénink') return 120
-  return 0
+  if (slot.name.includes('Zbůch')) return 130
+  if (slot.name.includes('Stod')) return 120
+  return slot.price || 0
 }
 
 function buildQrString(price, message) {
@@ -49,6 +50,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const isPersonal = slot.name === 'Osobní trénink'
+  const isZbuch = slot.name.includes('Zbůch')
   const price = getPrice(slot, bookingType)
 
   useEffect(() => {
@@ -97,14 +99,23 @@ export default function BookingModal({ slot, prefill, onClose }) {
               <div style={{ fontSize: 14, color: '#C8516B', marginTop: 6, fontWeight: 700 }}>Cena: {price} Kč</div>
             </div>
 
-            <div style={s.qrBox}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#2C1A22' }}>Zaplať přes QR kód</div>
-              <QRCode value={qrString} size={180} />
-              <div style={{ fontSize: 12, color: '#9B7E8A', textAlign: 'center', lineHeight: 1.5 }}>
-                Naskenuj QR kód v mobilním bankovnictví.<br />
-                Částka <strong style={{ color: '#C8516B' }}>{price} Kč</strong> bude předvyplněna.
+            {isZbuch ? (
+              <div style={{ background: 'rgba(91,158,152,0.07)', border: '1px solid rgba(91,158,152,0.35)', borderRadius: 12, padding: '20px 16px', margin: '16px 0', textAlign: 'center' }}>
+                <div style={{ fontSize: 28, marginBottom: 10 }}>💵</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#2C1A22' }}>Platbu provedete v hotovosti</div>
+                <div style={{ fontSize: 13, color: '#9B7E8A', marginTop: 6 }}>před zahájením lekce</div>
+                <div style={{ fontSize: 14, color: '#C8516B', fontWeight: 700, marginTop: 8 }}>{price} Kč</div>
               </div>
-            </div>
+            ) : (
+              <div style={s.qrBox}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#2C1A22' }}>Zaplať přes QR kód</div>
+                <QRCode value={qrString} size={180} />
+                <div style={{ fontSize: 12, color: '#9B7E8A', textAlign: 'center', lineHeight: 1.5 }}>
+                  Naskenuj QR kód v mobilním bankovnictví.<br />
+                  Částka <strong style={{ color: '#C8516B' }}>{price} Kč</strong> bude předvyplněna.
+                </div>
+              </div>
+            )}
 
             <button style={{ ...s.btn('primary'), flex: 'unset', width: '100%' }} onClick={onClose}>Zavřít</button>
           </div>
@@ -140,7 +151,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
                 {!isPersonal && (
                   <div style={{ background: `${slot.color}10`, border: `1px solid ${slot.color}30`, borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
                     <div style={{ fontSize: 13, color: '#9B7E8A' }}>Délka: {slot.duration_minutes} min • Volná místa: {slot.capacity - slot.booked}</div>
-                    <div style={{ fontSize: 14, color: '#C8516B', fontWeight: 700, marginTop: 4 }}>Cena: 120 Kč</div>
+                    <div style={{ fontSize: 14, color: '#C8516B', fontWeight: 700, marginTop: 4 }}>Cena: {price} Kč{isZbuch ? ' – platba v hotovosti' : ''}</div>
                   </div>
                 )}
                 <button style={{ ...s.btn('primary'), flex: 'unset', width: '100%' }} onClick={() => setStep(2)}>

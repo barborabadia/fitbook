@@ -89,7 +89,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
   const [templates, setTemplates] = useState([])
   const [bookingTypes, setBookingTypes] = useState({})
   const [paidCounts, setPaidCounts] = useState({})
-  const [newSlot, setNewSlot] = useState({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B' })
+  const [newSlot, setNewSlot] = useState({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B', price: 200 })
 
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
 
@@ -143,10 +143,17 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
 
   async function addSlot() {
     if (!newSlot.date || !newSlot.time) return
-    await supabase.from('training_slots').insert({ name: newSlot.name, slot_date: newSlot.date, start_time: newSlot.time, duration_minutes: parseInt(newSlot.duration), capacity: parseInt(newSlot.capacity), color: newSlot.color, price: newSlot.name === 'Osobní trénink' ? 200 : 0 })
+    await supabase.from('training_slots').insert({ name: newSlot.name, slot_date: newSlot.date, start_time: newSlot.time, duration_minutes: parseInt(newSlot.duration), capacity: parseInt(newSlot.capacity), color: newSlot.color, price: newSlot.price })
     setShowAddModal(false)
-    setNewSlot({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B' })
+    setNewSlot({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B', price: 200 })
     loadData()
+  }
+
+  function getSlotDefaults(name) {
+    if (name === 'Osobní trénink') return { color: '#C8516B', capacity: 1, price: 200 }
+    if (name.includes('Zbůch')) return { color: name.includes('XXL') ? '#D4945A' : name.includes('Posilování') ? '#5B9E98' : '#9B72CF', capacity: 10, price: 130 }
+    if (name.includes('Stod')) return { color: name.includes('XXL') ? '#D4945A' : '#9B72CF', capacity: 10, price: 120 }
+    return { color: '#C8516B', capacity: 1, price: 0 }
   }
 
   async function removeSlot(sl) {
@@ -269,11 +276,18 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
               <label style={s.label}>Typ tréninku</label>
               <select style={s.select} value={newSlot.name} onChange={e => {
                 const name = e.target.value
-                setNewSlot({ ...newSlot, name, color: name === 'XXL cvičení' ? '#D4945A' : name === 'Funkční trénink' ? '#9B72CF' : '#C8516B', capacity: name === 'XXL cvičení' ? 10 : name === 'Funkční trénink' ? 10 : 1 })
+                setNewSlot({ ...newSlot, name, ...getSlotDefaults(name) })
               }}>
-                <option>Osobní trénink</option>
-                <option>XXL cvičení</option>
-                <option>Funkční trénink</option>
+                <optgroup label="Stod">
+                  <option>Osobní trénink</option>
+                  <option>XXL cvičení - Stod</option>
+                  <option>Funkční trénink - Stod</option>
+                </optgroup>
+                <optgroup label="Zbůch">
+                  <option>XXL cvičení - Zbůch</option>
+                  <option>Posilování na hudbu - Zbůch</option>
+                  <option>FIT Orient - Zbůch</option>
+                </optgroup>
               </select>
               <label style={s.label}>Datum</label>
               <input style={s.input} type="date" value={newSlot.date} onChange={e => setNewSlot({ ...newSlot, date: e.target.value })} />

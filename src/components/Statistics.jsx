@@ -17,8 +17,17 @@ const MONTHS = ['Led','Úno','Bře','Dub','Kvě','Čer','Čvc','Srp','Zář','Ř
 const DAYS_SHORT = ['Po','Út','St','Čt','Pá','So','Ne']
 const TYPE_COLORS = {
   'Osobní trénink': '#C8516B',
-  'XXL cvičení': '#D4945A',
-  'Funkční trénink': '#9B72CF',
+  'XXL cvičení - Stod': '#D4945A',
+  'Funkční trénink - Stod': '#9B72CF',
+  'XXL cvičení - Zbůch': '#E8914A',
+  'Posilování na hudbu - Zbůch': '#5B9E98',
+  'FIT Orient - Zbůch': '#7B5EA7',
+}
+
+function zbuchProfit(count) {
+  if (count >= 9) return 300
+  if (count >= 5) return 250
+  return 200
 }
 
 const s = {
@@ -125,17 +134,34 @@ export default function Statistics() {
   const prevConfirmed = confirmed.filter(b => prevStart && inPeriod(b, prevStart, prevEnd))
 
   const totalRevenue = periodConfirmed.reduce((a, b) => a + (b.price || 0), 0)
-  const prevRevenue = prevConfirmed.reduce((a, b) => a + (b.price || 0), 0)
 
   const paidRevenue = periodConfirmed.filter(b => b.paid).reduce((a, b) => a + (b.price || 0), 0)
   const unpaidRevenue = totalRevenue - paidRevenue
   const unpaidBookings = periodConfirmed.filter(b => !b.paid && b.price > 0)
 
-  const groupSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name === 'XXL cvičení' || b.training_slots?.name === 'Funkční trénink').map(b => b.slot_id))
-  const salonCosts = groupSlotIds.size * 200
-  const netRevenue = totalRevenue - salonCosts
-  const prevGroupSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name === 'XXL cvičení' || b.training_slots?.name === 'Funkční trénink').map(b => b.slot_id))
-  const prevNetRevenue = prevRevenue - prevGroupSlotIds.size * 200
+  // Salon costs for Stod group trainings only
+  const stodSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
+  const salonCosts = stodSlotIds.size * 200
+
+  // Zbůch bracket profit
+  const zbuchBySlot = {}
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
+    zbuchBySlot[b.slot_id] = (zbuchBySlot[b.slot_id] || 0) + 1
+  })
+  const zbuchTotalProfit = Object.values(zbuchBySlot).reduce((a, n) => a + zbuchProfit(n), 0)
+
+  const nonZbuchRevenue = periodConfirmed.filter(b => !b.training_slots?.name?.includes('Zbůch')).reduce((a, b) => a + (b.price || 0), 0)
+  const netRevenue = nonZbuchRevenue - salonCosts + zbuchTotalProfit
+
+  // Previous period net
+  const prevStodSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
+  const prevZbuchBySlot = {}
+  prevConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
+    prevZbuchBySlot[b.slot_id] = (prevZbuchBySlot[b.slot_id] || 0) + 1
+  })
+  const prevZbuchProfit = Object.values(prevZbuchBySlot).reduce((a, n) => a + zbuchProfit(n), 0)
+  const prevNonZbuchRevenue = prevConfirmed.filter(b => !b.training_slots?.name?.includes('Zbůch')).reduce((a, b) => a + (b.price || 0), 0)
+  const prevNetRevenue = prevNonZbuchRevenue - prevStodSlotIds.size * 200 + prevZbuchProfit
 
   const uniqueClients = new Set(periodConfirmed.map(b => b.client_email)).size
   const prevUniqueClients = new Set(prevConfirmed.map(b => b.client_email)).size
@@ -175,19 +201,42 @@ export default function Statistics() {
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
     monthlyData[key] = { count: 0, revenue: 0, label: MONTHS[d.getMonth()] }
   }
-  const groupSlotsByMonth = {}
-  confirmed.filter(b => b.training_slots?.name === 'XXL cvičení' || b.training_slots?.name === 'Funkční trénink').forEach(b => {
+  // Slot attendance map for Zbůch bracket
+  const slotAttendance = {}
+  confirmed.forEach(b => { slotAttendance[b.slot_id] = (slotAttendance[b.slot_id] || 0) + 1 })
+
+  // Monthly Stod salon costs
+  const stodSlotsByMonth = {}
+  confirmed.filter(b => b.training_slots?.name?.includes('- Stod')).forEach(b => {
     const date = b.training_slots?.slot_date; if (!date) return
     const key = date.slice(0, 7)
-    if (!groupSlotsByMonth[key]) groupSlotsByMonth[key] = new Set()
-    groupSlotsByMonth[key].add(b.slot_id)
+    if (!stodSlotsByMonth[key]) stodSlotsByMonth[key] = new Set()
+    stodSlotsByMonth[key].add(b.slot_id)
   })
+
+  // Monthly Zbůch slot groups
+  const zbuchSlotsByMonth = {}
+  slots.filter(s => s.name?.includes('Zbůch')).forEach(s => {
+    const key = s.slot_date.slice(0, 7)
+    if (!zbuchSlotsByMonth[key]) zbuchSlotsByMonth[key] = []
+    zbuchSlotsByMonth[key].push(s)
+  })
+
   confirmed.forEach(b => {
     const date = b.training_slots?.slot_date; if (!date) return
     const key = date.slice(0, 7)
-    if (monthlyData[key]) { monthlyData[key].count++; monthlyData[key].revenue += b.price || 0 }
+    if (monthlyData[key]) {
+      monthlyData[key].count++
+      if (!b.training_slots?.name?.includes('Zbůch')) monthlyData[key].revenue += b.price || 0
+    }
   })
-  Object.entries(groupSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 200 })
+  Object.entries(stodSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 200 })
+  Object.entries(zbuchSlotsByMonth).forEach(([key, zbuchSlots]) => {
+    if (monthlyData[key]) zbuchSlots.forEach(s => {
+      const count = slotAttendance[s.id] || 0
+      if (count > 0) monthlyData[key].revenue += zbuchProfit(count)
+    })
+  })
   const months = Object.values(monthlyData)
   const maxCount = Math.max(...months.map(m => m.count), 1)
 
@@ -251,7 +300,7 @@ export default function Statistics() {
             {netRevenue.toLocaleString('cs-CZ')} Kč
             <Trend current={netRevenue} previous={prevNetRevenue} />
           </div>
-          <div style={s.statSub}>náklady sál: {salonCosts} Kč</div>
+          <div style={s.statSub}>náklady sál (Stod): {salonCosts} Kč{zbuchTotalProfit > 0 ? ` · Zbůch: +${zbuchTotalProfit} Kč` : ''}</div>
         </div>
         <div style={s.stat}>
           <div style={s.statLabel}>Obsazenost týden</div>
