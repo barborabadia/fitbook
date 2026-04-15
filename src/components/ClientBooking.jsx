@@ -67,8 +67,8 @@ const s = {
   dateHeader: { fontSize: 12, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 },
   card: (color, disabled) => ({
     display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', borderRadius: 12,
-    border: `1px solid ${disabled ? '#EBCFD8' : '#C8516B'}`,
-    background: disabled ? '#FAFAFA' : '#C8516B',
+    border: `1px solid ${disabled ? '#EBCFD8' : (color || '#C8516B')}`,
+    background: disabled ? '#FAFAFA' : (color || '#C8516B'),
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.5 : 1, marginBottom: 8,
     boxShadow: disabled ? 'none' : '0 2px 8px rgba(200,81,107,0.06)',

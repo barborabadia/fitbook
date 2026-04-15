@@ -17,11 +17,11 @@ const MONTHS = ['Led','Úno','Bře','Dub','Kvě','Čer','Čvc','Srp','Zář','Ř
 const DAYS_SHORT = ['Po','Út','St','Čt','Pá','So','Ne']
 const TYPE_COLORS = {
   'Osobní trénink': '#C8516B',
-  'XXL cvičení - Stod': '#D4945A',
-  'Funkční trénink - Stod': '#9B72CF',
-  'XXL cvičení - Zbůch': '#E8914A',
-  'Posilování na hudbu - Zbůch': '#5B9E98',
-  'FIT Orient - Zbůch': '#7B5EA7',
+  'XXL cvičení - Stod': '#E8779E',
+  'Funkční trénink - Stod': '#E8779E',
+  'XXL cvičení - Zbůch': '#E8779E',
+  'Posilování na hudbu - Zbůch': '#E8779E',
+  'FIT Orient - Zbůch': '#E8779E',
 }
 
 function zbuchProfit(count) {
