@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 
 const s = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 },
-  title: { fontSize: 32, fontWeight: 700, letterSpacing: '-1px', color: '#2C1A22', fontFamily: "'Cormorant Garamond', serif" },
+  title: { fontSize: 32, fontWeight: 700, letterSpacing: '-1px', color: '#2C1A22', fontFamily: "'Plus Jakarta Sans', sans-serif" },
   subtitle: { fontSize: 14, color: '#9B7E8A', marginTop: 4 },
   searchInput: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 16px', color: '#2C1A22', fontSize: 14, width: 240, fontFamily: 'inherit', outline: 'none' },
   table: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 20px rgba(200,81,107,0.06)' },

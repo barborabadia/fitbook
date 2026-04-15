@@ -12,7 +12,7 @@ const s = {
   root: { fontFamily: "'Plus Jakarta Sans', sans-serif", background: '#FBF6F8', minHeight: '100vh', color: '#2C1A22' },
   sidebar: { width: 224, background: '#FFFFFF', borderRight: '1px solid #EBCFD8', display: 'flex', flexDirection: 'column', padding: '32px 0', position: 'fixed', top: 0, left: 0, height: '100vh', boxShadow: '2px 0 20px rgba(200,81,107,0.06)' },
   logo: { padding: '0 28px 28px', borderBottom: '1px solid #F0D9DF' },
-  logoText: { fontSize: 20, fontWeight: 700, letterSpacing: '-0.3px', fontFamily: "'Cormorant Garamond', serif", lineHeight: 1.2 },
+  logoText: { fontSize: 20, fontWeight: 700, letterSpacing: '-0.3px', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.2 },
   logoAccent: { color: '#C8516B' },
   logoSub: { fontSize: 11, color: '#C4ABB4', marginTop: 2 },
   nav: { padding: '20px 12px', flex: 1 },

@@ -33,7 +33,7 @@ function formatWeekLabel(monday) {
 
 const s = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32, flexWrap: 'wrap', gap: 16 },
-  title: { fontSize: 32, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.1, color: '#2C1A22', fontFamily: "'Cormorant Garamond', serif" },
+  title: { fontSize: 32, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.1, color: '#2C1A22', fontFamily: "'Plus Jakarta Sans', sans-serif" },
   subtitle: { fontSize: 14, color: '#9B7E8A', marginTop: 4 },
   btnRow: { display: 'flex', gap: 8, flexWrap: 'wrap' },
   btn: (v = 'secondary') => ({
@@ -177,7 +177,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     return (
       <div>
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: '#2C1A22', fontFamily: "'Cormorant Garamond', serif" }}>Týdenní rozvrh</div>
+          <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: '#2C1A22', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Týdenní rozvrh</div>
           <div style={{ fontSize: 13, color: '#9B7E8A', marginTop: 2 }}>{formatWeekLabel(monday)}</div>
         </div>
 

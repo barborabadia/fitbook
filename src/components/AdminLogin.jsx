@@ -7,7 +7,7 @@ const LOCKOUT_MINUTES = 15
 const s = {
   wrap: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FBF6F8' },
   box: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 24, padding: '48px 40px', width: 400, maxWidth: '90vw', textAlign: 'center', boxShadow: '0 8px 40px rgba(200,81,107,0.10)' },
-  logo: { fontSize: 28, fontWeight: 700, letterSpacing: '-0.3px', marginBottom: 8, fontFamily: "'Cormorant Garamond', serif" },
+  logo: { fontSize: 28, fontWeight: 700, letterSpacing: '-0.3px', marginBottom: 8, fontFamily: "'Plus Jakarta Sans', sans-serif" },
   accent: { color: '#C8516B' },
   subtitle: { fontSize: 14, color: '#9B7E8A', marginBottom: 32 },
   input: { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '12px 16px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', marginBottom: 10, boxSizing: 'border-box' },

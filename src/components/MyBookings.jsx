@@ -11,7 +11,7 @@ function formatDate(dateStr) {
 
 const s = {
   wrap: { maxWidth: 640, margin: '0 auto' },
-  title: { fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', marginBottom: 4, color: '#2C1A22', fontFamily: "'Cormorant Garamond', serif" },
+  title: { fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', marginBottom: 4, color: '#2C1A22', fontFamily: "'Plus Jakarta Sans', sans-serif" },
   sub: { fontSize: 14, color: '#9B7E8A', marginBottom: 20 },
   inputRow: { display: 'flex', gap: 10, marginBottom: 20 },
   input: { flex: 1, background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 10, padding: '12px 16px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none' },

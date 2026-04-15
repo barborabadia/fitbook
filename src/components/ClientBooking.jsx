@@ -56,7 +56,7 @@ function formatDateShort(dateStr) {
 const s = {
   wrap: { maxWidth: 640, margin: '0 auto', padding: '40px 24px' },
   hero: { marginBottom: 24 },
-  title: { fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', color: '#2C1A22', fontFamily: "'Cormorant Garamond', serif" },
+  title: { fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', color: '#2C1A22', fontFamily: "'Plus Jakarta Sans', sans-serif" },
   sub: { fontSize: 14, color: '#9B7E8A', marginTop: 4 },
   tabRow: { display: 'flex', gap: 8, marginBottom: 24 },
   tab: (active) => ({ padding: '8px 18px', borderRadius: 10, border: `1px solid ${active ? 'rgba(200,81,107,0.3)' : '#EBCFD8'}`, background: active ? 'rgba(200,81,107,0.08)' : '#FFFFFF', color: active ? '#C8516B' : '#9B7E8A', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }),
@@ -99,7 +99,7 @@ function CertifikatyModal({ onClose }) {
     <div onClick={preview ? null : onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,34,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: '28px 24px', maxWidth: preview ? 800 : 420, width: '100%', boxShadow: '0 8px 32px rgba(200,81,107,0.15)', transition: 'max-width 0.2s' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22', fontFamily: "'Cormorant Garamond', serif" }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             {preview ? (
               <span>
                 <span
@@ -195,7 +195,7 @@ export default function ClientBooking() {
 
       {tab === 'info' && (
         <div style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '24px 22px' }}>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#2C1A22', marginBottom: 12, fontFamily: "'Cormorant Garamond', serif" }}>O tréninku</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#2C1A22', marginBottom: 12, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>O tréninku</div>
           <p style={{ fontSize: 14, color: '#5C3D4A', lineHeight: 1.65, margin: '0 0 16px' }}>
             Osobní tréninky ve Fitness Phoenix Stod s{' '}
             <span
