@@ -284,8 +284,9 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const ratio = booked / sl.capacity
                 const full = ratio >= 1
                 const allPaid = booked > 0 && (paidCounts[sl.id] || 0) >= booked
-                const cardBg = sl.is_cancelled ? '#f5f5f5' : allPaid ? '#27AE60' : (sl.color || '#C8516B')
-                const cardBorder = sl.is_cancelled ? '#EBCFD8' : allPaid ? '#27AE60' : (sl.color || '#C8516B')
+                const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E8779E')
+                const cardBg = sl.is_cancelled ? '#f5f5f5' : allPaid ? '#27AE60' : slotColor
+                const cardBorder = sl.is_cancelled ? '#EBCFD8' : allPaid ? '#27AE60' : slotColor
                 return (
                   <div key={sl.id} style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 12, padding: '12px 14px', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: sl.is_cancelled ? 0.4 : 1 }}>
                     <div style={{ flex: 1 }} onClick={() => !sl.is_cancelled && onSelectSlot({ ...sl, booked })}>
@@ -411,8 +412,9 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const ratio = booked / sl.capacity
                 const full = ratio >= 1
                 const allPaid = booked > 0 && (paidCounts[sl.id] || 0) >= booked
-                const cardBg = sl.is_cancelled ? 'transparent' : allPaid ? '#27AE60' : (sl.color || '#C8516B')
-                const cardBorder = sl.is_cancelled ? '#EBCFD8' : allPaid ? '#27AE60' : (sl.color || '#C8516B')
+                const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E8779E')
+                const cardBg = sl.is_cancelled ? 'transparent' : allPaid ? '#27AE60' : slotColor
+                const cardBorder = sl.is_cancelled ? '#EBCFD8' : allPaid ? '#27AE60' : slotColor
                 return (
                   <div key={sl.id} style={{ ...s.card(sl.color, full, sl.is_cancelled), background: cardBg, border: `1px solid ${cardBorder}` }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

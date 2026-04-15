@@ -67,8 +67,8 @@ const s = {
   dateHeader: { fontSize: 12, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 },
   card: (color, disabled) => ({
     display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', borderRadius: 12,
-    border: `1px solid ${disabled ? '#EBCFD8' : (color || '#C8516B')}`,
-    background: disabled ? '#FAFAFA' : (color || '#C8516B'),
+    border: `1px solid ${disabled ? '#EBCFD8' : color}`,
+    background: disabled ? '#FAFAFA' : color,
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.5 : 1, marginBottom: 8,
     boxShadow: disabled ? 'none' : '0 2px 8px rgba(200,81,107,0.06)',
@@ -243,9 +243,10 @@ export default function ClientBooking() {
                 const tooLate = isPersonal ? hours < 24 : hours < 0
                 const disabled = full || tooLate
 
+                const cardColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E8779E')
                 return (
-                  <div key={sl.id} style={s.card(sl.color, disabled)} onClick={() => !disabled && setSelected({ ...sl, booked })}>
-                    <div style={s.icon(sl.color, disabled)}>{getIcon(sl.name)}</div>
+                  <div key={sl.id} style={s.card(cardColor, disabled)} onClick={() => !disabled && setSelected({ ...sl, booked })}>
+                    <div style={s.icon(cardColor, disabled)}>{getIcon(sl.name)}</div>
                     <div style={{ flex: 1 }}>
                       <div style={{ ...s.cardName, color: disabled ? '#2C1A22' : '#fff' }}>{sl.name}</div>
                       <div style={{ ...s.cardMeta, color: disabled ? '#9B7E8A' : 'rgba(255,255,255,0.8)' }}>
