@@ -31,7 +31,7 @@ export default function Clients() {
   const [selectedClient, setSelectedClient] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
-  const [newClient, setNewClient] = useState({ name: '', email: '', phone: '' })
+  const [newClient, setNewClient] = useState({ name: '', email: '', phone: '', birthDate: '' })
   const [addLoading, setAddLoading] = useState(false)
   const [addError, setAddError] = useState('')
   const isMobile = window.innerWidth < 768
@@ -66,14 +66,18 @@ export default function Clients() {
   async function addClient() {
     if (!newClient.name.trim() || !newClient.email.trim()) return
     setAddLoading(true); setAddError('')
+    const email = newClient.email.trim().toLowerCase()
     const { error } = await supabase.from('manual_clients').insert({
       name: newClient.name.trim(),
-      email: newClient.email.trim().toLowerCase(),
+      email,
       phone: newClient.phone.trim() || null,
     })
     if (error) { setAddError('Chyba – email možná již existuje.'); setAddLoading(false); return }
+    if (newClient.birthDate) {
+      await supabase.from('client_profiles').upsert({ email, birth_date: newClient.birthDate }, { onConflict: 'email' })
+    }
     setShowAddModal(false)
-    setNewClient({ name: '', email: '', phone: '' })
+    setNewClient({ name: '', email: '', phone: '', birthDate: '' })
     setAddLoading(false)
     loadClients()
   }
@@ -171,6 +175,8 @@ export default function Clients() {
             <input style={inputStyle} type="email" placeholder="jana@email.cz" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
             <label style={labelStyle}>Telefon (volitelné)</label>
             <input style={inputStyle} placeholder="+420 777 888 999" value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} />
+            <label style={labelStyle}>Datum narození (volitelné)</label>
+            <input style={inputStyle} type="date" value={newClient.birthDate} onChange={e => setNewClient({ ...newClient, birthDate: e.target.value })} />
             {addError && <div style={{ fontSize: 13, color: '#C8516B', fontWeight: 600, marginBottom: 8 }}>⚠️ {addError}</div>}
             <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
               <button onClick={() => setShowAddModal(false)} style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1px solid #EBCFD8', background: '#fff', color: '#9B7E8A', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušit</button>

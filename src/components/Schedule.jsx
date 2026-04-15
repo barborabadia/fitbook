@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { getSvatek } from '../lib/svateky'
 
 const DAYS = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne']
 
@@ -77,6 +78,67 @@ const s = {
 }
 
 const DAYS_FULL = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle']
+
+function BirthdayWidget({ isMobile }) {
+  const [birthdays, setBirthdays] = useState([])
+  const today = new Date()
+  const todaySvatek = getSvatek(today)
+  const currentMonth = today.getMonth() + 1
+
+  useEffect(() => {
+    async function load() {
+      const [{ data: bk }, { data: mc }, { data: cp }] = await Promise.all([
+        supabase.from('bookings').select('client_name, client_email').eq('status', 'confirmed'),
+        supabase.from('manual_clients').select('name, email'),
+        supabase.from('client_profiles').select('email, birth_date').not('birth_date', 'is', null),
+      ])
+      const nameMap = {}
+      bk?.forEach(b => { if (!nameMap[b.client_email]) nameMap[b.client_email] = b.client_name })
+      mc?.forEach(c => { if (!nameMap[c.email]) nameMap[c.email] = c.name })
+      const thisMonth = (cp || []).filter(p => {
+        if (!p.birth_date) return false
+        const m = parseInt(p.birth_date.slice(5, 7))
+        return m === currentMonth
+      }).map(p => ({
+        name: nameMap[p.email] || p.email,
+        day: parseInt(p.birth_date.slice(8, 10)),
+        isToday: p.birth_date.slice(5) === `${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`,
+      })).sort((a, b) => a.day - b.day)
+      setBirthdays(thisMonth)
+    }
+    load()
+  }, [])
+
+  if (!todaySvatek && birthdays.length === 0) return null
+
+  const boxStyle = isMobile
+    ? { background: '#fff', border: '1px solid #EBCFD8', borderRadius: 12, padding: '12px 14px', marginBottom: 16, fontSize: 13 }
+    : { background: '#fff', border: '1px solid #EBCFD8', borderRadius: 12, padding: '14px 16px', minWidth: 200, maxWidth: 260, fontSize: 13, boxShadow: '0 2px 12px rgba(200,81,107,0.05)' }
+
+  return (
+    <div style={boxStyle}>
+      {todaySvatek && (
+        <div style={{ marginBottom: birthdays.length > 0 ? 10 : 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.7px', marginBottom: 4 }}>Svátek dnes</div>
+          <div style={{ fontWeight: 600, color: '#2C1A22' }}>🎉 {todaySvatek}</div>
+        </div>
+      )}
+      {birthdays.length > 0 && (
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.7px', marginBottom: 6 }}>Narozeniny tento měsíc</div>
+          {birthdays.map((b, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 0', borderBottom: i < birthdays.length - 1 ? '1px solid #FAF0F3' : 'none' }}>
+              <span style={{ fontWeight: b.isToday ? 700 : 400, color: b.isToday ? '#C8516B' : '#2C1A22' }}>
+                {b.isToday ? '🎂 ' : ''}{b.name}
+              </span>
+              <span style={{ fontSize: 12, color: b.isToday ? '#C8516B' : '#9B7E8A', fontWeight: b.isToday ? 700 : 400, marginLeft: 8 }}>{b.day}.</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
   const [monday, setMonday] = useState(getMonday())
@@ -180,6 +242,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
           <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: '#2C1A22', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Týdenní rozvrh</div>
           <div style={{ fontSize: 13, color: '#9B7E8A', marginTop: 2 }}>{formatWeekLabel(monday)}</div>
         </div>
+        <BirthdayWidget isMobile />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 16 }}>
           {[
@@ -306,17 +369,20 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
 
   return (
     <div>
-      <div style={s.header}>
+      <div style={{ ...s.header, alignItems: 'flex-start' }}>
         <div>
           <div style={s.title}>Týdenní rozvrh</div>
           <div style={s.subtitle}>{formatWeekLabel(monday)}</div>
         </div>
-        <div style={s.btnRow}>
-          <button style={s.btn()} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}>← Předchozí</button>
-          <button style={s.btn()} onClick={() => setMonday(getMonday())}>Tento týden</button>
-          <button style={s.btn()} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}>Následující →</button>
-          <button style={s.btn('primary')} onClick={() => setShowGenerateModal(true)}>⚡ Generovat týden</button>
-          <button style={s.btn('primary')} onClick={() => setShowAddModal(true)}>+ Přidat termín</button>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <BirthdayWidget />
+          <div style={s.btnRow}>
+            <button style={s.btn()} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}>← Předchozí</button>
+            <button style={s.btn()} onClick={() => setMonday(getMonday())}>Tento týden</button>
+            <button style={s.btn()} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}>Následující →</button>
+            <button style={s.btn('primary')} onClick={() => setShowGenerateModal(true)}>⚡ Generovat týden</button>
+            <button style={s.btn('primary')} onClick={() => setShowAddModal(true)}>+ Přidat termín</button>
+          </div>
         </div>
       </div>
 

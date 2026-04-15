@@ -48,8 +48,21 @@ export default function ClientDetailModal({ client, onClose }) {
   const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('')
   const [savingNote, setSavingNote] = useState(false)
+  const [birthDate, setBirthDate] = useState('')
+  const [birthSaved, setBirthSaved] = useState(false)
 
-  useEffect(() => { loadBookings(); loadNotes() }, [client.email])
+  useEffect(() => { loadBookings(); loadNotes(); loadProfile() }, [client.email])
+
+  async function loadProfile() {
+    const { data } = await supabase.from('client_profiles').select('birth_date').eq('email', client.email).single()
+    if (data?.birth_date) setBirthDate(data.birth_date)
+  }
+
+  async function saveBirthDate() {
+    await supabase.from('client_profiles').upsert({ email: client.email, birth_date: birthDate || null }, { onConflict: 'email' })
+    setBirthSaved(true)
+    setTimeout(() => setBirthSaved(false), 2000)
+  }
 
   async function loadNotes() {
     const { data } = await supabase.from('client_notes').select('*').eq('client_email', client.email).order('created_at', { ascending: false })
@@ -106,6 +119,18 @@ export default function ClientDetailModal({ client, onClose }) {
               <div style={s.name}>{client.name}</div>
               <div style={s.meta}>📧 {client.email}</div>
               {client.phone && <div style={s.meta}>📱 {client.phone}</div>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                <span style={{ fontSize: 13, color: '#9B7E8A' }}>🎂</span>
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={e => setBirthDate(e.target.value)}
+                  style={{ background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 8, padding: '5px 10px', fontSize: 13, color: '#2C1A22', fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}
+                />
+                <button onClick={saveBirthDate} style={{ padding: '5px 12px', borderRadius: 8, border: 'none', background: birthSaved ? '#27AE60' : '#C8516B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.2s' }}>
+                  {birthSaved ? '✓' : 'Uložit'}
+                </button>
+              </div>
             </div>
           </div>
           <button style={s.closeBtn} onClick={onClose}>✕</button>
