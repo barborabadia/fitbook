@@ -30,6 +30,7 @@ const TYPE_COLORS = {
   'Funkční trénink pro ženy Stod': '#E74C3C',
   'Cvičení Březín': '#E74C3C',
   'XXL cvičení Holýšov': '#E74C3C',
+  'XXL cvičení - Holýšov': '#E74C3C',
 }
 
 function zbuchProfit(count) {
@@ -165,14 +166,17 @@ export default function Statistics() {
   const brezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
   const brezinTotalProfit = brezinSlotIds.size * 500
 
-  const isCash = b => b.training_slots?.name?.includes('Zbůch') || b.training_slots?.name?.includes('Březín')
+  const isCash = b => b.training_slots?.name?.includes('Zbůch') || b.training_slots?.name?.includes('Březín') || b.training_slots?.name?.includes('Holýšov')
   const nonCashRevenue = periodConfirmed.filter(b => !isCash(b)).reduce((a, b) => a + (b.price || 0), 0)
+
+  // Holýšov per-person profit (150 Kč příjem - 70 Kč náklady = 80 Kč čistý zisk/os.)
+  const holysovProfit = periodConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).length * 80
 
   // Historical sessions for period
   const periodHistorical = historicalSessions.filter(h => !start || h.session_date >= start)
   const historicalRevenue = periodHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
 
-  const netRevenue = nonCashRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + historicalRevenue
+  const netRevenue = nonCashRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + holysovProfit + historicalRevenue
 
   // Previous period net
   const prevStodSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
@@ -184,9 +188,10 @@ export default function Statistics() {
   const prevBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
   const prevBrezinProfit = prevBrezinSlotIds.size * 500
   const prevNonCashRevenue = prevConfirmed.filter(b => !isCash(b)).reduce((a, b) => a + (b.price || 0), 0)
+  const prevHolysovProfit = prevConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).length * 80
   const prevHistorical = historicalSessions.filter(h => prevStart && h.session_date >= prevStart && h.session_date <= prevEnd)
   const prevHistoricalRevenue = prevHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
-  const prevNetRevenue = prevNonCashRevenue - prevStodSlotIds.size * 200 + prevZbuchProfit + prevBrezinProfit + prevHistoricalRevenue
+  const prevNetRevenue = prevNonCashRevenue - prevStodSlotIds.size * 200 + prevZbuchProfit + prevBrezinProfit + prevHolysovProfit + prevHistoricalRevenue
 
   const uniqueClients = new Set(periodConfirmed.map(b => b.client_email)).size
   const prevUniqueClients = new Set(prevConfirmed.map(b => b.client_email)).size
@@ -262,7 +267,8 @@ export default function Statistics() {
     if (monthlyData[key]) {
       monthlyData[key].count++
       const name = b.training_slots?.name
-      if (!name?.includes('Zbůch') && !name?.includes('Březín')) monthlyData[key].revenue += b.price || 0
+      if (!name?.includes('Zbůch') && !name?.includes('Březín') && !name?.includes('Holýšov')) monthlyData[key].revenue += b.price || 0
+      if (name?.includes('Holýšov')) monthlyData[key].revenue += 80
     }
   })
   Object.entries(stodSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 200 })
@@ -349,7 +355,7 @@ export default function Statistics() {
             {netRevenue.toLocaleString('cs-CZ')} Kč
             <Trend current={netRevenue} previous={prevNetRevenue} />
           </div>
-          <div style={s.statSub}>náklady sál (Stod): {salonCosts} Kč{zbuchTotalProfit > 0 ? ` · Zbůch: +${zbuchTotalProfit} Kč` : ''}{brezinTotalProfit > 0 ? ` · Březín: +${brezinTotalProfit} Kč` : ''}</div>
+          <div style={s.statSub}>náklady sál (Stod): {salonCosts} Kč{zbuchTotalProfit > 0 ? ` · Zbůch: +${zbuchTotalProfit} Kč` : ''}{brezinTotalProfit > 0 ? ` · Březín: +${brezinTotalProfit} Kč` : ''}{holysovProfit > 0 ? ` · Holýšov: +${holysovProfit} Kč` : ''}</div>
         </div>
         <div style={s.stat}>
           <div style={s.statLabel}>Obsazenost týden</div>

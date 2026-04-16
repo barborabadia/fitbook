@@ -7,6 +7,7 @@ function getPrice(slot, bookingType) {
   if (slot.name === 'Osobní trénink') return bookingType === 'duo' ? 300 : 200
   if (slot.name.includes('Zbůch')) return 130
   if (slot.name.includes('Březín')) return 130
+  if (slot.name.includes('Holýšov')) return 150
   if (slot.name.includes('Stod')) return 120
   return slot.price || 0
 }
@@ -51,7 +52,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const isPersonal = slot.name === 'Osobní trénink'
-  const isZbuch = slot.name.includes('Zbůch') || slot.name.includes('Březín')
+  const isZbuch = slot.name.includes('Zbůch') || slot.name.includes('Březín') || slot.name.includes('Holýšov')
   const price = getPrice(slot, bookingType)
 
   useEffect(() => {
