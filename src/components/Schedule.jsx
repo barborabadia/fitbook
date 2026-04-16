@@ -119,7 +119,7 @@ function BirthdayWidget({ isMobile }) {
     <div style={boxStyle}>
       {todaySvatek && (
         <div style={{ marginBottom: birthdays.length > 0 ? 10 : 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.7px', marginBottom: 4 }}>Svátek dnes</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.7px', marginBottom: 4 }}>Svátek má</div>
           <div style={{ fontWeight: 600, color: '#2C1A22' }}>🎉 {todaySvatek}</div>
         </div>
       )}

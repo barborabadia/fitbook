@@ -224,7 +224,10 @@ export default function ClientBooking() {
 
           <div style={s.weekNav}>
             <button style={s.navBtn} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}>←</button>
-            <div style={s.weekLabel}>{formatDateShort(weekDates[0])} – {formatDateShort(weekDates[6])}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1 }}>
+              <div style={s.weekLabel}>{formatDateShort(weekDates[0])} – {formatDateShort(weekDates[6])}</div>
+              <button style={{ background: 'none', border: 'none', fontSize: 11, color: '#C8516B', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, padding: 0 }} onClick={() => setMonday(getMonday())}>Tento týden</button>
+            </div>
             <button style={s.navBtn} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}>→</button>
           </div>
 
@@ -243,7 +246,7 @@ export default function ClientBooking() {
                 const tooLate = isPersonal ? hours < 24 : hours < 0
                 const disabled = full || tooLate
 
-                const cardColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E8779E')
+                const cardColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E74C3C')
                 return (
                   <div key={sl.id} style={s.card(cardColor, disabled)} onClick={() => !disabled && setSelected({ ...sl, booked })}>
                     <div style={s.icon(cardColor, disabled)}>{getIcon(sl.name)}</div>
