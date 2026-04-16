@@ -17,11 +17,12 @@ const MONTHS = ['Led','Úno','Bře','Dub','Kvě','Čer','Čvc','Srp','Zář','Ř
 const DAYS_SHORT = ['Po','Út','St','Čt','Pá','So','Ne']
 const TYPE_COLORS = {
   'Osobní trénink': '#C8516B',
-  'XXL cvičení - Stod': '#E8779E',
-  'Funkční trénink - Stod': '#E8779E',
-  'XXL cvičení - Zbůch': '#E8779E',
-  'Posilování na hudbu - Zbůch': '#E8779E',
-  'FIT Orient - Zbůch': '#E8779E',
+  'XXL cvičení - Stod': '#E74C3C',
+  'Funkční trénink - Stod': '#E74C3C',
+  'XXL cvičení - Zbůch': '#E74C3C',
+  'Posilování na hudbu - Zbůch': '#E74C3C',
+  'FIT Orient - Zbůch': '#E74C3C',
+  'Cvičení - Březín': '#E74C3C',
 }
 
 function zbuchProfit(count) {
@@ -150,8 +151,13 @@ export default function Statistics() {
   })
   const zbuchTotalProfit = Object.values(zbuchBySlot).reduce((a, n) => a + zbuchProfit(n), 0)
 
-  const nonZbuchRevenue = periodConfirmed.filter(b => !b.training_slots?.name?.includes('Zbůch')).reduce((a, b) => a + (b.price || 0), 0)
-  const netRevenue = nonZbuchRevenue - salonCosts + zbuchTotalProfit
+  // Březín flat profit (500 Kč per slot with at least 1 booking)
+  const brezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
+  const brezinTotalProfit = brezinSlotIds.size * 500
+
+  const isCash = b => b.training_slots?.name?.includes('Zbůch') || b.training_slots?.name?.includes('Březín')
+  const nonCashRevenue = periodConfirmed.filter(b => !isCash(b)).reduce((a, b) => a + (b.price || 0), 0)
+  const netRevenue = nonCashRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit
 
   // Previous period net
   const prevStodSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
@@ -160,8 +166,10 @@ export default function Statistics() {
     prevZbuchBySlot[b.slot_id] = (prevZbuchBySlot[b.slot_id] || 0) + 1
   })
   const prevZbuchProfit = Object.values(prevZbuchBySlot).reduce((a, n) => a + zbuchProfit(n), 0)
-  const prevNonZbuchRevenue = prevConfirmed.filter(b => !b.training_slots?.name?.includes('Zbůch')).reduce((a, b) => a + (b.price || 0), 0)
-  const prevNetRevenue = prevNonZbuchRevenue - prevStodSlotIds.size * 200 + prevZbuchProfit
+  const prevBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
+  const prevBrezinProfit = prevBrezinSlotIds.size * 500
+  const prevNonCashRevenue = prevConfirmed.filter(b => !isCash(b)).reduce((a, b) => a + (b.price || 0), 0)
+  const prevNetRevenue = prevNonCashRevenue - prevStodSlotIds.size * 200 + prevZbuchProfit + prevBrezinProfit
 
   const uniqueClients = new Set(periodConfirmed.map(b => b.client_email)).size
   const prevUniqueClients = new Set(prevConfirmed.map(b => b.client_email)).size
@@ -222,12 +230,21 @@ export default function Statistics() {
     zbuchSlotsByMonth[key].push(s)
   })
 
+  // Monthly Březín slot groups
+  const brezinSlotsByMonth = {}
+  slots.filter(s => s.name?.includes('Březín')).forEach(s => {
+    const key = s.slot_date.slice(0, 7)
+    if (!brezinSlotsByMonth[key]) brezinSlotsByMonth[key] = []
+    brezinSlotsByMonth[key].push(s)
+  })
+
   confirmed.forEach(b => {
     const date = b.training_slots?.slot_date; if (!date) return
     const key = date.slice(0, 7)
     if (monthlyData[key]) {
       monthlyData[key].count++
-      if (!b.training_slots?.name?.includes('Zbůch')) monthlyData[key].revenue += b.price || 0
+      const name = b.training_slots?.name
+      if (!name?.includes('Zbůch') && !name?.includes('Březín')) monthlyData[key].revenue += b.price || 0
     }
   })
   Object.entries(stodSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 200 })
@@ -235,6 +252,12 @@ export default function Statistics() {
     if (monthlyData[key]) zbuchSlots.forEach(s => {
       const count = slotAttendance[s.id] || 0
       if (count > 0) monthlyData[key].revenue += zbuchProfit(count)
+    })
+  })
+  Object.entries(brezinSlotsByMonth).forEach(([key, brezinSlots]) => {
+    if (monthlyData[key]) brezinSlots.forEach(s => {
+      const count = slotAttendance[s.id] || 0
+      if (count > 0) monthlyData[key].revenue += 500
     })
   })
   const months = Object.values(monthlyData)
@@ -300,7 +323,7 @@ export default function Statistics() {
             {netRevenue.toLocaleString('cs-CZ')} Kč
             <Trend current={netRevenue} previous={prevNetRevenue} />
           </div>
-          <div style={s.statSub}>náklady sál (Stod): {salonCosts} Kč{zbuchTotalProfit > 0 ? ` · Zbůch: +${zbuchTotalProfit} Kč` : ''}</div>
+          <div style={s.statSub}>náklady sál (Stod): {salonCosts} Kč{zbuchTotalProfit > 0 ? ` · Zbůch: +${zbuchTotalProfit} Kč` : ''}{brezinTotalProfit > 0 ? ` · Březín: +${brezinTotalProfit} Kč` : ''}</div>
         </div>
         <div style={s.stat}>
           <div style={s.statLabel}>Obsazenost týden</div>

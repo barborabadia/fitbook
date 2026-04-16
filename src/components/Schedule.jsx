@@ -213,7 +213,8 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
 
   function getSlotDefaults(name) {
     if (name === 'Osobní trénink') return { color: '#C8516B', capacity: 1, price: 200 }
-    if (name.includes('Zbůch') || name.includes('Stod')) return { color: '#E8779E', capacity: 10, price: name.includes('Zbůch') ? 130 : 120 }
+    if (name.includes('Zbůch') || name.includes('Stod')) return { color: '#E74C3C', capacity: 10, price: name.includes('Zbůch') ? 130 : 120 }
+    if (name.includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130 }
     return { color: '#C8516B', capacity: 1, price: 0 }
   }
 
@@ -284,7 +285,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const ratio = booked / sl.capacity
                 const full = ratio >= 1
                 const allPaid = booked > 0 && (paidCounts[sl.id] || 0) >= booked
-                const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E8779E')
+                const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E74C3C')
                 const cardBg = sl.is_cancelled ? '#f5f5f5' : allPaid ? '#27AE60' : slotColor
                 const cardBorder = sl.is_cancelled ? '#EBCFD8' : allPaid ? '#27AE60' : slotColor
                 return (
@@ -412,7 +413,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const ratio = booked / sl.capacity
                 const full = ratio >= 1
                 const allPaid = booked > 0 && (paidCounts[sl.id] || 0) >= booked
-                const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E8779E')
+                const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E74C3C')
                 const cardBg = sl.is_cancelled ? 'transparent' : allPaid ? '#27AE60' : slotColor
                 const cardBorder = sl.is_cancelled ? '#EBCFD8' : allPaid ? '#27AE60' : slotColor
                 return (
@@ -471,11 +472,24 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
             <label style={s.label}>Typ tréninku</label>
             <select style={s.select} value={newSlot.name} onChange={e => {
               const name = e.target.value
-              setNewSlot({ ...newSlot, name, color: name === 'XXL cvičení' ? '#D4945A' : name === 'Funkční trénink' ? '#9B72CF' : '#C8516B', capacity: name === 'XXL cvičení' ? 10 : name === 'Funkční trénink' ? 10 : 1})
+              const def = getSlotDefaults(name)
+              setNewSlot({ ...newSlot, name, color: def.color, capacity: def.capacity, price: def.price })
             }}>
-              <option>Osobní trénink</option>
-              <option>XXL cvičení</option>
-              <option>Funkční trénink</option>
+              <optgroup label="Osobní">
+                <option>Osobní trénink</option>
+              </optgroup>
+              <optgroup label="Stod">
+                <option>XXL cvičení - Stod</option>
+                <option>Funkční trénink - Stod</option>
+              </optgroup>
+              <optgroup label="Zbůch">
+                <option>XXL cvičení - Zbůch</option>
+                <option>Posilování na hudbu - Zbůch</option>
+                <option>FIT Orient - Zbůch</option>
+              </optgroup>
+              <optgroup label="Březín">
+                <option>Cvičení - Březín</option>
+              </optgroup>
             </select>
             <label style={s.label}>Datum</label>
             <input style={s.input} type="date" value={newSlot.date} onChange={e => setNewSlot({ ...newSlot, date: e.target.value })} />
