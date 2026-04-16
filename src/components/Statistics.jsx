@@ -355,7 +355,7 @@ export default function Statistics() {
             {netRevenue.toLocaleString('cs-CZ')} Kč
             <Trend current={netRevenue} previous={prevNetRevenue} />
           </div>
-          <div style={s.statSub}>náklady sál (Stod): {salonCosts} Kč{zbuchTotalProfit > 0 ? ` · Zbůch: +${zbuchTotalProfit} Kč` : ''}{brezinTotalProfit > 0 ? ` · Březín: +${brezinTotalProfit} Kč` : ''}{holysovProfit > 0 ? ` · Holýšov: +${holysovProfit} Kč` : ''}</div>
+          <div style={s.statSub}>{zbuchTotalProfit > 0 ? `Zbůch: +${zbuchTotalProfit} Kč` : ''}{brezinTotalProfit > 0 ? `${zbuchTotalProfit > 0 ? ' · ' : ''}Březín: +${brezinTotalProfit} Kč` : ''}{holysovProfit > 0 ? `${zbuchTotalProfit > 0 || brezinTotalProfit > 0 ? ' · ' : ''}Holýšov: +${holysovProfit} Kč` : ''}</div>
         </div>
         <div style={s.stat}>
           <div style={s.statLabel}>Obsazenost týden</div>
