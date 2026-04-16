@@ -23,6 +23,13 @@ const TYPE_COLORS = {
   'Posilování na hudbu - Zbůch': '#E74C3C',
   'FIT Orient - Zbůch': '#E74C3C',
   'Cvičení - Březín': '#E74C3C',
+  // historické názvy z Tabidoo
+  'XXL cvičení Stod': '#E74C3C',
+  'XXL cvičení Zbůch': '#E74C3C',
+  'FIT Orient Zbůch': '#E74C3C',
+  'Funkční trénink pro ženy Stod': '#E74C3C',
+  'Cvičení Březín': '#E74C3C',
+  'XXL cvičení Holýšov': '#E74C3C',
 }
 
 function zbuchProfit(count) {
@@ -102,6 +109,7 @@ function getPeriodRange(period) {
 export default function Statistics() {
   const [bookings, setBookings] = useState([])
   const [slots, setSlots] = useState([])
+  const [historicalSessions, setHistoricalSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('month')
   const [showUnpaidTooltip, setShowUnpaidTooltip] = useState(false)
@@ -113,8 +121,10 @@ export default function Statistics() {
     setLoading(true)
     const { data: bk } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time)').order('created_at', { ascending: false })
     const { data: sl } = await supabase.from('training_slots').select('*').order('slot_date')
+    const { data: hs } = await supabase.from('historical_sessions').select('*').order('session_date')
     if (bk) setBookings(bk)
     if (sl) setSlots(sl)
+    if (hs) setHistoricalSessions(hs)
     setLoading(false)
   }
 
@@ -157,7 +167,12 @@ export default function Statistics() {
 
   const isCash = b => b.training_slots?.name?.includes('Zbůch') || b.training_slots?.name?.includes('Březín')
   const nonCashRevenue = periodConfirmed.filter(b => !isCash(b)).reduce((a, b) => a + (b.price || 0), 0)
-  const netRevenue = nonCashRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit
+
+  // Historical sessions for period
+  const periodHistorical = historicalSessions.filter(h => !start || h.session_date >= start)
+  const historicalRevenue = periodHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
+
+  const netRevenue = nonCashRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + historicalRevenue
 
   // Previous period net
   const prevStodSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
@@ -169,7 +184,9 @@ export default function Statistics() {
   const prevBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
   const prevBrezinProfit = prevBrezinSlotIds.size * 500
   const prevNonCashRevenue = prevConfirmed.filter(b => !isCash(b)).reduce((a, b) => a + (b.price || 0), 0)
-  const prevNetRevenue = prevNonCashRevenue - prevStodSlotIds.size * 200 + prevZbuchProfit + prevBrezinProfit
+  const prevHistorical = historicalSessions.filter(h => prevStart && h.session_date >= prevStart && h.session_date <= prevEnd)
+  const prevHistoricalRevenue = prevHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
+  const prevNetRevenue = prevNonCashRevenue - prevStodSlotIds.size * 200 + prevZbuchProfit + prevBrezinProfit + prevHistoricalRevenue
 
   const uniqueClients = new Set(periodConfirmed.map(b => b.client_email)).size
   const prevUniqueClients = new Set(prevConfirmed.map(b => b.client_email)).size
@@ -184,9 +201,10 @@ export default function Statistics() {
   const totalClients = Object.keys(allClientMap).length
   const retentionRate = totalClients > 0 ? Math.round(returningClients / totalClients * 100) : 0
 
-  // Oblíbenost tréninků
+  // Oblíbenost tréninků (live + historická data)
   const byType = {}
   periodConfirmed.forEach(b => { const name = b.training_slots?.name || 'Neznámý'; byType[name] = (byType[name] || 0) + 1 })
+  periodHistorical.forEach(h => { byType[h.session_name] = (byType[h.session_name] || 0) + h.attendance })
   const maxByType = Math.max(...Object.values(byType), 1)
 
   // Nejoblíbenější den v týdnu
@@ -259,6 +277,14 @@ export default function Statistics() {
       const count = slotAttendance[s.id] || 0
       if (count > 0) monthlyData[key].revenue += 500
     })
+  })
+  // Historická data do měsíčního grafu
+  historicalSessions.forEach(h => {
+    const key = h.session_date.slice(0, 7)
+    if (monthlyData[key]) {
+      monthlyData[key].count += h.attendance
+      monthlyData[key].revenue += h.revenue || 0
+    }
   })
   const months = Object.values(monthlyData)
   const maxCount = Math.max(...months.map(m => m.count), 1)
