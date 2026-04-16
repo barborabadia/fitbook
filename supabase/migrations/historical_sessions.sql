@@ -85,6 +85,8 @@ INSERT INTO historical_sessions (session_date, session_name, attendance, revenue
 ('2025-11-26', 'Funkční trénink pro ženy Stod',  3,  160),
 ('2025-11-26', 'XXL cvičení Stod',               5,  400),
 ('2025-11-23', 'XXL cvičení Zbůch',              7,  200),
+('2025-11-21', 'XXL cvičení Holýšov',            4,  320),
+('2025-11-19', 'Funkční trénink pro ženy Stod',  5,  400),
 ('2025-11-17', 'FIT Orient Zbůch',               6,  200),
 ('2025-11-16', 'XXL cvičení Zbůch',              8,  250),
 ('2025-11-14', 'XXL cvičení Holýšov',            5,  400),
