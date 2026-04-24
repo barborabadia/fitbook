@@ -85,6 +85,44 @@ const s = {
   empty: { textAlign: 'center', color: '#BFA0AD', padding: '40px 0', fontSize: 14 },
 }
 
+function SlotCard({ sl, booked, onSelect }) {
+  const [hov, setHov] = useState(false)
+  const free = sl.capacity - booked
+  const full = free <= 0
+  const isPersonal = sl.name === 'Osobní trénink'
+  const hours = hoursUntilSlot(sl.slot_date, sl.start_time)
+  const tooLate = isPersonal ? hours < 24 : hours < 0
+  const disabled = full || tooLate
+  const cardColor = isPersonal ? '#C8516B' : (sl.color || '#E74C3C')
+
+  return (
+    <div
+      style={s.card(cardColor, disabled)}
+      onClick={() => !disabled && onSelect({ ...sl, booked })}
+      onMouseEnter={() => !disabled && setHov(true)}
+      onMouseLeave={() => setHov(false)}
+    >
+      <div style={s.icon(cardColor, disabled)}>{getIcon(sl.name)}</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ ...s.cardName, color: '#2C1A22' }}>{sl.name}</div>
+        <div style={{ ...s.cardMeta, color: '#9B7E8A' }}>
+          {sl.start_time} • {sl.duration_minutes} min
+          {!isPersonal && free > 0 && !full && <span style={{ marginLeft: 8, color: '#BFA0AD' }}>{free} volných míst</span>}
+        </div>
+      </div>
+      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        {full && <span style={{ fontSize: 12, color: '#C8516B', fontWeight: 600 }}>Plno</span>}
+        {!full && tooLate && <span style={s.disabledChip}>Uzavřeno</span>}
+        {!full && !tooLate && (
+          <span style={{ padding: '3px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: hov ? cardColor : 'transparent', color: hov ? '#fff' : cardColor, border: `1px solid ${cardColor}60`, transition: 'all 0.15s', display: 'inline-block' }}>
+            Rezervovat
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 const CERTIFIKATY = [
   'Fitness instruktor.pdf',
   'Instruktor zdravotní tělesné výchovy.pdf',
@@ -242,37 +280,7 @@ export default function ClientBooking() {
               <div style={s.dateHeader}>{getDayName(date)} – {formatDate(date)}</div>
               {daySlots.map(sl => {
                 const booked = bookingCounts[sl.id] || 0
-                const free = sl.capacity - booked
-                const full = free <= 0
-                const isPersonal = sl.name === 'Osobní trénink'
-                const hours = hoursUntilSlot(sl.slot_date, sl.start_time)
-                const tooLate = isPersonal ? hours < 24 : hours < 0
-                const disabled = full || tooLate
-
-                const cardColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E74C3C')
-                return (
-                  <div key={sl.id} style={s.card(cardColor, disabled)} onClick={() => !disabled && setSelected({ ...sl, booked })}>
-                    <div style={s.icon(cardColor, disabled)}>{getIcon(sl.name)}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ ...s.cardName, color: '#2C1A22' }}>{sl.name}</div>
-                      <div style={{ ...s.cardMeta, color: '#9B7E8A' }}>
-                        {sl.start_time} • {sl.duration_minutes} min
-                        {!isPersonal && free > 0 && !full && <span style={{ marginLeft: 8, color: '#BFA0AD' }}>{free} volných míst</span>}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      {full && <span style={{ fontSize: 12, color: '#C8516B', fontWeight: 600 }}>Plno</span>}
-                      {!full && tooLate && <span style={s.disabledChip}>Uzavřeno</span>}
-                      {!full && !tooLate && (
-                        <span
-                          style={{ padding: '3px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: 'transparent', color: cardColor, border: `1px solid ${cardColor}60`, transition: 'all 0.15s', display: 'inline-block' }}
-                          onMouseEnter={e => { e.currentTarget.style.background = cardColor; e.currentTarget.style.color = '#fff' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = cardColor }}
-                        >Rezervovat</span>
-                      )}
-                    </div>
-                  </div>
-                )
+                return <SlotCard key={sl.id} sl={sl} booked={booked} onSelect={setSelected} />
               })}
             </div>
           ))}
