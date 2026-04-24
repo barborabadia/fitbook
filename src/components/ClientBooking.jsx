@@ -48,9 +48,12 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long' })
 }
 
-function formatDateShort(dateStr) {
-  const [y, m, d] = dateStr.split('-')
-  return `${d}/${m}/${y.slice(2)}`
+function formatWeekRange(startStr, endStr) {
+  const start = new Date(startStr + 'T12:00:00')
+  const end = new Date(endStr + 'T12:00:00')
+  const startFmt = start.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long' })
+  const endFmt = end.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' })
+  return `${startFmt} – ${endFmt}`
 }
 
 const s = {
@@ -68,13 +71,13 @@ const s = {
   card: (color, disabled) => ({
     display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', borderRadius: 12,
     border: `1px solid ${disabled ? '#EBCFD8' : color}`,
-    background: disabled ? '#FAFAFA' : color,
+    background: disabled ? '#FAFAFA' : '#FFFFFF',
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.5 : 1, marginBottom: 8,
     boxShadow: disabled ? 'none' : '0 2px 8px rgba(200,81,107,0.06)',
     transition: 'all 0.15s',
   }),
-  icon: (color, disabled) => ({ width: 40, height: 40, borderRadius: 10, background: disabled ? `${color}18` : 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }),
+  icon: (color, disabled) => ({ width: 40, height: 40, borderRadius: 10, background: disabled ? `${color}18` : `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }),
   cardName: { fontWeight: 700, fontSize: 14 },
   cardMeta: { fontSize: 12, marginTop: 2 },
   chip: (color) => ({ padding: '3px 12px', background: color, borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#fff' }),
@@ -225,7 +228,7 @@ export default function ClientBooking() {
           <div style={s.weekNav}>
             <button style={s.navBtn} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}>←</button>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1 }}>
-              <div style={s.weekLabel}>{formatDateShort(weekDates[0])} – {formatDateShort(weekDates[6])}</div>
+              <div style={s.weekLabel}>{formatWeekRange(weekDates[0], weekDates[6])}</div>
               <button style={{ background: 'none', border: 'none', fontSize: 11, color: '#C8516B', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, padding: 0 }} onClick={() => setMonday(getMonday())}>Tento týden</button>
             </div>
             <button style={s.navBtn} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}>→</button>
@@ -251,16 +254,22 @@ export default function ClientBooking() {
                   <div key={sl.id} style={s.card(cardColor, disabled)} onClick={() => !disabled && setSelected({ ...sl, booked })}>
                     <div style={s.icon(cardColor, disabled)}>{getIcon(sl.name)}</div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ ...s.cardName, color: disabled ? '#2C1A22' : '#fff' }}>{sl.name}</div>
-                      <div style={{ ...s.cardMeta, color: disabled ? '#9B7E8A' : 'rgba(255,255,255,0.8)' }}>
+                      <div style={{ ...s.cardName, color: '#2C1A22' }}>{sl.name}</div>
+                      <div style={{ ...s.cardMeta, color: '#9B7E8A' }}>
                         {sl.start_time} • {sl.duration_minutes} min
-                        {!isPersonal && free > 0 && !full && <span style={{ marginLeft: 8, color: disabled ? '#BFA0AD' : 'rgba(255,255,255,0.6)' }}>{free} volných míst</span>}
+                        {!isPersonal && free > 0 && !full && <span style={{ marginLeft: 8, color: '#BFA0AD' }}>{free} volných míst</span>}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       {full && <span style={{ fontSize: 12, color: '#C8516B', fontWeight: 600 }}>Plno</span>}
                       {!full && tooLate && <span style={s.disabledChip}>Uzavřeno</span>}
-                      {!full && !tooLate && <div style={{ ...s.chip(sl.color), background: '#fff', color: '#C8516B' }}>Rezervovat</div>}
+                      {!full && !tooLate && (
+                        <span
+                          style={{ padding: '3px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: 'transparent', color: cardColor, border: `1px solid ${cardColor}60`, transition: 'all 0.15s', display: 'inline-block' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = cardColor; e.currentTarget.style.color = '#fff' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = cardColor }}
+                        >Rezervovat</span>
+                      )}
                     </div>
                   </div>
                 )
