@@ -28,8 +28,8 @@ const s = {
   tag: (color) => ({ fontSize: 11, color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }),
   name: { fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#2C1A22' },
   typeRow: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, margin: '20px 0' },
-  typeCard: (selected, color) => ({ padding: '14px', borderRadius: 12, border: `1px solid ${selected ? color : '#EBCFD8'}`, background: selected ? `${color}12` : '#FBF6F8', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }),
-  typeLabel: { fontSize: 14, fontWeight: 700, color: '#2C1A22' },
+  typeCard: (selected, color) => ({ padding: '14px', borderRadius: 12, border: `2px solid ${selected ? color : '#EBCFD8'}`, background: selected ? `${color}20` : '#FBF6F8', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s', boxShadow: selected ? `0 2px 12px ${color}30` : 'none' }),
+  typeLabel: (selected, color) => ({ fontSize: 14, fontWeight: 700, color: selected ? color : '#2C1A22' }),
   typePrice: { fontSize: 12, color: '#9B7E8A', marginTop: 4 },
   label: { fontSize: 11, fontWeight: 600, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6, marginTop: 14 },
   input: (prefilled) => ({ width: '100%', background: prefilled ? 'rgba(91,158,152,0.05)' : '#FBF6F8', border: `1px solid ${prefilled ? 'rgba(91,158,152,0.4)' : '#EBCFD8'}`, borderRadius: 10, padding: '11px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }),
@@ -137,14 +137,14 @@ export default function BookingModal({ slot, prefill, onClose }) {
                   <>
                     <div style={{ fontSize: 13, color: '#9B7E8A', marginBottom: 4 }}>Vyber typ tréninku:</div>
                     <div style={s.typeRow}>
-                      <div style={s.typeCard(bookingType === 'solo', slot.color)} onClick={() => setBookingType('solo')}>
+                      <div style={s.typeCard(bookingType === 'solo', '#C8516B')} onClick={() => setBookingType('solo')}>
                         <div style={{ fontSize: 24 }}>🧘</div>
-                        <div style={s.typeLabel}>Sólo</div>
+                        <div style={s.typeLabel(bookingType === 'solo', '#C8516B')}>Sólo</div>
                         <div style={s.typePrice}>200 Kč / 60 min</div>
                       </div>
-                      <div style={s.typeCard(bookingType === 'duo', slot.color)} onClick={() => setBookingType('duo')}>
+                      <div style={s.typeCard(bookingType === 'duo', '#C8516B')} onClick={() => setBookingType('duo')}>
                         <div style={{ fontSize: 24 }}>👯</div>
-                        <div style={s.typeLabel}>Duo</div>
+                        <div style={s.typeLabel(bookingType === 'duo', '#C8516B')}>Duo</div>
                         <div style={s.typePrice}>300 Kč / 60 min</div>
                       </div>
                     </div>
