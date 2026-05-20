@@ -38,6 +38,8 @@ export default function Clients() {
   const [search, setSearch] = useState('')
   const [selectedClient, setSelectedClient] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [sortBy, setSortBy] = useState(null)
+  const [sortDir, setSortDir] = useState('desc')
   const [showAddModal, setShowAddModal] = useState(false)
   const [newClient, setNewClient] = useState({ name: '', email: '', phone: '', birthDate: '' })
   const [addLoading, setAddLoading] = useState(false)
@@ -107,6 +109,25 @@ export default function Clients() {
     return 'sporadic'
   }
   const statusLabel = { tahoun: 'Tahoun', regular: 'Pravidelný', sporadic: 'Sporadický' }
+  const statusOrder = { tahoun: 0, regular: 1, sporadic: 2 }
+
+  function handleSort(col) {
+    if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortBy(col); setSortDir('desc') }
+  }
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (!sortBy) return 0
+    let av, bv
+    if (sortBy === 'name') { av = a.name.toLowerCase(); bv = b.name.toLowerCase() }
+    else if (sortBy === 'email') { av = a.email.toLowerCase(); bv = b.email.toLowerCase() }
+    else if (sortBy === 'sessions') { av = a.sessions; bv = b.sessions }
+    else if (sortBy === 'totalSpent') { av = a.totalSpent; bv = b.totalSpent }
+    else if (sortBy === 'status') { av = statusOrder[getStatus(a)]; bv = statusOrder[getStatus(b)] }
+    if (av < bv) return sortDir === 'asc' ? -1 : 1
+    if (av > bv) return sortDir === 'asc' ? 1 : -1
+    return 0
+  })
 
   return (
     <div>
@@ -157,9 +178,14 @@ export default function Clients() {
       ) : (
         <div style={s.table}>
           <div style={s.tHead}>
-            <span>Jméno</span><span>E-mail</span><span>Tréninků</span><span>Utraceno</span><span>Status</span>
+            {[['name','Jméno'],['email','E-mail'],['sessions','Tréninků'],['totalSpent','Utraceno'],['status','Status']].map(([col, label]) => (
+              <span key={col} onClick={() => handleSort(col)} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                {label}
+                {sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : <span style={{ opacity: 0.3 }}> ↕</span>}
+              </span>
+            ))}
           </div>
-          {filtered.map((c, i) => {
+          {sorted.map((c, i) => {
             const hue = getHue(c.email)
             const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
             const status = getStatus(c)
