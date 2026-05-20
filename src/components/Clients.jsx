@@ -11,7 +11,15 @@ const s = {
   tHead: { display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr', padding: '14px 24px', fontSize: 11, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', borderBottom: '1px solid #F0D9DF', background: '#FFF5F7' },
   tRow: { display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr', padding: '14px 24px', borderBottom: '1px solid #FAF0F3', alignItems: 'center', fontSize: 14 },
   avatar: (hue) => ({ width: 32, height: 32, borderRadius: '50%', background: `hsl(${hue}, 60%, 88%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: `hsl(${hue}, 50%, 40%)`, flexShrink: 0 }),
-  badge: (type) => ({ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: type === 'new' ? 'rgba(91,158,152,0.1)' : 'rgba(212,148,90,0.1)', color: type === 'new' ? '#5B9E98' : '#D4945A', border: `1px solid ${type === 'new' ? 'rgba(91,158,152,0.2)' : 'rgba(212,148,90,0.2)'}` }),
+  badge: (type) => {
+    const map = {
+      tahoun:    { bg: 'rgba(200,81,107,0.1)',   color: '#C8516B',  border: 'rgba(200,81,107,0.25)' },
+      regular:   { bg: 'rgba(91,158,152,0.1)',   color: '#5B9E98',  border: 'rgba(91,158,152,0.2)' },
+      sporadic:  { bg: 'rgba(212,148,90,0.1)',   color: '#D4945A',  border: 'rgba(212,148,90,0.2)' },
+    }
+    const t = map[type] || map.sporadic
+    return { display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: t.bg, color: t.color, border: `1px solid ${t.border}` }
+  },
   empty: { padding: '48px 24px', textAlign: 'center', color: '#BFA0AD', fontSize: 14 },
 }
 
@@ -92,6 +100,14 @@ export default function Clients() {
     c.email.toLowerCase().includes(search.toLowerCase())
   )
 
+  const maxSessions = Math.max(...clients.map(c => c.sessions), 0)
+  function getStatus(c) {
+    if (c.sessions > 0 && c.sessions === maxSessions) return 'tahoun'
+    if (c.sessions >= 5) return 'regular'
+    return 'sporadic'
+  }
+  const statusLabel = { tahoun: 'Tahoun', regular: 'Pravidelný', sporadic: 'Sporadický' }
+
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
@@ -113,7 +129,7 @@ export default function Clients() {
           {filtered.map(c => {
             const hue = getHue(c.email)
             const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-            const isNew = c.sessions <= 2
+            const status = getStatus(c)
             return (
               <div key={c.email} style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '14px 16px', marginBottom: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(200,81,107,0.05)' }} onClick={() => setSelectedClient(c)}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
@@ -122,7 +138,7 @@ export default function Clients() {
                     <div style={{ fontWeight: 700, color: '#2C1A22', fontSize: 15 }}>{c.name}</div>
                     <div style={{ fontSize: 12, color: '#9B7E8A', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
                   </div>
-                  <span style={s.badge(isNew ? 'new' : 'active')}>{isNew ? 'Nová' : 'Aktivní'}</span>
+                  <span style={s.badge(status)}>{statusLabel[status]}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={{ flex: 1, background: '#FBF6F8', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
@@ -146,7 +162,7 @@ export default function Clients() {
           {filtered.map((c, i) => {
             const hue = getHue(c.email)
             const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-            const isNew = c.sessions <= 2
+            const status = getStatus(c)
             return (
               <div key={c.email} style={{ ...s.tRow, background: i % 2 === 0 ? 'transparent' : 'rgba(200,81,107,0.015)', cursor: 'pointer' }} onClick={() => setSelectedClient(c)}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -159,7 +175,7 @@ export default function Clients() {
                 <span style={{ color: '#9B7E8A', fontSize: 13 }}>{c.email}</span>
                 <span style={{ fontWeight: 700, color: '#2C1A22' }}>{c.sessions}</span>
                 <span style={{ fontWeight: 600, color: '#D4945A' }}>{c.totalSpent > 0 ? `${c.totalSpent} Kč` : '–'}</span>
-                <span style={s.badge(isNew ? 'new' : 'active')}>{isNew ? 'Nová' : 'Aktivní'}</span>
+                <span style={s.badge(status)}>{statusLabel[status]}</span>
               </div>
             )
           })}
