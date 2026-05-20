@@ -6,7 +6,7 @@ import AdminLogin from './components/AdminLogin'
 import SlotDetailModal from './components/SlotDetailModal'
 import Statistics from './components/Statistics'
 
-const isClientView = window.location.pathname === '/book'
+const isClientView = window.location.pathname.startsWith('/book')
 
 const s = {
   root: { fontFamily: "'Plus Jakarta Sans', sans-serif", background: '#FBF6F8', minHeight: '100vh', color: '#2C1A22' },
