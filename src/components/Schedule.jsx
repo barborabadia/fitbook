@@ -159,29 +159,34 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
 
   async function loadData() {
     setLoading(true)
-    const { data: sl } = await supabase.from('training_slots').select('*').gte('slot_date', weekDates[0]).lte('slot_date', weekDates[6]).order('slot_date').order('start_time')
-    if (sl) setSlots(sl)
+    try {
+      const { data: sl } = await supabase.from('training_slots').select('*').gte('slot_date', weekDates[0]).lte('slot_date', weekDates[6]).order('slot_date').order('start_time')
+      if (sl) setSlots(sl)
 
-    if (sl && sl.length > 0) {
-      const { data: bk } = await supabase.from('bookings').select('slot_id, booking_type, paid').in('slot_id', sl.map(s => s.id)).eq('status', 'confirmed')
-      if (bk) {
-        const counts = {}
-        const types = {}
-        const paid = {}
-        bk.forEach(b => {
-          counts[b.slot_id] = (counts[b.slot_id] || 0) + 1
-          types[b.slot_id] = b.booking_type
-          if (b.paid) paid[b.slot_id] = (paid[b.slot_id] || 0) + 1
-        })
-        setBookingCounts(counts)
-        setBookingTypes(types)
-        setPaidCounts(paid)
+      if (sl && sl.length > 0) {
+        const { data: bk } = await supabase.from('bookings').select('slot_id, booking_type, paid').in('slot_id', sl.map(s => s.id)).eq('status', 'confirmed')
+        if (bk) {
+          const counts = {}
+          const types = {}
+          const paid = {}
+          bk.forEach(b => {
+            counts[b.slot_id] = (counts[b.slot_id] || 0) + 1
+            types[b.slot_id] = b.booking_type
+            if (b.paid) paid[b.slot_id] = (paid[b.slot_id] || 0) + 1
+          })
+          setBookingCounts(counts)
+          setBookingTypes(types)
+          setPaidCounts(paid)
+        }
       }
-    }
 
-    const { data: tmpl } = await supabase.from('training_templates').select('*').eq('is_active', true)
-    if (tmpl) setTemplates(tmpl)
-    setLoading(false)
+      const { data: tmpl } = await supabase.from('training_templates').select('*').eq('is_active', true)
+      if (tmpl) setTemplates(tmpl)
+    } catch (err) {
+      console.error('Chyba načítání rozvrhu:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function generateWeek() {

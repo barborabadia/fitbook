@@ -120,13 +120,18 @@ export default function Statistics() {
 
   async function loadData() {
     setLoading(true)
-    const { data: bk } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time)').order('created_at', { ascending: false })
-    const { data: sl } = await supabase.from('training_slots').select('*').order('slot_date')
-    const { data: hs } = await supabase.from('historical_sessions').select('*').order('session_date')
-    if (bk) setBookings(bk)
-    if (sl) setSlots(sl)
-    if (hs) setHistoricalSessions(hs)
-    setLoading(false)
+    try {
+      const { data: bk } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time)').order('created_at', { ascending: false })
+      const { data: sl } = await supabase.from('training_slots').select('*').order('slot_date')
+      const { data: hs } = await supabase.from('historical_sessions').select('*').order('session_date')
+      if (bk) setBookings(bk)
+      if (sl) setSlots(sl)
+      if (hs) setHistoricalSessions(hs)
+    } catch (err) {
+      console.error('Chyba načítání statistik:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const { start, prevStart, prevEnd } = getPeriodRange(period)

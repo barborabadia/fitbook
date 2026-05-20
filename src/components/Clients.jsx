@@ -40,27 +40,32 @@ export default function Clients() {
 
   async function loadClients() {
     setLoading(true)
-    const [{ data }, { data: mc }] = await Promise.all([
-      supabase.from('bookings').select('client_name, client_email, client_phone, booking_type, price, status, created_at, slot_id, training_slots(name, slot_date, start_time)').eq('status', 'confirmed').order('created_at', { ascending: false }),
-      supabase.from('manual_clients').select('*').order('name'),
-    ])
+    try {
+      const [{ data }, { data: mc }] = await Promise.all([
+        supabase.from('bookings').select('client_name, client_email, client_phone, booking_type, price, status, created_at, slot_id, training_slots(name, slot_date, start_time)').eq('status', 'confirmed').order('created_at', { ascending: false }),
+        supabase.from('manual_clients').select('*').order('name'),
+      ])
 
-    const map = {}
-    data?.forEach(b => {
-      const key = b.client_email
-      if (!map[key]) map[key] = { name: b.client_name, email: b.client_email, phone: b.client_phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null }
-      map[key].sessions++
-      map[key].totalSpent += b.price || 0
-      if (!map[key].lastDate || b.created_at > map[key].lastDate) {
-        map[key].lastDate = b.created_at
-        map[key].lastSlot = b.training_slots
-      }
-    })
-    mc?.forEach(c => {
-      if (!map[c.email]) map[c.email] = { name: c.name, email: c.email, phone: c.phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null, isManual: true }
-    })
-    setClients(Object.values(map))
-    setLoading(false)
+      const map = {}
+      data?.forEach(b => {
+        const key = b.client_email
+        if (!map[key]) map[key] = { name: b.client_name, email: b.client_email, phone: b.client_phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null }
+        map[key].sessions++
+        map[key].totalSpent += b.price || 0
+        if (!map[key].lastDate || b.created_at > map[key].lastDate) {
+          map[key].lastDate = b.created_at
+          map[key].lastSlot = b.training_slots
+        }
+      })
+      mc?.forEach(c => {
+        if (!map[c.email]) map[c.email] = { name: c.name, email: c.email, phone: c.phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null, isManual: true }
+      })
+      setClients(Object.values(map))
+    } catch (err) {
+      console.error('Chyba načítání klientů:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function addClient() {

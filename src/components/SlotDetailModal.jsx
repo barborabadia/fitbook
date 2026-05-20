@@ -55,6 +55,7 @@ export default function SlotDetailModal({ slot, onClose }) {
   const [clientSearch, setClientSearch] = useState('')
   const [addError, setAddError] = useState('')
   const [addLoading, setAddLoading] = useState(false)
+  const [bookingType, setBookingType] = useState('solo')
   const isMobile = window.innerWidth < 768
 
   useEffect(() => { loadBookings() }, [slot.id])
@@ -86,6 +87,7 @@ export default function SlotDetailModal({ slot, onClose }) {
     setShowAddBooking(true)
     setClientSearch('')
     setAddError('')
+    setBookingType('solo')
     const { data: bk } = await supabase.from('bookings').select('client_name, client_email, client_phone').eq('status', 'confirmed')
     const { data: mc } = await supabase.from('manual_clients').select('*').order('name')
     const map = {}
@@ -105,7 +107,7 @@ export default function SlotDetailModal({ slot, onClose }) {
       client_name: client.name,
       client_email: client.email,
       client_phone: client.phone || null,
-      booking_type: 'solo',
+      booking_type: bookingType,
       price: slot.price || 0,
       status: 'confirmed',
     })
@@ -171,6 +173,19 @@ export default function SlotDetailModal({ slot, onClose }) {
         {showAddBooking && (
           <div style={{ background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#2C1A22', marginBottom: 10 }}>Vybrat klienta</div>
+            {slot.name === 'Osobní trénink' && (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                {['solo', 'duo'].map(type => (
+                  <button
+                    key={type}
+                    onClick={() => setBookingType(type)}
+                    style={{ flex: 1, padding: '7px', borderRadius: 8, border: `1px solid ${bookingType === type ? (type === 'duo' ? '#9B72CF' : '#5B9E98') : '#EBCFD8'}`, background: bookingType === type ? (type === 'duo' ? 'rgba(155,114,207,0.1)' : 'rgba(91,158,152,0.1)') : '#fff', color: bookingType === type ? (type === 'duo' ? '#9B72CF' : '#5B9E98') : '#9B7E8A', fontWeight: bookingType === type ? 700 : 400, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    {type === 'duo' ? '👯 Duo' : '🧘 Sólo'}
+                  </button>
+                ))}
+              </div>
+            )}
             <input
               style={{ width: '100%', background: '#fff', border: '1px solid #EBCFD8', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
               placeholder="🔍 Hledat klienta..."
