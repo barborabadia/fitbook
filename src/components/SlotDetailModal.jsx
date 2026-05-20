@@ -108,7 +108,7 @@ export default function SlotDetailModal({ slot, onClose }) {
       client_email: client.email,
       client_phone: client.phone || null,
       booking_type: bookingType,
-      price: slot.price || 0,
+      price: bookingType === 'duo' ? 300 : (slot.price || 0),
       status: 'confirmed',
     })
     if (error) { setAddError('Chyba při ukládání.'); setAddLoading(false); return }
