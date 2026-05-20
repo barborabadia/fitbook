@@ -59,6 +59,16 @@ export default function ClientAuthBar({ onUserChange }) {
     })
   }
 
+  function handleSeznam() {
+    const params = new URLSearchParams({
+      client_id: import.meta.env.VITE_SEZNAM_CLIENT_ID,
+      redirect_uri: 'https://kkugctxybegcggiyxozj.supabase.co/functions/v1/seznam-callback',
+      response_type: 'code',
+      scope: 'identity',
+    })
+    window.location.href = `https://login.szn.cz/api/v1/oauth/auth?${params}`
+  }
+
   async function handleSignOut() {
     await supabase.auth.signOut()
     setUser(null)
@@ -101,8 +111,20 @@ export default function ClientAuthBar({ onUserChange }) {
         <button style={s.btn('#F5E8EC', '#EBCFD8')} onClick={handleGoogle}>
           <GoogleIcon /> Google
         </button>
+        <button style={s.btn('#FFF3E0', '#FFD59E')} onClick={handleSeznam}>
+          <SeznamIcon /> Seznam
+        </button>
       </div>
     </div>
+  )
+}
+
+function SeznamIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 48 48">
+      <circle cx="24" cy="24" r="24" fill="#CC0000"/>
+      <text x="24" y="32" textAnchor="middle" fontSize="26" fontWeight="bold" fill="white" fontFamily="Arial">S</text>
+    </svg>
   )
 }
 
