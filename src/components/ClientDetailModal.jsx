@@ -26,7 +26,7 @@ const s = {
   avatar: (hue) => ({ width: 52, height: 52, borderRadius: '50%', background: `hsl(${hue}, 60%, 88%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: `hsl(${hue}, 50%, 40%)`, flexShrink: 0 }),
   name: { fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: '#2C1A22' },
   meta: { fontSize: 13, color: '#9B7E8A', marginTop: 4 },
-  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, margin: '20px 0' },
+  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, margin: '20px 0' },
   stat: { background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '12px 14px', textAlign: 'center' },
   statLabel: { fontSize: 10, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 },
   statVal: { fontSize: 22, fontWeight: 800 },
@@ -141,7 +141,6 @@ export default function ClientDetailModal({ client, onClose }) {
             { label: 'Celkem tréninků', value: confirmed.length, color: '#2C1A22' },
             { label: 'Zrušeno', value: cancelled.length, color: cancelled.length > 0 ? '#C8516B' : '#2C1A22' },
             { label: 'Utraceno', value: totalSpent > 0 ? `${totalSpent} Kč` : '–', color: '#D4945A' },
-            { label: 'Status', value: confirmed.length <= 2 ? 'Nová' : 'Aktivní', color: confirmed.length <= 2 ? '#5B9E98' : '#D4945A' },
           ].map((s2, i) => (
             <div key={i} style={s.stat}>
               <div style={s.statLabel}>{s2.label}</div>
