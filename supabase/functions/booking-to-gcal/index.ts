@@ -114,6 +114,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (!slot) throw new Error('Slot not found')
+    if (slot.name !== 'Osobní trénink') return new Response('Not personal training', { status: 200 })
 
     // Použij explicitní Prague timezone aby se čas neshiftoval
     const startDateTime = new Date(`${slot.slot_date}T${slot.start_time}:00+02:00`)
