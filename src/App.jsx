@@ -39,7 +39,7 @@ export default function App() {
   const [view, setView] = useState('schedule')
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [scheduleRefresh, setScheduleRefresh] = useState(0)
-  const [isLoggedIn, setIsLoggedIn] = useState(sessionStorage.getItem('fitbook_admin') === '1')
+  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('fitbook_admin') === '1')
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function App() {
   if (!isLoggedIn) return <div style={s.root}><AdminLogin onLogin={() => setIsLoggedIn(true)} /></div>
 
   const bookingUrl = `${window.location.origin}/book`
-  const logout = () => { sessionStorage.removeItem('fitbook_admin'); setIsLoggedIn(false) }
+  const logout = () => { localStorage.removeItem('fitbook_admin'); setIsLoggedIn(false) }
 
   if (isMobile) {
     return (

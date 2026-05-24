@@ -63,7 +63,7 @@ export default function AdminLogin({ onLogin }) {
     if (isLocked) return
     if (password === ADMIN_PASSWORD) {
       saveLockoutData({ attempts: 0, lockedUntil: null })
-      sessionStorage.setItem('fitbook_admin', '1')
+      localStorage.setItem('fitbook_admin', '1')
       onLogin()
     } else {
       const newAttempts = lockout.attempts + 1
