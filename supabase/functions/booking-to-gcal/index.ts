@@ -137,7 +137,7 @@ Deno.serve(async (req: Request) => {
     const endTimeStr = `${endHH}:${endMM}`
 
     const calEvent = await createCalendarEvent(accessToken, calendarId, {
-      summary: `💪 ${slot.name}${typeLabel} – ${booking.client_name}`,
+      summary: `${slot.start_time.slice(0, 5)} ${slot.name}${typeLabel} – ${booking.client_name}`,
       description: [
         `👤 ${booking.client_name}`,
         `📧 ${booking.client_email}`,
