@@ -59,6 +59,8 @@ export default function SlotDetailModal({ slot, onClose }) {
   const [editingPriceId, setEditingPriceId] = useState(null)
   const [editingPriceValue, setEditingPriceValue] = useState('')
   const [paymentPickerId, setPaymentPickerId] = useState(null)
+  const [movingBookingId, setMovingBookingId] = useState(null)
+  const [availableSlots, setAvailableSlots] = useState([])
   const isMobile = window.innerWidth < 768
 
   useEffect(() => { loadBookings() }, [slot.id])
@@ -83,6 +85,33 @@ export default function SlotDetailModal({ slot, onClose }) {
 
   async function unsetPaid(bookingId) {
     await supabase.from('bookings').update({ paid: false, payment_method: null }).eq('id', bookingId)
+    loadBookings()
+  }
+
+  async function openMoveBooking(bookingId) {
+    if (movingBookingId === bookingId) { setMovingBookingId(null); return }
+    // Načti všechny budoucí termíny stejného typu kromě aktuálního
+    const today = new Date().toISOString().slice(0, 10)
+    const { data: slots } = await supabase
+      .from('training_slots')
+      .select('*, bookings(id, status)')
+      .eq('name', slot.name)
+      .neq('id', slot.id)
+      .gte('slot_date', today)
+      .order('slot_date')
+      .order('start_time')
+    // Filtruj termíny s volnou kapacitou
+    const withCapacity = (slots || []).filter(s => {
+      const confirmed = (s.bookings || []).filter(b => b.status === 'confirmed').length
+      return confirmed < s.capacity
+    })
+    setAvailableSlots(withCapacity)
+    setMovingBookingId(bookingId)
+  }
+
+  async function moveBooking(bookingId, targetSlotId) {
+    await supabase.from('bookings').update({ slot_id: targetSlotId }).eq('id', bookingId)
+    setMovingBookingId(null)
     loadBookings()
   }
 
@@ -297,8 +326,27 @@ export default function SlotDetailModal({ slot, onClose }) {
                       Zaplaceno?
                     </button>
                   )}
+                  <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset' }} onClick={() => openMoveBooking(b.id)}>Přesunout</button>
                   <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset' }} onClick={() => cancelBooking(b.id)}>Zrušit</button>
                 </div>
+                {movingBookingId === b.id && (
+                  <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 10, background: '#fff', border: '1px solid #EBCFD8', borderRadius: 10, padding: 8, boxShadow: '0 4px 16px rgba(200,81,107,0.12)', minWidth: 220, maxHeight: 240, overflowY: 'auto' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6, padding: '0 4px' }}>Přesunout na termín</div>
+                    {availableSlots.length === 0 && <div style={{ fontSize: 12, color: '#9B7E8A', padding: '4px 4px 8px' }}>Žádný volný termín</div>}
+                    {availableSlots.map(ts => (
+                      <div
+                        key={ts.id}
+                        onClick={() => moveBooking(b.id, ts.id)}
+                        style={{ padding: '8px 10px', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,81,107,0.06)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <span style={{ fontWeight: 600, color: '#2C1A22' }}>{ts.start_time.slice(0, 5)}</span>
+                        <span style={{ color: '#9B7E8A', fontSize: 12 }}> · {formatDate(ts.slot_date)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {paymentPickerId === b.id && (
                   <div style={{ display: 'flex', gap: 6, position: 'absolute', top: '100%', right: 0, zIndex: 10, background: '#fff', border: '1px solid #EBCFD8', borderRadius: 10, padding: 8, boxShadow: '0 4px 16px rgba(200,81,107,0.12)', whiteSpace: 'nowrap' }}>
                     <button onClick={() => setPaid(b.id, 'cash')} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: '#FBF6F8', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}>💵 Hotově</button>
