@@ -86,6 +86,13 @@ export default function SlotDetailModal({ slot, onClose }) {
     loadBookings()
   }
 
+  async function toggleBookingType(bookingId, currentType) {
+    const newType = currentType === 'duo' ? 'solo' : 'duo'
+    const newPrice = newType === 'duo' ? 300 : (slot.price || 0)
+    await supabase.from('bookings').update({ booking_type: newType, price: newPrice }).eq('id', bookingId)
+    loadBookings()
+  }
+
   async function savePrice(bookingId) {
     const val = parseInt(editingPriceValue, 10)
     if (!isNaN(val) && val >= 0) {
@@ -250,7 +257,7 @@ export default function SlotDetailModal({ slot, onClose }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
                   <span style={s.clientName}>{b.client_name}</span>
-                  {isPersonal && <span style={s.badge(b.booking_type)}>{b.booking_type === 'duo' ? 'Duo' : 'Sólo'}</span>}
+                  {isPersonal && <span title="Klikni pro změnu" style={{ ...s.badge(b.booking_type), cursor: 'pointer' }} onClick={() => toggleBookingType(b.id, b.booking_type)}>{b.booking_type === 'duo' ? 'Duo' : 'Sólo'}</span>}
                   {editingPriceId === b.id ? (
                     <input
                       autoFocus
