@@ -56,6 +56,9 @@ export default function SlotDetailModal({ slot, onClose }) {
   const [addError, setAddError] = useState('')
   const [addLoading, setAddLoading] = useState(false)
   const [bookingType, setBookingType] = useState('solo')
+  const [editingPriceId, setEditingPriceId] = useState(null)
+  const [editingPriceValue, setEditingPriceValue] = useState('')
+  const [paymentPickerId, setPaymentPickerId] = useState(null)
   const isMobile = window.innerWidth < 768
 
   useEffect(() => { loadBookings() }, [slot.id])
@@ -72,9 +75,24 @@ export default function SlotDetailModal({ slot, onClose }) {
     loadBookings()
   }
 
-  async function togglePaid(bookingId, currentPaid) {
-    await supabase.from('bookings').update({ paid: !currentPaid }).eq('id', bookingId)
+  async function setPaid(bookingId, method) {
+    await supabase.from('bookings').update({ paid: true, payment_method: method }).eq('id', bookingId)
+    setPaymentPickerId(null)
     loadBookings()
+  }
+
+  async function unsetPaid(bookingId) {
+    await supabase.from('bookings').update({ paid: false, payment_method: null }).eq('id', bookingId)
+    loadBookings()
+  }
+
+  async function savePrice(bookingId) {
+    const val = parseInt(editingPriceValue, 10)
+    if (!isNaN(val) && val >= 0) {
+      await supabase.from('bookings').update({ price: val }).eq('id', bookingId)
+      loadBookings()
+    }
+    setEditingPriceId(null)
   }
 
   async function saveNotes() {
@@ -225,6 +243,7 @@ export default function SlotDetailModal({ slot, onClose }) {
           const hue = getHue(b.client_email)
           const initials = b.client_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
           const isPersonal = slot.name === 'Osobní trénink'
+          const paymentLabel = b.payment_method === 'cash' ? '💵 Hotově' : b.payment_method === 'transfer' ? '🏦 Na účet' : ''
           return (
             <div key={b.id} style={{ ...s.clientCard(b.paid), flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
               <div style={s.avatar(hue)}>{initials}</div>
@@ -232,18 +251,53 @@ export default function SlotDetailModal({ slot, onClose }) {
                 <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
                   <span style={s.clientName}>{b.client_name}</span>
                   {isPersonal && <span style={s.badge(b.booking_type)}>{b.booking_type === 'duo' ? 'Duo' : 'Sólo'}</span>}
-                  {b.price > 0 && <span style={{ fontSize: 11, color: '#C8516B', fontWeight: 600, marginLeft: 4 }}>{b.price} Kč</span>}
+                  {editingPriceId === b.id ? (
+                    <input
+                      autoFocus
+                      type="number"
+                      value={editingPriceValue}
+                      onChange={e => setEditingPriceValue(e.target.value)}
+                      onBlur={() => savePrice(b.id)}
+                      onKeyDown={e => { if (e.key === 'Enter') savePrice(b.id); if (e.key === 'Escape') setEditingPriceId(null) }}
+                      style={{ width: 64, fontSize: 11, padding: '2px 6px', borderRadius: 6, border: '1px solid #C8516B', fontFamily: 'inherit', outline: 'none', marginLeft: 4 }}
+                    />
+                  ) : (
+                    <span
+                      title="Klikni pro úpravu ceny"
+                      onClick={() => { setEditingPriceId(b.id); setEditingPriceValue(String(b.price ?? 0)) }}
+                      style={{ fontSize: 11, color: '#C8516B', fontWeight: 600, marginLeft: 4, cursor: 'pointer', borderBottom: '1px dashed #C8516B' }}
+                    >
+                      {b.price ?? 0} Kč
+                    </span>
+                  )}
                 </div>
                 <div style={{ ...s.clientMeta, wordBreak: 'break-all' }}>
                   📧 {b.client_email}
                   {b.client_phone && <span> · 📱 {b.client_phone}</span>}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 6, width: isMobile ? '100%' : 'auto', marginTop: isMobile ? 10 : 0 }}>
-                <button style={{ ...s.paidBtn(b.paid), flex: isMobile ? 1 : 'unset' }} onClick={() => togglePaid(b.id, b.paid)}>
-                  {b.paid ? '✓ Zaplaceno' : 'Zaplaceno?'}
-                </button>
-                <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset' }} onClick={() => cancelBooking(b.id)}>Zrušit</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: isMobile ? '100%' : 'auto', marginTop: isMobile ? 10 : 0, position: 'relative' }}>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {b.paid ? (
+                    <button style={{ ...s.paidBtn(true), flex: isMobile ? 1 : 'unset' }} onClick={() => unsetPaid(b.id)}>
+                      ✓ {paymentLabel || 'Zaplaceno'}
+                    </button>
+                  ) : (
+                    <button
+                      style={{ ...s.paidBtn(false), flex: isMobile ? 1 : 'unset' }}
+                      onClick={() => setPaymentPickerId(paymentPickerId === b.id ? null : b.id)}
+                    >
+                      Zaplaceno?
+                    </button>
+                  )}
+                  <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset' }} onClick={() => cancelBooking(b.id)}>Zrušit</button>
+                </div>
+                {paymentPickerId === b.id && (
+                  <div style={{ display: 'flex', gap: 6, position: 'absolute', top: '100%', right: 0, zIndex: 10, background: '#fff', border: '1px solid #EBCFD8', borderRadius: 10, padding: 8, boxShadow: '0 4px 16px rgba(200,81,107,0.12)', whiteSpace: 'nowrap' }}>
+                    <button onClick={() => setPaid(b.id, 'cash')} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: '#FBF6F8', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}>💵 Hotově</button>
+                    <button onClick={() => setPaid(b.id, 'transfer')} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: '#FBF6F8', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}>🏦 Na účet</button>
+                  </div>
+                )}
               </div>
             </div>
           )
