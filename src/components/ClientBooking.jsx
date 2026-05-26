@@ -13,6 +13,12 @@ function getMonday(d = new Date()) {
   return date
 }
 
+function getToday() {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
 function addDays(date, days) {
   const d = new Date(date)
   d.setDate(d.getDate() + days)
@@ -183,7 +189,7 @@ function CertifikatyModal({ onClose }) {
 
 export default function ClientBooking() {
   const [tab, setTab] = useState('book')
-  const [monday, setMonday] = useState(getMonday())
+  const [monday, setMonday] = useState(getToday())
   const [slots, setSlots] = useState([])
   const [bookingCounts, setBookingCounts] = useState({})
   const [selected, setSelected] = useState(null)
@@ -267,7 +273,7 @@ export default function ClientBooking() {
             <button style={s.navBtn} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}>←</button>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1 }}>
               <div style={s.weekLabel}>{formatWeekRange(weekDates[0], weekDates[6])}</div>
-              <button style={{ background: 'none', border: 'none', fontSize: 11, color: '#C8516B', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, padding: 0 }} onClick={() => setMonday(getMonday())}>Tento týden</button>
+              <button style={{ background: 'none', border: 'none', fontSize: 11, color: '#C8516B', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, padding: 0 }} onClick={() => setMonday(getToday())}>Tento týden</button>
             </div>
             <button style={s.navBtn} onClick={() => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}>→</button>
           </div>
