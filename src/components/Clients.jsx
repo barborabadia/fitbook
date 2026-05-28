@@ -235,6 +235,7 @@ export default function Clients() {
         <ClientDetailModal
           client={selectedClient}
           onClose={() => setSelectedClient(null)}
+          onMerge={() => { setSelectedClient(null); loadClients() }}
           onDelete={selectedClient.isManual && selectedClient.manualId ? () => { setSelectedClient(null); deleteClient(selectedClient) } : null}
         />
       )}

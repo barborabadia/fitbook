@@ -42,7 +42,7 @@ const s = {
   empty: { textAlign: 'center', color: '#BFA0AD', padding: '24px 0', fontSize: 14 },
 }
 
-export default function ClientDetailModal({ client, onClose, onDelete }) {
+export default function ClientDetailModal({ client, onClose, onDelete, onMerge }) {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [notes, setNotes] = useState([])
@@ -50,6 +50,8 @@ export default function ClientDetailModal({ client, onClose, onDelete }) {
   const [savingNote, setSavingNote] = useState(false)
   const [birthDate, setBirthDate] = useState('')
   const [birthSaved, setBirthSaved] = useState(false)
+  const [editEmail, setEditEmail] = useState(null)
+  const [emailSaving, setEmailSaving] = useState(false)
 
   useEffect(() => { loadBookings(); loadNotes(); loadProfile() }, [client.email])
 
@@ -94,6 +96,59 @@ export default function ClientDetailModal({ client, onClose, onDelete }) {
     setLoading(false)
   }
 
+  async function saveEmail() {
+    const newEmail = editEmail.trim().toLowerCase()
+    const oldEmail = client.email
+    if (!newEmail || newEmail === oldEmail) { setEditEmail(null); return }
+    setEmailSaving(true)
+
+    // Zkontroluj, zda cílový email již existuje
+    const [{ data: mcTarget }, { data: bTarget }] = await Promise.all([
+      supabase.from('manual_clients').select('id').eq('email', newEmail).maybeSingle(),
+      supabase.from('bookings').select('id').eq('client_email', newEmail).limit(1),
+    ])
+    const targetExists = mcTarget || (bTarget && bTarget.length > 0)
+
+    if (targetExists) {
+      if (!window.confirm(`Klient s e-mailem "${newEmail}" již existuje. Sloučit oba záznamy dohromady?`)) {
+        setEmailSaving(false)
+        return
+      }
+    }
+
+    // Přesuň rezervace a poznámky na nový email
+    if (oldEmail) {
+      await supabase.from('bookings').update({ client_email: newEmail }).eq('client_email', oldEmail)
+      await supabase.from('client_notes').update({ client_email: newEmail }).eq('client_email', oldEmail)
+
+      // Přesuň datum narození (jen pokud cíl nemá vlastní)
+      const [{ data: srcProfile }, { data: tgtProfile }] = await Promise.all([
+        supabase.from('client_profiles').select('birth_date').eq('email', oldEmail).maybeSingle(),
+        supabase.from('client_profiles').select('birth_date').eq('email', newEmail).maybeSingle(),
+      ])
+      if (srcProfile) {
+        await supabase.from('client_profiles').delete().eq('email', oldEmail)
+        if (srcProfile.birth_date && !tgtProfile?.birth_date) {
+          await supabase.from('client_profiles').upsert({ email: newEmail, birth_date: srcProfile.birth_date }, { onConflict: 'email' })
+        }
+      }
+    }
+
+    // Aktualizuj nebo smaž manual_clients záznam
+    if (client.manualId) {
+      if (mcTarget) {
+        // Cíl má vlastní manual_clients záznam – zdrojový smažeme (slučujeme)
+        await supabase.from('manual_clients').delete().eq('id', client.manualId)
+      } else {
+        await supabase.from('manual_clients').update({ email: newEmail }).eq('id', client.manualId)
+      }
+    }
+
+    setEmailSaving(false)
+    setEditEmail(null)
+    onMerge ? onMerge() : onClose()
+  }
+
   const confirmed = bookings.filter(b => b.status === 'confirmed')
   const cancelled = bookings.filter(b => b.status === 'cancelled')
   const totalSpent = confirmed.reduce((a, b) => a + (b.price || 0), 0)
@@ -121,7 +176,27 @@ export default function ClientDetailModal({ client, onClose, onDelete }) {
             <div style={s.avatar(hue)}>{initials}</div>
             <div>
               <div style={s.name}>{client.name}</div>
-              {client.email && <div style={s.meta}>📧 {client.email}</div>}
+              {editEmail !== null ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={e => setEditEmail(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') saveEmail(); if (e.key === 'Escape') setEditEmail(null) }}
+                    autoFocus
+                    style={{ background: '#FBF6F8', border: '1px solid #C8516B', borderRadius: 8, padding: '4px 10px', fontSize: 13, color: '#2C1A22', fontFamily: 'inherit', outline: 'none', width: 200 }}
+                  />
+                  <button onClick={saveEmail} disabled={emailSaving} style={{ padding: '4px 10px', borderRadius: 7, border: 'none', background: '#C8516B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {emailSaving ? '...' : 'Uložit'}
+                  </button>
+                  <button onClick={() => setEditEmail(null)} style={{ background: 'none', border: 'none', color: '#BFA0AD', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>✕</button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                  <span style={{ fontSize: 13, color: '#9B7E8A' }}>📧 {client.email || '(bez e-mailu)'}</span>
+                  <button onClick={() => setEditEmail(client.email || '')} title="Upravit e-mail" style={{ background: 'none', border: 'none', color: '#BFA0AD', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}>✎</button>
+                </div>
+              )}
               {client.phone && <div style={s.meta}>📱 {client.phone}</div>}
               {client.email && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
