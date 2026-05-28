@@ -42,7 +42,7 @@ const s = {
   empty: { textAlign: 'center', color: '#BFA0AD', padding: '24px 0', fontSize: 14 },
 }
 
-export default function ClientDetailModal({ client, onClose }) {
+export default function ClientDetailModal({ client, onClose, onDelete }) {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [notes, setNotes] = useState([])
@@ -54,23 +54,26 @@ export default function ClientDetailModal({ client, onClose }) {
   useEffect(() => { loadBookings(); loadNotes(); loadProfile() }, [client.email])
 
   async function loadProfile() {
+    if (!client.email) return
     const { data } = await supabase.from('client_profiles').select('birth_date').eq('email', client.email).single()
     if (data?.birth_date) setBirthDate(data.birth_date)
   }
 
   async function saveBirthDate() {
+    if (!client.email) return
     await supabase.from('client_profiles').upsert({ email: client.email, birth_date: birthDate || null }, { onConflict: 'email' })
     setBirthSaved(true)
     setTimeout(() => setBirthSaved(false), 2000)
   }
 
   async function loadNotes() {
+    if (!client.email) return
     const { data } = await supabase.from('client_notes').select('*').eq('client_email', client.email).order('created_at', { ascending: false })
     if (data) setNotes(data)
   }
 
   async function addNote() {
-    if (!newNote.trim()) return
+    if (!newNote.trim() || !client.email) return
     setSavingNote(true)
     await supabase.from('client_notes').insert({ client_email: client.email, note: newNote.trim() })
     setNewNote('')
@@ -84,6 +87,7 @@ export default function ClientDetailModal({ client, onClose }) {
   }
 
   async function loadBookings() {
+    if (!client.email) { setLoading(false); return }
     setLoading(true)
     const { data } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, duration_minutes, color)').eq('client_email', client.email).order('created_at', { ascending: false })
     if (data) setBookings(data)
@@ -117,20 +121,22 @@ export default function ClientDetailModal({ client, onClose }) {
             <div style={s.avatar(hue)}>{initials}</div>
             <div>
               <div style={s.name}>{client.name}</div>
-              <div style={s.meta}>📧 {client.email}</div>
+              {client.email && <div style={s.meta}>📧 {client.email}</div>}
               {client.phone && <div style={s.meta}>📱 {client.phone}</div>}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                <span style={{ fontSize: 13, color: '#9B7E8A' }}>🎂</span>
-                <input
-                  type="date"
-                  value={birthDate}
-                  onChange={e => setBirthDate(e.target.value)}
-                  style={{ background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 8, padding: '5px 10px', fontSize: 13, color: '#2C1A22', fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}
-                />
-                <button onClick={saveBirthDate} style={{ padding: '5px 12px', borderRadius: 8, border: 'none', background: birthSaved ? '#27AE60' : '#C8516B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.2s' }}>
-                  {birthSaved ? '✓' : 'Uložit'}
-                </button>
-              </div>
+              {client.email && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                  <span style={{ fontSize: 13, color: '#9B7E8A' }}>🎂</span>
+                  <input
+                    type="date"
+                    value={birthDate}
+                    onChange={e => setBirthDate(e.target.value)}
+                    style={{ background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 8, padding: '5px 10px', fontSize: 13, color: '#2C1A22', fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}
+                  />
+                  <button onClick={saveBirthDate} style={{ padding: '5px 12px', borderRadius: 8, border: 'none', background: birthSaved ? '#27AE60' : '#C8516B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.2s' }}>
+                    {birthSaved ? '✓' : 'Uložit'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <button style={s.closeBtn} onClick={onClose}>✕</button>
@@ -163,29 +169,33 @@ export default function ClientDetailModal({ client, onClose }) {
           </>
         )}
 
-        <div style={{ ...s.sectionLabel, marginBottom: 10 }}>Poznámky</div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          <input
-            style={{ flex: 1, background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
-            placeholder="Přidat poznámku..."
-            value={newNote}
-            onChange={e => setNewNote(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addNote()}
-          />
-          <button onClick={addNote} disabled={!newNote.trim() || savingNote} style={{ padding: '10px 16px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: !newNote.trim() ? 0.5 : 1 }}>
-            {savingNote ? '...' : '+ Přidat'}
-          </button>
-        </div>
-        {notes.map(n => (
-          <div key={n.id} style={{ background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-            <div>
-              <div style={{ fontSize: 13, color: '#2C1A22', lineHeight: 1.5 }}>{n.note}</div>
-              <div style={{ fontSize: 11, color: '#BFA0AD', marginTop: 4 }}>{new Date(n.created_at).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+        {client.email && (
+          <>
+            <div style={{ ...s.sectionLabel, marginBottom: 10 }}>Poznámky</div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <input
+                style={{ flex: 1, background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+                placeholder="Přidat poznámku..."
+                value={newNote}
+                onChange={e => setNewNote(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addNote()}
+              />
+              <button onClick={addNote} disabled={!newNote.trim() || savingNote} style={{ padding: '10px 16px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: !newNote.trim() ? 0.5 : 1 }}>
+                {savingNote ? '...' : '+ Přidat'}
+              </button>
             </div>
-            <button onClick={() => deleteNote(n.id)} style={{ background: 'none', border: 'none', color: '#C4ABB4', cursor: 'pointer', fontSize: 16, lineHeight: 1, flexShrink: 0 }}>✕</button>
-          </div>
-        ))}
-        {notes.length === 0 && <div style={{ ...s.empty, padding: '12px 0' }}>Žádné poznámky</div>}
+            {notes.map(n => (
+              <div key={n.id} style={{ background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: 13, color: '#2C1A22', lineHeight: 1.5 }}>{n.note}</div>
+                  <div style={{ fontSize: 11, color: '#BFA0AD', marginTop: 4 }}>{new Date(n.created_at).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                </div>
+                <button onClick={() => deleteNote(n.id)} style={{ background: 'none', border: 'none', color: '#C4ABB4', cursor: 'pointer', fontSize: 16, lineHeight: 1, flexShrink: 0 }}>✕</button>
+              </div>
+            ))}
+            {notes.length === 0 && <div style={{ ...s.empty, padding: '12px 0' }}>Žádné poznámky</div>}
+          </>
+        )}
 
         <div style={{ ...s.sectionLabel, marginTop: 20 }}>Historie rezervací</div>
 
@@ -215,6 +225,13 @@ export default function ClientDetailModal({ client, onClose }) {
             </div>
           )
         })}
+        {onDelete && (
+          <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid #F0D9DF' }}>
+            <button onClick={onDelete} style={{ width: '100%', padding: '11px', borderRadius: 10, border: '1px solid rgba(200,81,107,0.3)', background: 'rgba(200,81,107,0.06)', color: '#C8516B', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              Smazat klienta z databáze
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

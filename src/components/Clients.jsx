@@ -8,8 +8,8 @@ const s = {
   subtitle: { fontSize: 14, color: '#9B7E8A', marginTop: 4 },
   searchInput: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 16px', color: '#2C1A22', fontSize: 14, width: 240, fontFamily: 'inherit', outline: 'none' },
   table: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 20px rgba(200,81,107,0.06)' },
-  tHead: { display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr', padding: '14px 24px', fontSize: 11, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', borderBottom: '1px solid #F0D9DF', background: '#FFF5F7' },
-  tRow: { display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr', padding: '14px 24px', borderBottom: '1px solid #FAF0F3', alignItems: 'center', fontSize: 14 },
+  tHead: { display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 40px', padding: '14px 24px', fontSize: 11, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', borderBottom: '1px solid #F0D9DF', background: '#FFF5F7' },
+  tRow: { display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 40px', padding: '14px 24px', borderBottom: '1px solid #FAF0F3', alignItems: 'center', fontSize: 14 },
   avatar: (hue) => ({ width: 32, height: 32, borderRadius: '50%', background: `hsl(${hue}, 60%, 88%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: `hsl(${hue}, 50%, 40%)`, flexShrink: 0 }),
   badge: (type) => {
     const map = {
@@ -68,7 +68,8 @@ export default function Clients() {
         }
       })
       mc?.forEach(c => {
-        if (!map[c.email]) map[c.email] = { name: c.name, email: c.email, phone: c.phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null, isManual: true }
+        const key = c.email || `__mc_${c.id}`
+        if (!map[key]) map[key] = { name: c.name, email: c.email || '', phone: c.phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null, isManual: true, manualId: c.id }
       })
       setClients(Object.values(map))
     } catch (err) {
@@ -79,16 +80,16 @@ export default function Clients() {
   }
 
   async function addClient() {
-    if (!newClient.name.trim() || !newClient.email.trim()) return
+    if (!newClient.name.trim()) return
     setAddLoading(true); setAddError('')
-    const email = newClient.email.trim().toLowerCase()
+    const email = newClient.email.trim().toLowerCase() || null
     const { error } = await supabase.from('manual_clients').insert({
       name: newClient.name.trim(),
       email,
       phone: newClient.phone.trim() || null,
     })
-    if (error) { setAddError('Chyba – email možná již existuje.'); setAddLoading(false); return }
-    if (newClient.birthDate) {
+    if (error) { setAddError('Nepodařilo se přidat klienta.'); setAddLoading(false); return }
+    if (email && newClient.birthDate) {
       await supabase.from('client_profiles').upsert({ email, birth_date: newClient.birthDate }, { onConflict: 'email' })
     }
     setShowAddModal(false)
@@ -97,9 +98,19 @@ export default function Clients() {
     loadClients()
   }
 
+  async function deleteClient(client) {
+    if (!window.confirm(`Opravdu smazat klienta "${client.name}"? Tato akce je nevratná.`)) return
+    if (client.email) {
+      await supabase.from('client_notes').delete().eq('client_email', client.email)
+      await supabase.from('client_profiles').delete().eq('email', client.email)
+    }
+    await supabase.from('manual_clients').delete().eq('id', client.manualId)
+    loadClients()
+  }
+
   const filtered = clients.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.email.toLowerCase().includes(search.toLowerCase())
+    (c.email || '').toLowerCase().includes(search.toLowerCase())
   )
 
   const maxSessions = Math.max(...clients.map(c => c.sessions), 0)
@@ -120,7 +131,7 @@ export default function Clients() {
     if (!sortBy) return 0
     let av, bv
     if (sortBy === 'name') { av = a.name.toLowerCase(); bv = b.name.toLowerCase() }
-    else if (sortBy === 'email') { av = a.email.toLowerCase(); bv = b.email.toLowerCase() }
+    else if (sortBy === 'email') { av = (a.email || '').toLowerCase(); bv = (b.email || '').toLowerCase() }
     else if (sortBy === 'sessions') { av = a.sessions; bv = b.sessions }
     else if (sortBy === 'totalSpent') { av = a.totalSpent; bv = b.totalSpent }
     else if (sortBy === 'status') { av = statusOrder[getStatus(a)]; bv = statusOrder[getStatus(b)] }
@@ -148,18 +159,21 @@ export default function Clients() {
       {isMobile ? (
         <div>
           {filtered.map(c => {
-            const hue = getHue(c.email)
+            const hue = getHue(c.email || c.name)
             const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
             const status = getStatus(c)
             return (
-              <div key={c.email} style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '14px 16px', marginBottom: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(200,81,107,0.05)' }} onClick={() => setSelectedClient(c)}>
+              <div key={c.manualId || c.email} style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '14px 16px', marginBottom: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(200,81,107,0.05)' }} onClick={() => setSelectedClient(c)}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                   <div style={s.avatar(hue)}>{initials}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, color: '#2C1A22', fontSize: 15 }}>{c.name}</div>
-                    <div style={{ fontSize: 12, color: '#9B7E8A', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
+                    {c.email && <div style={{ fontSize: 12, color: '#9B7E8A', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>}
                   </div>
                   <span style={s.badge(status)}>{statusLabel[status]}</span>
+                  {c.isManual && c.manualId && (
+                    <button onClick={e => { e.stopPropagation(); deleteClient(c) }} title="Smazat klienta" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4ABB4', fontSize: 18, padding: '2px', lineHeight: 1 }}>🗑</button>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={{ flex: 1, background: '#FBF6F8', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
@@ -184,13 +198,14 @@ export default function Clients() {
                 {sortBy === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : <span style={{ opacity: 0.3 }}> ↕</span>}
               </span>
             ))}
+            <span />
           </div>
           {sorted.map((c, i) => {
-            const hue = getHue(c.email)
+            const hue = getHue(c.email || c.name)
             const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
             const status = getStatus(c)
             return (
-              <div key={c.email} style={{ ...s.tRow, background: i % 2 === 0 ? 'transparent' : 'rgba(200,81,107,0.015)', cursor: 'pointer' }} onClick={() => setSelectedClient(c)}>
+              <div key={c.manualId || c.email} style={{ ...s.tRow, background: i % 2 === 0 ? 'transparent' : 'rgba(200,81,107,0.015)', cursor: 'pointer' }} onClick={() => setSelectedClient(c)}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={s.avatar(hue)}>{initials}</div>
                   <div>
@@ -198,16 +213,31 @@ export default function Clients() {
                     {c.phone && <div style={{ fontSize: 11, color: '#9B7E8A' }}>{c.phone}</div>}
                   </div>
                 </div>
-                <span style={{ color: '#9B7E8A', fontSize: 13 }}>{c.email}</span>
+                <span style={{ color: '#9B7E8A', fontSize: 13 }}>{c.email || '–'}</span>
                 <span style={{ fontWeight: 700, color: '#2C1A22' }}>{c.sessions}</span>
                 <span style={{ fontWeight: 600, color: '#D4945A' }}>{c.totalSpent > 0 ? `${c.totalSpent} Kč` : '–'}</span>
                 <span style={s.badge(status)}>{statusLabel[status]}</span>
+                <span onClick={e => e.stopPropagation()}>
+                  {c.isManual && c.manualId && (
+                    <button onClick={() => deleteClient(c)} title="Smazat klienta" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4ABB4', fontSize: 16, padding: '2px 4px', lineHeight: 1, borderRadius: 6 }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#C8516B'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#C4ABB4'}>
+                      🗑
+                    </button>
+                  )}
+                </span>
               </div>
             )
           })}
         </div>
       )}
-      {selectedClient && <ClientDetailModal client={selectedClient} onClose={() => setSelectedClient(null)} />}
+      {selectedClient && (
+        <ClientDetailModal
+          client={selectedClient}
+          onClose={() => setSelectedClient(null)}
+          onDelete={selectedClient.isManual && selectedClient.manualId ? () => { setSelectedClient(null); deleteClient(selectedClient) } : null}
+        />
+      )}
 
       {showAddModal && (
         <div style={modalStyle} onClick={e => e.target === e.currentTarget && setShowAddModal(false)}>
@@ -218,7 +248,7 @@ export default function Clients() {
             </div>
             <label style={labelStyle}>Jméno a příjmení *</label>
             <input style={inputStyle} placeholder="Jana Nováková" value={newClient.name} onChange={e => setNewClient({ ...newClient, name: e.target.value })} />
-            <label style={labelStyle}>E-mail *</label>
+            <label style={labelStyle}>E-mail (volitelné)</label>
             <input style={inputStyle} type="email" placeholder="jana@email.cz" value={newClient.email} onChange={e => setNewClient({ ...newClient, email: e.target.value })} />
             <label style={labelStyle}>Telefon (volitelné)</label>
             <input style={inputStyle} placeholder="+420 777 888 999" value={newClient.phone} onChange={e => setNewClient({ ...newClient, phone: e.target.value })} />
@@ -227,7 +257,7 @@ export default function Clients() {
             {addError && <div style={{ fontSize: 13, color: '#C8516B', fontWeight: 600, marginBottom: 8 }}>⚠️ {addError}</div>}
             <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
               <button onClick={() => setShowAddModal(false)} style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1px solid #EBCFD8', background: '#fff', color: '#9B7E8A', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušit</button>
-              <button onClick={addClient} disabled={!newClient.name || !newClient.email || addLoading} style={{ flex: 2, padding: '11px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: (!newClient.name || !newClient.email || addLoading) ? 0.5 : 1 }}>
+              <button onClick={addClient} disabled={!newClient.name || addLoading} style={{ flex: 2, padding: '11px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: (!newClient.name || addLoading) ? 0.5 : 1 }}>
                 {addLoading ? 'Ukládám...' : 'Přidat klienta'}
               </button>
             </div>
