@@ -1,0 +1,14 @@
+{
+  "name": "FitBook – Trenér panel",
+  "short_name": "FitBook",
+  "description": "Trenér panel pro správu rezervací",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#C03468",
+  "theme_color": "#C03468",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

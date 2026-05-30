@@ -16,6 +16,16 @@ CREATE POLICY "Public insert" ON historical_sessions FOR INSERT WITH CHECK (true
 -- (Zisk = čistý příjem trenérky, u Stod již po odečtení nákladů na sál)
 INSERT INTO historical_sessions (session_date, session_name, attendance, revenue) VALUES
 -- Duben 2026
+('2026-04-27', 'Posilování na hudbu Zbůch',     10,  300),
+('2026-04-27', 'FIT Orient Zbůch',               3,  200),
+('2026-04-26', 'XXL cvičení Zbůch',              5,  250),
+('2026-04-22', 'XXL cvičení Stod',               7,  640),
+('2026-04-20', 'Posilování na hudbu Zbůch',      9,  300),
+('2026-04-20', 'FIT Orient Zbůch',               3,  200),
+('2026-04-19', 'XXL cvičení Zbůch',              5,  200),
+('2026-04-15', 'XXL cvičení Stod',               5,  400),
+('2026-04-13', 'Posilování na hudbu Zbůch',      7,  250),
+('2026-04-13', 'FIT Orient Zbůch',               3,  200),
 ('2026-04-12', 'XXL cvičení Zbůch',              4,  200),
 ('2026-04-08', 'XXL cvičení Stod',               6,  520),
 ('2026-04-01', 'XXL cvičení Stod',               5,  400),

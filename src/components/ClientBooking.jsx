@@ -196,8 +196,29 @@ export default function ClientBooking() {
   const [loading, setLoading] = useState(true)
   const [loggedInUser, setLoggedInUser] = useState(null)
   const [showCerts, setShowCerts] = useState(false)
+  const [installPrompt, setInstallPrompt] = useState(null)
+  const [showInstallBanner, setShowInstallBanner] = useState(false)
 
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
+
+  useEffect(() => {
+    if (localStorage.getItem('fitbook_install_dismissed')) return
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); setShowInstallBanner(true) }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  const handleInstall = async () => {
+    if (!installPrompt) return
+    installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+    if (outcome === 'accepted') { setShowInstallBanner(false); setInstallPrompt(null) }
+  }
+
+  const handleDismissInstall = () => {
+    setShowInstallBanner(false)
+    localStorage.setItem('fitbook_install_dismissed', '1')
+  }
 
   useEffect(() => { loadData() }, [monday])
 
@@ -225,6 +246,18 @@ export default function ClientBooking() {
   })
 
   return (
+    <>
+    {showInstallBanner && (
+      <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'linear-gradient(135deg, #F08DAE, #C03468)', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 2px 16px rgba(192,52,104,0.35)' }}>
+        <img src="/icon-192.png" style={{ width: 38, height: 38, borderRadius: 8, flexShrink: 0 }} alt="" />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.3 }}>Přidejte si aplikaci na plochu</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 1 }}>Rychlý přístup k rezervacím</div>
+        </div>
+        <button onClick={handleInstall} style={{ padding: '8px 14px', borderRadius: 8, background: 'white', border: 'none', color: '#C03468', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Instalovat</button>
+        <button onClick={handleDismissInstall} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.75)', cursor: 'pointer', fontSize: 22, padding: '0 2px', lineHeight: 1, flexShrink: 0 }}>×</button>
+      </div>
+    )}
     <div style={s.wrap}>
       <div style={s.hero}>
         <div style={s.title}>Barbora Knížková 🌸</div>
@@ -296,5 +329,6 @@ export default function ClientBooking() {
       {selected && <BookingModal slot={selected} prefill={prefill} onClose={async () => { setSelected(null); await loadData() }} />}
       {showCerts && <CertifikatyModal onClose={() => setShowCerts(false)} />}
     </div>
+    </>
   )
 }

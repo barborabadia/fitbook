@@ -3,7 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#C03468" />
     <title>Barbora Knížková</title>
+    <script>
+      var l = document.createElement('link')
+      l.rel = 'manifest'
+      l.href = window.location.pathname.startsWith('/book') ? '/manifest-book.json' : '/manifest.json'
+      document.head.appendChild(l)
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
+        })
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
