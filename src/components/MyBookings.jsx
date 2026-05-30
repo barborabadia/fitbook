@@ -46,7 +46,7 @@ export default function MyBookings({ prefillEmail }) {
   async function fetchBookings(emailVal) {
     if (!emailVal?.trim()) return
     setLoading(true); setError(''); setSuccess('')
-    const { data, error: err } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, duration_minutes, color, price)').eq('client_email', emailVal.trim().toLowerCase()).order('created_at', { ascending: false })
+    const { data, error: err } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, duration_minutes, color, price, notes)').eq('client_email', emailVal.trim().toLowerCase()).order('created_at', { ascending: false })
     if (err) { setError('Chyba při načítání.'); setLoading(false); return }
     setBookings(data || [])
     setLoading(false)
@@ -220,6 +220,12 @@ export default function MyBookings({ prefillEmail }) {
                       </div>
                       {b.price > 0 && <div style={{ fontSize: 13, color: '#9B7E8A', fontWeight: 600 }}>{b.price} Kč</div>}
                     </div>
+                    {slot.notes && b.status === 'confirmed' && (
+                      <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(200,81,107,0.05)', borderRadius: 8, borderLeft: '3px solid rgba(200,81,107,0.3)' }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 3 }}>Co jsme cvičili</div>
+                        <div style={{ fontSize: 13, color: '#9B7E8A' }}>{slot.notes}</div>
+                      </div>
+                    )}
                   </div>
                 )
               })}
