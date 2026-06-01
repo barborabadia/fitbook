@@ -223,7 +223,7 @@ export default function Statistics() {
 
   // Nejoblíbenější den v týdnu
   const byDayOfWeek = [0, 0, 0, 0, 0, 0, 0]
-  periodConfirmed.forEach(b => {
+  periodConfirmed.filter(b => b.training_slots?.name === 'Osobní trénink').forEach(b => {
     const date = b.training_slots?.slot_date
     if (!date) return
     const day = new Date(date).getDay()
@@ -567,7 +567,7 @@ export default function Statistics() {
         </div>
 
         <div style={s.card}>
-          <div style={s.cardTitle}>Nejoblíbenější den v týdnu</div>
+          <div style={s.cardTitle}>Nejoblíbenější den (osobní tréninky)</div>
           {byDayOfWeek.every(v => v === 0) && <div style={s.empty}>Žádná data</div>}
           {!byDayOfWeek.every(v => v === 0) && (
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 100, marginBottom: 16 }}>
