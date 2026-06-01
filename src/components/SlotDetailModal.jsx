@@ -74,25 +74,25 @@ export default function SlotDetailModal({ slot, onClose }) {
 
   async function cancelBooking(bookingId) {
     await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId)
-    loadBookings()
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'cancelled' } : b))
   }
 
   async function deleteBooking(bookingId, clientName) {
     if (!window.confirm(`Opravdu smazat rezervaci klienta "${clientName}"? Tato akce je nevratná.`)) return
     const { error } = await supabase.from('bookings').delete().eq('id', bookingId)
     if (error) { alert('Chyba při mazání: ' + error.message); return }
-    loadBookings()
+    setBookings(prev => prev.filter(b => b.id !== bookingId))
   }
 
   async function setPaid(bookingId, method) {
     await supabase.from('bookings').update({ paid: true, payment_method: method }).eq('id', bookingId)
     setPaymentPickerId(null)
-    loadBookings()
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, paid: true, payment_method: method } : b))
   }
 
   async function unsetPaid(bookingId) {
     await supabase.from('bookings').update({ paid: false, payment_method: null }).eq('id', bookingId)
-    loadBookings()
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, paid: false, payment_method: null } : b))
   }
 
   async function openMoveBooking(bookingId) {
@@ -126,14 +126,14 @@ export default function SlotDetailModal({ slot, onClose }) {
     const newType = currentType === 'duo' ? 'solo' : 'duo'
     const newPrice = newType === 'duo' ? 300 : (slot.price || 0)
     await supabase.from('bookings').update({ booking_type: newType, price: newPrice }).eq('id', bookingId)
-    loadBookings()
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, booking_type: newType, price: newPrice } : b))
   }
 
   async function savePrice(bookingId) {
     const val = parseInt(editingPriceValue, 10)
     if (!isNaN(val) && val >= 0) {
       await supabase.from('bookings').update({ price: val }).eq('id', bookingId)
-      loadBookings()
+      setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, price: val } : b))
     }
     setEditingPriceId(null)
   }
