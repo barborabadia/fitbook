@@ -104,7 +104,12 @@ export default function Clients() {
       await supabase.from('client_notes').delete().eq('client_email', client.email)
       await supabase.from('client_profiles').delete().eq('email', client.email)
     }
-    await supabase.from('manual_clients').delete().eq('id', client.manualId)
+    const { error } = await supabase.from('manual_clients').delete().eq('id', client.manualId)
+    if (error) {
+      console.error('Chyba při mazání klienta:', error)
+      alert('Nepodařilo se smazat klienta: ' + error.message)
+      return
+    }
     loadClients()
   }
 
