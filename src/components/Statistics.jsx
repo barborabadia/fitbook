@@ -18,6 +18,7 @@ const DAYS_SHORT = ['Po','Út','St','Čt','Pá','So','Ne']
 const TYPE_COLORS = {
   'Osobní trénink': '#C8516B',
   'XXL cvičení - Stod': '#E74C3C',
+  'Posilování na hudbu - Stod': '#E74C3C',
   'Funkční trénink - Stod': '#E74C3C',
   'XXL cvičení - Zbůch': '#E74C3C',
   'Posilování na hudbu - Zbůch': '#E74C3C',

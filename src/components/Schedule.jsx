@@ -351,6 +351,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 <optgroup label="Stod">
                   <option>Osobní trénink</option>
                   <option>XXL cvičení - Stod</option>
+                  <option>Posilování na hudbu - Stod</option>
                   <option>Funkční trénink - Stod</option>
                 </optgroup>
                 <optgroup label="Zbůch">
@@ -486,6 +487,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
               </optgroup>
               <optgroup label="Stod">
                 <option>XXL cvičení - Stod</option>
+                <option>Posilování na hudbu - Stod</option>
                 <option>Funkční trénink - Stod</option>
               </optgroup>
               <optgroup label="Zbůch">
