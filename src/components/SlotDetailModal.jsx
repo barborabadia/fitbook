@@ -79,7 +79,8 @@ export default function SlotDetailModal({ slot, onClose }) {
 
   async function deleteBooking(bookingId, clientName) {
     if (!window.confirm(`Opravdu smazat rezervaci klienta "${clientName}"? Tato akce je nevratná.`)) return
-    await supabase.from('bookings').delete().eq('id', bookingId)
+    const { error } = await supabase.from('bookings').delete().eq('id', bookingId)
+    if (error) { alert('Chyba při mazání: ' + error.message); return }
     loadBookings()
   }
 
