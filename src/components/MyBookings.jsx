@@ -43,6 +43,17 @@ export default function MyBookings({ prefillEmail }) {
     if (prefillEmail) { setEmail(prefillEmail); fetchBookings(prefillEmail) }
   }, [prefillEmail])
 
+  // Auto-refresh při přepnutí zpět na stránku (jen pokud jsou rezervace už načtené)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && bookings !== null) {
+        fetchBookings(email)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [email, bookings])
+
   async function fetchBookings(emailVal) {
     if (!emailVal?.trim()) return
     setLoading(true); setError(''); setSuccess('')

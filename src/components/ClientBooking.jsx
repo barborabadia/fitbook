@@ -222,6 +222,18 @@ export default function ClientBooking() {
 
   useEffect(() => { loadData() }, [monday])
 
+  // Auto-refresh: každých 30 sekund a při přepnutí zpět na stránku
+  useEffect(() => {
+    if (tab !== 'book') return
+    const onVisible = () => { if (document.visibilityState === 'visible') loadData() }
+    document.addEventListener('visibilitychange', onVisible)
+    const interval = setInterval(loadData, 30_000)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      clearInterval(interval)
+    }
+  }, [tab, monday])
+
   async function loadData() {
     setLoading(true)
     const { data: sl } = await supabase.from('training_slots').select('*').gte('slot_date', weekDates[0]).lte('slot_date', weekDates[6]).eq('is_cancelled', false).order('slot_date').order('start_time')
