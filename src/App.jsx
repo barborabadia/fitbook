@@ -48,6 +48,18 @@ export default function App() {
     return () => window.removeEventListener('resize', handler)
   }, [])
 
+  useEffect(() => {
+    if (!isLoggedIn) return
+    const refresh = () => setScheduleRefresh(r => r + 1)
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
+    document.addEventListener('visibilitychange', onVisible)
+    const interval = setInterval(refresh, 60_000)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      clearInterval(interval)
+    }
+  }, [isLoggedIn])
+
   if (isClientView) return <div style={s.root}><ClientBooking /></div>
   if (!isLoggedIn) return <div style={s.root}><AdminLogin onLogin={() => setIsLoggedIn(true)} /></div>
 
@@ -66,7 +78,7 @@ export default function App() {
         </div>
         <div style={{ padding: '68px 12px 76px' }}>
           {view === 'schedule' && <Schedule onSelectSlot={setSelectedSlot} refreshKey={scheduleRefresh} isMobile />}
-          {view === 'clients' && <Clients />}
+          {view === 'clients' && <Clients refreshKey={scheduleRefresh} />}
           {view === 'stats' && <Statistics />}
         </div>
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #EBCFD8', display: 'flex', zIndex: 50 }}>
@@ -113,7 +125,7 @@ export default function App() {
       </div>
       <div style={s.main}>
         {view === 'schedule' && <Schedule onSelectSlot={setSelectedSlot} refreshKey={scheduleRefresh} />}
-        {view === 'clients' && <Clients />}
+        {view === 'clients' && <Clients refreshKey={scheduleRefresh} />}
         {view === 'stats' && <Statistics />}
       </div>
       {selectedSlot && <SlotDetailModal slot={selectedSlot} onClose={() => { setSelectedSlot(null); setScheduleRefresh(r => r + 1) }} />}

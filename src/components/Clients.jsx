@@ -33,7 +33,7 @@ const modalStyle = { position: 'fixed', inset: 0, background: 'rgba(44,26,34,0.5
 const inputStyle = { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 10 }
 const labelStyle = { fontSize: 11, fontWeight: 600, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6, marginTop: 12 }
 
-export default function Clients() {
+export default function Clients({ refreshKey }) {
   const [clients, setClients] = useState([])
   const [search, setSearch] = useState('')
   const [selectedClient, setSelectedClient] = useState(null)
@@ -46,7 +46,7 @@ export default function Clients() {
   const [addError, setAddError] = useState('')
   const isMobile = window.innerWidth < 768
 
-  useEffect(() => { loadClients() }, [])
+  useEffect(() => { loadClients() }, [refreshKey])
 
   async function loadClients() {
     setLoading(true)
