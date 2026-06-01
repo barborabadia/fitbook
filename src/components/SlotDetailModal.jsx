@@ -77,6 +77,12 @@ export default function SlotDetailModal({ slot, onClose }) {
     loadBookings()
   }
 
+  async function deleteBooking(bookingId, clientName) {
+    if (!window.confirm(`Opravdu smazat rezervaci klienta "${clientName}"? Tato akce je nevratná.`)) return
+    await supabase.from('bookings').delete().eq('id', bookingId)
+    loadBookings()
+  }
+
   async function setPaid(bookingId, method) {
     await supabase.from('bookings').update({ paid: true, payment_method: method }).eq('id', bookingId)
     setPaymentPickerId(null)
@@ -341,6 +347,7 @@ export default function SlotDetailModal({ slot, onClose }) {
                   ))}
                   <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset' }} onClick={() => openMoveBooking(b.id)}>Přesunout</button>
                   <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset' }} onClick={() => cancelBooking(b.id)}>Zrušit</button>
+                  <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset', color: '#C8516B', borderColor: 'rgba(200,81,107,0.3)' }} onClick={() => deleteBooking(b.id, b.client_name)}>Smazat</button>
                 </div>
                 {movingBookingId === b.id && (
                   <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 10, background: '#fff', border: '1px solid #EBCFD8', borderRadius: 10, padding: 8, boxShadow: '0 4px 16px rgba(200,81,107,0.12)', minWidth: 220, maxHeight: 240, overflowY: 'auto' }}>
@@ -387,6 +394,7 @@ export default function SlotDetailModal({ slot, onClose }) {
                     </div>
                     <div style={s.clientMeta}>📧 {b.client_email}</div>
                   </div>
+                  <button style={{ ...s.cancelBtn, color: '#C8516B', borderColor: 'rgba(200,81,107,0.3)', opacity: 1 }} onClick={() => deleteBooking(b.id, b.client_name)}>Smazat</button>
                 </div>
               )
             })}
