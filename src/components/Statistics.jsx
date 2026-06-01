@@ -150,11 +150,15 @@ export default function Statistics() {
   const periodConfirmed = confirmed.filter(b => !start || inPeriod(b, start, null))
   const prevConfirmed = confirmed.filter(b => prevStart && inPeriod(b, prevStart, prevEnd))
 
-  const totalRevenue = periodConfirmed.reduce((a, b) => a + (b.price || 0), 0)
+  // Skupinové tréninky kde klient platí organizátorovi, ne mně
+  const isCash = b => b.training_slots?.name?.includes('Zbůch') || b.training_slots?.name?.includes('Březín') || b.training_slots?.name?.includes('Holýšov')
 
-  const paidRevenue = periodConfirmed.filter(b => b.paid).reduce((a, b) => a + (b.price || 0), 0)
+  // Pouze tréninky kde klient platí přímo mně
+  const directPayConfirmed = periodConfirmed.filter(b => !isCash(b))
+  const totalRevenue = directPayConfirmed.reduce((a, b) => a + (b.price || 0), 0)
+  const paidRevenue = directPayConfirmed.filter(b => b.paid).reduce((a, b) => a + (b.price || 0), 0)
   const unpaidRevenue = totalRevenue - paidRevenue
-  const unpaidBookings = periodConfirmed.filter(b => !b.paid && b.price > 0)
+  const unpaidBookings = directPayConfirmed.filter(b => !b.paid && b.price > 0)
 
   // Salon costs for Stod group trainings only
   const stodSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
@@ -171,7 +175,6 @@ export default function Statistics() {
   const brezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
   const brezinTotalProfit = brezinSlotIds.size * 500
 
-  const isCash = b => b.training_slots?.name?.includes('Zbůch') || b.training_slots?.name?.includes('Březín') || b.training_slots?.name?.includes('Holýšov')
   const nonCashRevenue = periodConfirmed.filter(b => !isCash(b)).reduce((a, b) => a + (b.price || 0), 0)
 
   // Holýšov per-person profit (150 Kč příjem - 70 Kč náklady = 80 Kč čistý zisk/os.)

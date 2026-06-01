@@ -175,6 +175,12 @@ export default function SlotDetailModal({ slot, onClose }) {
   const cancelled = bookings.filter(b => b.status === 'cancelled')
   const ratio = confirmed.length / slot.capacity
   const dayName = getDayName(slot.slot_date)
+  const isZbuch = slot.name?.includes('Zbůch')
+  function zbuchProfit(count) {
+    if (count >= 9) return 300
+    if (count >= 5) return 250
+    return 200
+  }
 
   return (
     <div style={s.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
@@ -196,10 +202,17 @@ export default function SlotDetailModal({ slot, onClose }) {
             <div style={s.statLabel}>Rezervováno</div>
             <div style={{ ...s.statVal, color: ratio >= 1 ? '#C8516B' : '#2C1A22' }}>{confirmed.length}</div>
           </div>
-          <div style={s.stat}>
-            <div style={s.statLabel}>Volná místa</div>
-            <div style={{ ...s.statVal, color: '#5B9E98' }}>{Math.max(0, slot.capacity - confirmed.length)}</div>
-          </div>
+          {isZbuch ? (
+            <div style={s.stat}>
+              <div style={s.statLabel}>Odměna za lekci</div>
+              <div style={{ ...s.statVal, color: '#5B9E98' }}>{confirmed.length > 0 ? `${zbuchProfit(confirmed.length)} Kč` : '–'}</div>
+            </div>
+          ) : (
+            <div style={s.stat}>
+              <div style={s.statLabel}>Volná místa</div>
+              <div style={{ ...s.statVal, color: '#5B9E98' }}>{Math.max(0, slot.capacity - confirmed.length)}</div>
+            </div>
+          )}
         </div>
 
         <div style={s.bar}>
@@ -287,7 +300,7 @@ export default function SlotDetailModal({ slot, onClose }) {
                 <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
                   <span style={s.clientName}>{b.client_name}</span>
                   {isPersonal && <span title="Klikni pro změnu" style={{ ...s.badge(b.booking_type), cursor: 'pointer' }} onClick={() => toggleBookingType(b.id, b.booking_type)}>{b.booking_type === 'duo' ? 'Duo' : 'Sólo'}</span>}
-                  {editingPriceId === b.id ? (
+                  {!isZbuch && (editingPriceId === b.id ? (
                     <input
                       autoFocus
                       type="number"
@@ -305,7 +318,7 @@ export default function SlotDetailModal({ slot, onClose }) {
                     >
                       {b.price ?? 0} Kč
                     </span>
-                  )}
+                  ))}
                 </div>
                 <div style={{ ...s.clientMeta, wordBreak: 'break-all' }}>
                   📧 {b.client_email}
@@ -314,7 +327,7 @@ export default function SlotDetailModal({ slot, onClose }) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: isMobile ? '100%' : 'auto', marginTop: isMobile ? 10 : 0, position: 'relative' }}>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  {b.paid ? (
+                  {!isZbuch && (b.paid ? (
                     <button style={{ ...s.paidBtn(true), flex: isMobile ? 1 : 'unset' }} onClick={() => unsetPaid(b.id)}>
                       ✓ {paymentLabel || 'Zaplaceno'}
                     </button>
@@ -325,7 +338,7 @@ export default function SlotDetailModal({ slot, onClose }) {
                     >
                       Zaplaceno?
                     </button>
-                  )}
+                  ))}
                   <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset' }} onClick={() => openMoveBooking(b.id)}>Přesunout</button>
                   <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset' }} onClick={() => cancelBooking(b.id)}>Zrušit</button>
                 </div>
