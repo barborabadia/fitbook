@@ -322,6 +322,18 @@ export default function Statistics() {
 
   const cancellationRate = bookings.length > 0 ? Math.round(cancelled.length / bookings.length * 100) : 0
 
+  // Normalizace historických názvů na aktuální (bez pomlčky → s pomlčkou)
+  const HIST_NAME_MAP = {
+    'XXL cvičení Zbůch': 'XXL cvičení - Zbůch',
+    'FIT Orient Zbůch': 'FIT Orient - Zbůch',
+    'Posilování na hudbu Zbůch': 'Posilování na hudbu - Zbůch',
+    'XXL cvičení Stod': 'XXL cvičení - Stod',
+    'Funkční trénink pro ženy Stod': 'Funkční trénink - Stod',
+    'XXL cvičení Holýšov': 'XXL cvičení - Holýšov',
+    'Cvičení Březín': 'Cvičení Březín',
+  }
+  function normalizeSessionName(name) { return HIST_NAME_MAP[name] || name }
+
   // Příjmy dle typu tréninku – jen zaplacené (kromě skupinových dle klíče)
   const revenueByType = {}
 
@@ -365,6 +377,11 @@ export default function Statistics() {
   periodConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).forEach(b => {
     const name = b.training_slots.name
     revenueByType[name] = (revenueByType[name] || 0) + 80
+  })
+  // Historická data – revenue je již čistý zisk (u Stod po odečtení nájmu)
+  periodHistorical.forEach(h => {
+    const name = normalizeSessionName(h.session_name)
+    revenueByType[name] = (revenueByType[name] || 0) + (h.revenue || 0)
   })
   const maxTypeRevenue = Math.max(...Object.values(revenueByType).filter(v => v > 0), 1)
 
