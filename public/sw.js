@@ -1,4 +1,4 @@
-const CACHE = 'fitbook-v2'
+const CACHE = 'fitbook-v3'
 
 self.addEventListener('install', () => { self.skipWaiting() })
 self.addEventListener('activate', (e) => {
