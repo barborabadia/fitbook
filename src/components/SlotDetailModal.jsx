@@ -300,55 +300,43 @@ export default function SlotDetailModal({ slot, onClose }) {
           const isPersonal = slot.name === 'Osobní trénink'
           const paymentLabel = b.payment_method === 'cash' ? '💵 Hotově' : b.payment_method === 'transfer' ? '🏦 Na účet' : ''
           return (
-            <div key={b.id} style={{ ...s.clientCard(b.paid), flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-              <div style={s.avatar(hue)}>{initials}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
-                  <span style={s.clientName}>{b.client_name}</span>
-                  {isPersonal && <span title="Klikni pro změnu" style={{ ...s.badge(b.booking_type), cursor: 'pointer' }} onClick={() => toggleBookingType(b.id, b.booking_type)}>{b.booking_type === 'duo' ? 'Duo' : 'Sólo'}</span>}
-                  {!isZbuch && (editingPriceId === b.id ? (
-                    <input
-                      autoFocus
-                      type="number"
-                      value={editingPriceValue}
-                      onChange={e => setEditingPriceValue(e.target.value)}
-                      onBlur={() => savePrice(b.id)}
-                      onKeyDown={e => { if (e.key === 'Enter') savePrice(b.id); if (e.key === 'Escape') setEditingPriceId(null) }}
-                      style={{ width: 64, fontSize: 11, padding: '2px 6px', borderRadius: 6, border: '1px solid #C8516B', fontFamily: 'inherit', outline: 'none', marginLeft: 4 }}
-                    />
-                  ) : (
-                    <span
-                      title="Klikni pro úpravu ceny"
-                      onClick={() => { setEditingPriceId(b.id); setEditingPriceValue(String(b.price ?? 0)) }}
-                      style={{ fontSize: 11, color: '#C8516B', fontWeight: 600, marginLeft: 4, cursor: 'pointer', borderBottom: '1px dashed #C8516B' }}
-                    >
-                      {b.price ?? 0} Kč
-                    </span>
-                  ))}
+            <div key={b.id} style={{ ...s.clientCard(b.paid), flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+              {/* Řádek 1: avatar + jméno + zaplaceno */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={s.avatar(hue)}>{initials}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={s.clientName}>{b.client_name}</span>
+                    {isPersonal && <span title="Klikni pro změnu" style={{ ...s.badge(b.booking_type), cursor: 'pointer' }} onClick={() => toggleBookingType(b.id, b.booking_type)}>{b.booking_type === 'duo' ? 'Duo' : 'Sólo'}</span>}
+                    {!isZbuch && (editingPriceId === b.id ? (
+                      <input autoFocus type="number" value={editingPriceValue}
+                        onChange={e => setEditingPriceValue(e.target.value)}
+                        onBlur={() => savePrice(b.id)}
+                        onKeyDown={e => { if (e.key === 'Enter') savePrice(b.id); if (e.key === 'Escape') setEditingPriceId(null) }}
+                        style={{ width: 64, fontSize: 11, padding: '2px 6px', borderRadius: 6, border: '1px solid #C8516B', fontFamily: 'inherit', outline: 'none' }}
+                      />
+                    ) : (
+                      <span title="Klikni pro úpravu ceny" onClick={() => { setEditingPriceId(b.id); setEditingPriceValue(String(b.price ?? 0)) }}
+                        style={{ fontSize: 11, color: '#C8516B', fontWeight: 600, cursor: 'pointer', borderBottom: '1px dashed #C8516B' }}>
+                        {b.price ?? 0} Kč
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ ...s.clientMeta, marginTop: 2 }}>
+                    📧 {b.client_email}{b.client_phone && <span> · 📱 {b.client_phone}</span>}
+                  </div>
                 </div>
-                <div style={{ ...s.clientMeta, wordBreak: 'break-all' }}>
-                  📧 {b.client_email}
-                  {b.client_phone && <span> · 📱 {b.client_phone}</span>}
-                </div>
+                {!isZbuch && (b.paid ? (
+                  <button style={s.paidBtn(true)} onClick={() => unsetPaid(b.id)}>✓ {paymentLabel || 'Zaplaceno'}</button>
+                ) : (
+                  <button style={s.paidBtn(false)} onClick={() => setPaymentPickerId(paymentPickerId === b.id ? null : b.id)}>Zaplaceno?</button>
+                ))}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: isMobile ? '100%' : 'auto', marginTop: isMobile ? 10 : 0, position: 'relative' }}>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {!isZbuch && (b.paid ? (
-                    <button style={{ ...s.paidBtn(true), flex: isMobile ? 1 : 'unset' }} onClick={() => unsetPaid(b.id)}>
-                      ✓ {paymentLabel || 'Zaplaceno'}
-                    </button>
-                  ) : (
-                    <button
-                      style={{ ...s.paidBtn(false), flex: isMobile ? 1 : 'unset' }}
-                      onClick={() => setPaymentPickerId(paymentPickerId === b.id ? null : b.id)}
-                    >
-                      Zaplaceno?
-                    </button>
-                  ))}
-                  <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset' }} onClick={() => openMoveBooking(b.id)}>Přesunout</button>
-                  <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset' }} onClick={() => cancelBooking(b.id)}>Zrušit</button>
-                  <button style={{ ...s.cancelBtn, flex: isMobile ? 1 : 'unset', color: '#C8516B', borderColor: 'rgba(200,81,107,0.3)' }} onClick={() => deleteBooking(b.id, b.client_name)}>Smazat</button>
-                </div>
+              {/* Řádek 2: akční tlačítka + dropdowny */}
+              <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', position: 'relative' }}>
+                <button style={s.cancelBtn} onClick={() => openMoveBooking(b.id)}>Přesunout</button>
+                <button style={s.cancelBtn} onClick={() => cancelBooking(b.id)}>Zrušit</button>
+                <button style={{ ...s.cancelBtn, color: '#C8516B', borderColor: 'rgba(200,81,107,0.3)' }} onClick={() => deleteBooking(b.id, b.client_name)}>Smazat</button>
                 {movingBookingId === b.id && (
                   <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 10, background: '#fff', border: '1px solid #EBCFD8', borderRadius: 10, padding: 8, boxShadow: '0 4px 16px rgba(200,81,107,0.12)', minWidth: 220, maxHeight: 240, overflowY: 'auto' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6, padding: '0 4px' }}>Přesunout na termín</div>
