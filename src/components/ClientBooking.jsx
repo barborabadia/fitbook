@@ -187,6 +187,9 @@ function CertifikatyModal({ onClose }) {
   )
 }
 
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+const isInStandaloneMode = () => window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches
+
 export default function ClientBooking() {
   const [tab, setTab] = useState('book')
   const [monday, setMonday] = useState(getMonday())
@@ -198,11 +201,17 @@ export default function ClientBooking() {
   const [showCerts, setShowCerts] = useState(false)
   const [installPrompt, setInstallPrompt] = useState(null)
   const [showInstallBanner, setShowInstallBanner] = useState(false)
+  const [showIOSBanner, setShowIOSBanner] = useState(false)
 
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
 
   useEffect(() => {
     if (localStorage.getItem('fitbook_install_dismissed')) return
+    if (isInStandaloneMode()) return
+    if (isIOS) {
+      setShowIOSBanner(true)
+      return
+    }
     const handler = (e) => { e.preventDefault(); setInstallPrompt(e); setShowInstallBanner(true) }
     window.addEventListener('beforeinstallprompt', handler)
     return () => window.removeEventListener('beforeinstallprompt', handler)
@@ -217,6 +226,7 @@ export default function ClientBooking() {
 
   const handleDismissInstall = () => {
     setShowInstallBanner(false)
+    setShowIOSBanner(false)
     localStorage.setItem('fitbook_install_dismissed', '1')
   }
 
@@ -268,6 +278,24 @@ export default function ClientBooking() {
         </div>
         <button onClick={handleInstall} style={{ padding: '8px 14px', borderRadius: 8, background: 'white', border: 'none', color: '#C03468', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Instalovat</button>
         <button onClick={handleDismissInstall} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.75)', cursor: 'pointer', fontSize: 22, padding: '0 2px', lineHeight: 1, flexShrink: 0 }}>×</button>
+      </div>
+    )}
+    {showIOSBanner && (
+      <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'linear-gradient(135deg, #F08DAE, #C03468)', padding: '14px 20px', boxShadow: '0 2px 16px rgba(192,52,104,0.35)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+          <img src="/icon-192.png" style={{ width: 38, height: 38, borderRadius: 8, flexShrink: 0 }} alt="" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'white', lineHeight: 1.3 }}>Přidejte si aplikaci na plochu</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 1 }}>Rychlý přístup k rezervacím</div>
+          </div>
+          <button onClick={handleDismissInstall} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.75)', cursor: 'pointer', fontSize: 22, padding: '0 2px', lineHeight: 1, flexShrink: 0 }}>×</button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '10px 14px' }}>
+          <span style={{ fontSize: 20 }}>⬆️</span>
+          <div style={{ fontSize: 12, color: 'white', lineHeight: 1.5 }}>
+            Klepněte na <strong>Sdílet</strong> (ikona se šipkou nahoru) a pak na <strong>Přidat na plochu</strong>
+          </div>
+        </div>
       </div>
     )}
     <div style={s.wrap}>
