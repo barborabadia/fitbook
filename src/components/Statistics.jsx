@@ -186,6 +186,7 @@ export default function Statistics() {
 
   const netRevenue = nonCashRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + holysovProfit + historicalRevenue
 
+
   // Previous period net
   const prevStodSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
   const prevZbuchBySlot = {}
@@ -426,7 +427,6 @@ export default function Statistics() {
             {netRevenue.toLocaleString('cs-CZ')} Kč
             <Trend current={netRevenue} previous={prevNetRevenue} />
           </div>
-          <div style={s.statSub}>{zbuchTotalProfit > 0 ? `Zbůch: +${zbuchTotalProfit} Kč` : ''}{brezinTotalProfit > 0 ? `${zbuchTotalProfit > 0 ? ' · ' : ''}Březín: +${brezinTotalProfit} Kč` : ''}{holysovProfit > 0 ? `${zbuchTotalProfit > 0 || brezinTotalProfit > 0 ? ' · ' : ''}Holýšov: +${holysovProfit} Kč` : ''}</div>
         </div>
         <div style={s.stat}>
           <div style={s.statLabel}>Obsazenost týden</div>
