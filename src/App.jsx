@@ -49,6 +49,11 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    // Vynutit aktualizaci service workeru při každém spuštění aplikace
+    navigator.serviceWorker?.getRegistration().then(reg => reg?.update())
+  }, [])
+
+  useEffect(() => {
     if (!isLoggedIn) return
     const refresh = () => setScheduleRefresh(r => r + 1)
     const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
@@ -74,7 +79,10 @@ export default function App() {
             <div style={{ ...s.logoText, fontSize: 17 }}>Barbora<span style={s.logoAccent}> Knížková</span> 🌸</div>
             <div style={{ ...s.logoSub, fontSize: 10 }}>trenér panel</div>
           </div>
-          <button onClick={logout} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#BFA0AD', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' }}>Odhlásit</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setScheduleRefresh(r => r + 1)} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#C8516B', cursor: 'pointer', fontSize: 16, fontFamily: 'inherit' }}>↻</button>
+            <button onClick={logout} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#BFA0AD', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' }}>Odhlásit</button>
+          </div>
         </div>
         <div style={{ padding: '68px 12px 76px' }}>
           {view === 'schedule' && <Schedule onSelectSlot={setSelectedSlot} refreshKey={scheduleRefresh} isMobile />}
