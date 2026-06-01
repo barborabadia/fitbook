@@ -188,6 +188,12 @@ export default function MyBookings({ prefillEmail }) {
                         : <div style={s.disabledBtn}>Nelze zrušit</div>
                       )}
                     </div>
+                    {slot.notes && !cancelled && (
+                      <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(200,81,107,0.05)', borderRadius: 8, borderLeft: '3px solid rgba(200,81,107,0.3)' }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 3 }}>Poznámka k tréninku</div>
+                        <div style={{ fontSize: 13, color: '#9B7E8A' }}>{slot.notes}</div>
+                      </div>
+                    )}
                     {confirmCancel?.id === b.id && (
                       <div style={s.confirmBox}>
                         <div style={{ fontSize: 13, color: '#9B7E8A', marginBottom: 12 }}>Opravdu chceš zrušit tuto rezervaci?</div>
