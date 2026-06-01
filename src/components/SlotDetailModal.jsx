@@ -267,21 +267,27 @@ export default function SlotDetailModal({ slot, onClose }) {
               onChange={e => setClientSearch(e.target.value)}
             />
             <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #EBCFD8', borderRadius: 8, background: '#fff' }}>
-              {allClients.filter(c => c.name.toLowerCase().includes(clientSearch.toLowerCase()) || c.email.toLowerCase().includes(clientSearch.toLowerCase())).slice(0, 20).map(c => (
-                <div
-                  key={c.email}
-                  onClick={() => addManualBooking(c)}
-                  style={{ padding: '10px 12px', borderBottom: '1px solid #FAF0F3', cursor: 'pointer', fontSize: 13 }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,81,107,0.05)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ fontWeight: 600, color: '#2C1A22' }}>{c.name}</div>
-                  <div style={{ fontSize: 11, color: '#9B7E8A' }}>{c.email}{c.phone ? ` · ${c.phone}` : ''}</div>
-                </div>
-              ))}
-              {allClients.filter(c => c.name.toLowerCase().includes(clientSearch.toLowerCase()) || c.email.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
-                <div style={{ padding: '16px', textAlign: 'center', color: '#BFA0AD', fontSize: 13 }}>Žádný klient nenalezen</div>
-              )}
+              {(() => {
+                const q = clientSearch.toLowerCase()
+                const filtered = allClients.filter(c =>
+                  (c.name || '').toLowerCase().includes(q) ||
+                  (c.email || '').toLowerCase().includes(q)
+                )
+                return filtered.length === 0
+                  ? <div style={{ padding: '16px', textAlign: 'center', color: '#BFA0AD', fontSize: 13 }}>Žádný klient nenalezen</div>
+                  : filtered.slice(0, 20).map(c => (
+                    <div
+                      key={c.email || c.name}
+                      onClick={() => addManualBooking(c)}
+                      style={{ padding: '10px 12px', borderBottom: '1px solid #FAF0F3', cursor: 'pointer', fontSize: 13 }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,81,107,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div style={{ fontWeight: 600, color: '#2C1A22' }}>{c.name}</div>
+                      <div style={{ fontSize: 11, color: '#9B7E8A' }}>{c.email}{c.phone ? ` · ${c.phone}` : ''}</div>
+                    </div>
+                  ))
+              })()}
             </div>
             {addError && <div style={{ fontSize: 12, color: '#C8516B', marginTop: 8, fontWeight: 600 }}>⚠️ {addError}</div>}
             {addLoading && <div style={{ fontSize: 12, color: '#9B7E8A', marginTop: 8 }}>Ukládám...</div>}
