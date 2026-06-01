@@ -99,16 +99,18 @@ export default function Clients({ refreshKey }) {
   }
 
   async function deleteClient(client) {
-    if (!window.confirm(`Opravdu smazat klienta "${client.name}"? Tato akce je nevratná.`)) return
+    const msg = client.manualId
+      ? `Opravdu smazat klienta "${client.name}"? Tato akce je nevratná.`
+      : `Opravdu smazat klienta "${client.name}" včetně všech jeho rezervací? Tato akce je nevratná.`
+    if (!window.confirm(msg)) return
     if (client.email) {
       await supabase.from('client_notes').delete().eq('client_email', client.email)
       await supabase.from('client_profiles').delete().eq('email', client.email)
+      await supabase.from('bookings').delete().eq('client_email', client.email)
     }
-    const { error } = await supabase.from('manual_clients').delete().eq('id', client.manualId)
-    if (error) {
-      console.error('Chyba při mazání klienta:', error)
-      alert('Nepodařilo se smazat klienta: ' + error.message)
-      return
+    if (client.manualId) {
+      const { error } = await supabase.from('manual_clients').delete().eq('id', client.manualId)
+      if (error) { alert('Nepodařilo se smazat klienta: ' + error.message); return }
     }
     loadClients()
   }
@@ -176,9 +178,7 @@ export default function Clients({ refreshKey }) {
                     {c.email && <div style={{ fontSize: 12, color: '#9B7E8A', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>}
                   </div>
                   <span style={s.badge(status)}>{statusLabel[status]}</span>
-                  {c.isManual && c.manualId && (
-                    <button onClick={e => { e.stopPropagation(); deleteClient(c) }} title="Smazat klienta" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4ABB4', fontSize: 18, padding: '2px', lineHeight: 1 }}>🗑</button>
-                  )}
+                  <button onClick={e => { e.stopPropagation(); deleteClient(c) }} title="Smazat klienta" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4ABB4', fontSize: 18, padding: '2px', lineHeight: 1 }}>🗑</button>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <div style={{ flex: 1, background: '#FBF6F8', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
@@ -223,13 +223,11 @@ export default function Clients({ refreshKey }) {
                 <span style={{ fontWeight: 600, color: '#D4945A' }}>{c.totalSpent > 0 ? `${c.totalSpent} Kč` : '–'}</span>
                 <span style={s.badge(status)}>{statusLabel[status]}</span>
                 <span onClick={e => e.stopPropagation()}>
-                  {c.isManual && c.manualId && (
-                    <button onClick={() => deleteClient(c)} title="Smazat klienta" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4ABB4', fontSize: 16, padding: '2px 4px', lineHeight: 1, borderRadius: 6 }}
-                      onMouseEnter={e => e.currentTarget.style.color = '#C8516B'}
-                      onMouseLeave={e => e.currentTarget.style.color = '#C4ABB4'}>
-                      🗑
-                    </button>
-                  )}
+                  <button onClick={() => deleteClient(c)} title="Smazat klienta" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4ABB4', fontSize: 16, padding: '2px 4px', lineHeight: 1, borderRadius: 6 }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#C8516B'}
+                    onMouseLeave={e => e.currentTarget.style.color = '#C4ABB4'}>
+                    🗑
+                  </button>
                 </span>
               </div>
             )
@@ -241,7 +239,7 @@ export default function Clients({ refreshKey }) {
           client={selectedClient}
           onClose={() => setSelectedClient(null)}
           onMerge={() => { setSelectedClient(null); loadClients() }}
-          onDelete={selectedClient.isManual && selectedClient.manualId ? () => { setSelectedClient(null); deleteClient(selectedClient) } : null}
+          onDelete={() => { setSelectedClient(null); deleteClient(selectedClient) }}
         />
       )}
 
