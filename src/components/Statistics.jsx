@@ -322,6 +322,52 @@ export default function Statistics() {
 
   const cancellationRate = bookings.length > 0 ? Math.round(cancelled.length / bookings.length * 100) : 0
 
+  // Příjmy dle typu tréninku – jen zaplacené (kromě skupinových dle klíče)
+  const revenueByType = {}
+
+  // Osobní trénink + Stod: pouze paid rezervace
+  directPayConfirmed.filter(b => b.paid).forEach(b => {
+    const name = b.training_slots?.name
+    if (!name) return
+    revenueByType[name] = (revenueByType[name] || 0) + (b.price || 0)
+  })
+  // Stod: odečíst 200 Kč nájem za každý unikátní slot
+  const stodSlotsByTypeName = {}
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).forEach(b => {
+    const name = b.training_slots.name
+    if (!stodSlotsByTypeName[name]) stodSlotsByTypeName[name] = new Set()
+    stodSlotsByTypeName[name].add(b.slot_id)
+  })
+  Object.entries(stodSlotsByTypeName).forEach(([name, slotSet]) => {
+    revenueByType[name] = (revenueByType[name] || 0) - slotSet.size * 200
+  })
+  // Zbůch: klíč dle počtu za každý slot, seskupeno dle názvu
+  const zbuchSlotCountByType = {}
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
+    const name = b.training_slots.name
+    if (!zbuchSlotCountByType[name]) zbuchSlotCountByType[name] = {}
+    zbuchSlotCountByType[name][b.slot_id] = (zbuchSlotCountByType[name][b.slot_id] || 0) + 1
+  })
+  Object.entries(zbuchSlotCountByType).forEach(([name, slotCounts]) => {
+    revenueByType[name] = (revenueByType[name] || 0) + Object.values(slotCounts).reduce((a, n) => a + zbuchProfit(n), 0)
+  })
+  // Březín: 500 Kč za každý slot s alespoň 1 rezervací
+  const brezinSlotsByType = {}
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).forEach(b => {
+    const name = b.training_slots.name
+    if (!brezinSlotsByType[name]) brezinSlotsByType[name] = new Set()
+    brezinSlotsByType[name].add(b.slot_id)
+  })
+  Object.entries(brezinSlotsByType).forEach(([name, slotSet]) => {
+    revenueByType[name] = (revenueByType[name] || 0) + slotSet.size * 500
+  })
+  // Holýšov: 80 Kč čistého za osobu
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).forEach(b => {
+    const name = b.training_slots.name
+    revenueByType[name] = (revenueByType[name] || 0) + 80
+  })
+  const maxTypeRevenue = Math.max(...Object.values(revenueByType).filter(v => v > 0), 1)
+
   if (loading) return <div style={{ color: '#BFA0AD', padding: '40px 0' }}>Načítám statistiky...</div>
 
   const statsGrid = isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)'
@@ -418,6 +464,35 @@ export default function Statistics() {
           </div>
         </div>
       )}
+
+      <div style={{ ...s.card, marginBottom: 16 }}>
+        <div style={s.cardTitle}>Příjmy podle typu tréninku</div>
+        {Object.keys(revenueByType).length === 0 && <div style={s.empty}>Žádná data</div>}
+        {Object.entries(revenueByType)
+          .filter(([, v]) => v > 0)
+          .sort((a, b) => b[1] - a[1])
+          .map(([name, revenue]) => {
+            const isGroup = name.includes('Zbůch') || name.includes('Březín') || name.includes('Holýšov')
+            return (
+              <div key={name} style={s.barWrap}>
+                <div style={s.barLabel}>
+                  <span style={{ color: '#2C1A22' }}>{name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {isGroup && <span style={{ fontSize: 10, color: '#9B7E8A', fontStyle: 'italic' }}>dle klíče</span>}
+                    <span style={{ color: TYPE_COLORS[name] || '#5B9E98', fontWeight: 700 }}>{revenue.toLocaleString('cs-CZ')} Kč</span>
+                  </div>
+                </div>
+                <div style={s.barTrack}>
+                  <div style={s.barFill(TYPE_COLORS[name] || '#5B9E98', Math.round(revenue / maxTypeRevenue * 100))} />
+                </div>
+              </div>
+            )
+          })}
+        <div style={{ marginTop: 12, fontSize: 11, color: '#BFA0AD' }}>
+          Osobní trénink a Stod: započítány jen zaplacené. Zbůch/Březín/Holýšov: dle klíče.
+          {salonCosts > 0 && ` Nájem Stod odečten (${salonCosts} Kč).`}
+        </div>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: cardsGrid, gap: 16, marginBottom: 16 }}>
         <div style={s.card}>
