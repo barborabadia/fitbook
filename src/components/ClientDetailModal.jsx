@@ -52,6 +52,8 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
   const [birthSaved, setBirthSaved] = useState(false)
   const [editEmail, setEditEmail] = useState(null)
   const [emailSaving, setEmailSaving] = useState(false)
+  const [editName, setEditName] = useState(null)
+  const [nameSaving, setNameSaving] = useState(false)
 
   useEffect(() => { loadBookings(); loadNotes(); loadProfile() }, [client.email])
 
@@ -149,6 +151,21 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
     onMerge ? onMerge() : onClose()
   }
 
+  async function saveName() {
+    const newName = editName.trim()
+    if (!newName || newName === client.name) { setEditName(null); return }
+    setNameSaving(true)
+    if (client.manualId) {
+      await supabase.from('manual_clients').update({ name: newName }).eq('id', client.manualId)
+    }
+    if (client.email) {
+      await supabase.from('bookings').update({ client_name: newName }).eq('client_email', client.email)
+    }
+    setNameSaving(false)
+    setEditName(null)
+    onMerge ? onMerge() : onClose()
+  }
+
   const confirmed = bookings.filter(b => b.status === 'confirmed')
   const cancelled = bookings.filter(b => b.status === 'cancelled')
   const totalSpent = confirmed.reduce((a, b) => a + (b.price || 0), 0)
@@ -175,7 +192,26 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={s.avatar(hue)}>{initials}</div>
             <div>
-              <div style={s.name}>{client.name}</div>
+              {editName !== null ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <input
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditName(null) }}
+                    autoFocus
+                    style={{ background: '#FBF6F8', border: '1px solid #C8516B', borderRadius: 8, padding: '4px 10px', fontSize: 18, fontWeight: 800, color: '#2C1A22', fontFamily: 'inherit', outline: 'none', width: 220 }}
+                  />
+                  <button onClick={saveName} disabled={nameSaving} style={{ padding: '4px 10px', borderRadius: 7, border: 'none', background: '#C8516B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {nameSaving ? '...' : 'Uložit'}
+                  </button>
+                  <button onClick={() => setEditName(null)} style={{ background: 'none', border: 'none', color: '#BFA0AD', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>✕</button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={s.name}>{client.name}</div>
+                  <button onClick={() => setEditName(client.name)} title="Upravit jméno" style={{ background: 'none', border: 'none', color: '#BFA0AD', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0, marginTop: 2 }}>✎</button>
+                </div>
+              )}
               {editEmail !== null ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
                   <input
