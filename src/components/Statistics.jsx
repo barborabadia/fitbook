@@ -585,10 +585,10 @@ export default function Statistics() {
             <div style={{ ...s.cardTitle, marginBottom: 12 }}>Nejaktivnější klienti</div>
             {topClients.length === 0 && <div style={s.empty}>Žádná data</div>}
             {topClients.map((c, i) => {
-              const hue = getHue(c.email)
-              const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+              const hue = getHue(c.email || c.name || '')
+              const initials = (c.name || '?').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
               return (
-                <div key={c.email} style={s.clientRow}>
+                <div key={c.email || c.name} style={s.clientRow}>
                   <div style={{ fontSize: 12, color: '#D4B8C2', fontWeight: 700, width: 16 }}>{i + 1}</div>
                   <div style={s.avatar(hue)}>{initials}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
