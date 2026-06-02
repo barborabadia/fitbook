@@ -76,8 +76,8 @@ export default function MyBookings({ prefillEmail }) {
     fetchBookings(email)
   }
 
-  const upcoming = bookings?.filter(b => b.training_slots && new Date(`${b.training_slots.slot_date}T${b.training_slots.start_time}:00`) > new Date()) || []
-  const past = bookings?.filter(b => b.training_slots && new Date(`${b.training_slots.slot_date}T${b.training_slots.start_time}:00`) <= new Date()) || []
+  const upcoming = bookings?.filter(b => b.training_slots?.slot_date && b.training_slots?.start_time && new Date(`${b.training_slots.slot_date}T${b.training_slots.start_time}:00`) > new Date()) || []
+  const past = bookings?.filter(b => b.training_slots?.slot_date && b.training_slots?.start_time && new Date(`${b.training_slots.slot_date}T${b.training_slots.start_time}:00`) <= new Date()) || []
 
   const TYPE_COLORS = { 'Osobní trénink': '#C8516B', 'XXL cvičení': '#D4945A', 'Funkční trénink': '#9B72CF' }
   const pastConfirmed = past.filter(b => b.status === 'confirmed')

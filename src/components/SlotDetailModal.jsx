@@ -368,7 +368,7 @@ export default function SlotDetailModal({ slot, onClose }) {
                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,81,107,0.06)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
-                        <span style={{ fontWeight: 600, color: '#2C1A22' }}>{ts.start_time.slice(0, 5)}</span>
+                        <span style={{ fontWeight: 600, color: '#2C1A22' }}>{ts.start_time?.slice(0, 5) || '–'}</span>
                         <span style={{ color: '#9B7E8A', fontSize: 12 }}> · {formatDate(ts.slot_date)}</span>
                       </div>
                     ))}
