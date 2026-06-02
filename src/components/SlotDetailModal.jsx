@@ -193,7 +193,7 @@ export default function SlotDetailModal({ slot, onClose }) {
   const confirmed = bookings.filter(b => b.status === 'confirmed')
   const cancelled = bookings.filter(b => b.status === 'cancelled')
   const ratio = confirmed.length / slot.capacity
-  const dayName = getDayName(slot.slot_date)
+  const dayName = getDayName(slot.slot_date || '')
   const isZbuch = slot.name?.includes('Zbůch')
   function zbuchProfit(count) {
     if (count >= 9) return 300

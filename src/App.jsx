@@ -50,7 +50,7 @@ export default function App() {
 
   useEffect(() => {
     // Vynutit aktualizaci service workeru při každém spuštění aplikace
-    navigator.serviceWorker?.getRegistration().then(reg => reg?.update())
+    navigator.serviceWorker?.getRegistration().then(reg => reg?.update()).catch(() => {})
   }, [])
 
   useEffect(() => {

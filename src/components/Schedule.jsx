@@ -240,6 +240,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
 
   const slotsByDate = {}
   slots.forEach(sl => {
+    if (!sl.slot_date) return
     if (!slotsByDate[sl.slot_date]) slotsByDate[sl.slot_date] = []
     slotsByDate[sl.slot_date].push(sl)
   })

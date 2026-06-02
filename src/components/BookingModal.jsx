@@ -61,7 +61,9 @@ export default function BookingModal({ slot, prefill, onClose }) {
   }, [prefill])
 
   async function handleConfirm() {
-    if (!form.name.trim() || !form.email.trim()) return
+    if (!form.name.trim()) { setError('Zadej prosím jméno.'); return }
+    if (!form.email.trim()) { setError('Zadej prosím e-mail.'); return }
+    if (!form.email.includes('@')) { setError('Zadej platný e-mail.'); return }
     setLoading(true); setError('')
 
     const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_email', form.email.trim().toLowerCase()).eq('status', 'confirmed')

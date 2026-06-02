@@ -89,7 +89,7 @@ export default function Clients({ refreshKey }) {
   }
 
   async function addClient() {
-    if (!newClient.name.trim()) return
+    if (!newClient.name.trim()) { setAddError('Jméno je povinné.'); return }
     setAddLoading(true); setAddError('')
     const email = newClient.email.trim().toLowerCase() || null
     const { error } = await supabase.from('manual_clients').insert({

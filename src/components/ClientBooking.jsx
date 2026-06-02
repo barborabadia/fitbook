@@ -273,6 +273,7 @@ export default function ClientBooking() {
 
   const slotsByDate = {}
   slots.forEach(sl => {
+    if (!sl.slot_date) return
     if (!slotsByDate[sl.slot_date]) slotsByDate[sl.slot_date] = []
     slotsByDate[sl.slot_date].push(sl)
   })
@@ -364,7 +365,7 @@ export default function ClientBooking() {
           {loading && <div style={s.empty}>Načítám tréninky...</div>}
           {!loading && slots.length === 0 && <div style={s.empty}>Tento týden nejsou žádné termíny.<br />Zkus jiný týden.</div>}
 
-          {Object.entries(slotsByDate).filter(([date]) => date >= toDateStr(getToday())).map(([date, daySlots]) => (
+          {Object.entries(slotsByDate).filter(([date]) => date && date >= toDateStr(getToday())).map(([date, daySlots]) => (
             <div key={date} style={s.dateGroup}>
               <div style={s.dateHeader}>{getDayName(date)} – {formatDate(date)}</div>
               {daySlots.map(sl => {
