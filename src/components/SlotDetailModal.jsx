@@ -185,6 +185,7 @@ export default function SlotDetailModal({ slot, onClose }) {
     if (slot.price) return slot.price
     if (slot.name === 'Osobní trénink') return 200
     if (slot.name?.includes('Holýšov')) return 150
+    if (slot.name === 'Tabata - Březín') return 150
     if (slot.name?.includes('Zbůch') || slot.name?.includes('Březín')) return 130
     if (slot.name?.includes('Stod')) return 120
     return 0

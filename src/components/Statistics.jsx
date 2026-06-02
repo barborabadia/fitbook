@@ -24,6 +24,7 @@ const TYPE_COLORS = {
   'Posilování na hudbu - Zbůch': '#E74C3C',
   'FIT Orient - Zbůch': '#E74C3C',
   'Cvičení - Březín': '#E74C3C',
+  'Tabata - Březín': '#9B72CF',
   // historické názvy z Tabidoo
   'XXL cvičení Stod': '#E74C3C',
   'XXL cvičení Zbůch': '#E74C3C',
@@ -156,7 +157,7 @@ export default function Statistics() {
   const prevConfirmed = pastConfirmed.filter(b => prevStart && inPeriod(b, prevStart, prevEnd))
 
   // Skupinové tréninky kde klient platí organizátorovi, ne mně
-  const isCash = b => b.training_slots?.name?.includes('Zbůch') || b.training_slots?.name?.includes('Březín') || b.training_slots?.name?.includes('Holýšov')
+  const isCash = b => b.training_slots?.name?.includes('Zbůch') || (b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')) || b.training_slots?.name?.includes('Holýšov')
 
   // Pouze tréninky kde klient platí přímo mně
   const directPayConfirmed = periodConfirmed.filter(b => !isCash(b))
@@ -165,9 +166,10 @@ export default function Statistics() {
   const unpaidRevenue = totalRevenue - paidRevenue
   const unpaidBookings = directPayConfirmed.filter(b => !b.paid && b.price > 0)
 
-  // Salon costs for Stod group trainings only
+  // Salon costs for Stod group trainings + Tabata - Březín
   const stodSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
-  const salonCosts = stodSlotIds.size * 200
+  const tabataBrezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
+  const salonCosts = stodSlotIds.size * 200 + tabataBrezinSlotIds.size * 250
 
   // Zbůch bracket profit
   const zbuchBySlot = {}
@@ -176,8 +178,8 @@ export default function Statistics() {
   })
   const zbuchTotalProfit = Object.values(zbuchBySlot).reduce((a, n) => a + zbuchProfit(n), 0)
 
-  // Březín flat profit (500 Kč per slot with at least 1 booking)
-  const brezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
+  // Březín flat profit (500 Kč per slot with at least 1 booking) - jen Cvičení - Březín, ne Tabata
+  const brezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).map(b => b.slot_id))
   const brezinTotalProfit = brezinSlotIds.size * 500
 
   // Holýšov per-person profit (150 Kč příjem - 70 Kč náklady = 80 Kč čistý zisk/os.)
@@ -197,13 +199,14 @@ export default function Statistics() {
     prevZbuchBySlot[b.slot_id] = (prevZbuchBySlot[b.slot_id] || 0) + 1
   })
   const prevZbuchProfit = Object.values(prevZbuchBySlot).reduce((a, n) => a + zbuchProfit(n), 0)
-  const prevBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
+  const prevBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).map(b => b.slot_id))
   const prevBrezinProfit = prevBrezinSlotIds.size * 500
+  const prevTabataBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
   const prevPaidRevenue = prevConfirmed.filter(b => !isCash(b) && b.paid).reduce((a, b) => a + (b.price || 0), 0)
   const prevHolysovProfit = prevConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).length * 80
   const prevHistorical = historicalSessions.filter(h => prevStart && h.session_date >= prevStart && h.session_date <= prevEnd)
   const prevHistoricalRevenue = prevHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
-  const prevNetRevenue = prevPaidRevenue - prevStodSlotIds.size * 200 + prevZbuchProfit + prevBrezinProfit + prevHolysovProfit + prevHistoricalRevenue
+  const prevNetRevenue = prevPaidRevenue - prevStodSlotIds.size * 200 - prevTabataBrezinSlotIds.size * 250 + prevZbuchProfit + prevBrezinProfit + prevHolysovProfit + prevHistoricalRevenue
 
   const uniqueClients = new Set(periodConfirmed.map(b => b.client_email)).size
   const prevUniqueClients = new Set(prevConfirmed.map(b => b.client_email)).size
@@ -265,12 +268,20 @@ export default function Statistics() {
     zbuchSlotsByMonth[key].push(s)
   })
 
-  // Monthly Březín slot groups (jen proběhlé)
+  // Monthly Březín slot groups (jen proběhlé, jen Cvičení - Březín, ne Tabata)
   const brezinSlotsByMonth = {}
-  slots.filter(s => s.name?.includes('Březín') && s.slot_date <= today).forEach(s => {
+  slots.filter(s => s.name?.includes('Březín') && !s.name?.includes('Tabata') && s.slot_date <= today).forEach(s => {
     const key = s.slot_date.slice(0, 7)
     if (!brezinSlotsByMonth[key]) brezinSlotsByMonth[key] = []
     brezinSlotsByMonth[key].push(s)
+  })
+  // Monthly Tabata - Březín salon costs (250 Kč/lekce)
+  const tabataBrezinSlotsByMonth = {}
+  pastConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).forEach(b => {
+    const date = b.training_slots?.slot_date; if (!date) return
+    const key = date.slice(0, 7)
+    if (!tabataBrezinSlotsByMonth[key]) tabataBrezinSlotsByMonth[key] = new Set()
+    tabataBrezinSlotsByMonth[key].add(b.slot_id)
   })
 
   pastConfirmed.forEach(b => {
@@ -279,11 +290,12 @@ export default function Statistics() {
     if (monthlyData[key]) {
       monthlyData[key].count++
       const name = b.training_slots?.name
-      if (!name?.includes('Zbůch') && !name?.includes('Březín') && !name?.includes('Holýšov')) monthlyData[key].revenue += b.paid ? (b.price || 0) : 0
+      if (!name?.includes('Zbůch') && !(name?.includes('Březín') && !name?.includes('Tabata')) && !name?.includes('Holýšov')) monthlyData[key].revenue += b.paid ? (b.price || 0) : 0
       if (name?.includes('Holýšov')) monthlyData[key].revenue += 80
     }
   })
   Object.entries(stodSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 200 })
+  Object.entries(tabataBrezinSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 250 })
   Object.entries(zbuchSlotsByMonth).forEach(([key, zbuchSlots]) => {
     if (monthlyData[key]) zbuchSlots.forEach(s => {
       const count = slotAttendance[s.id] || 0
@@ -368,9 +380,9 @@ export default function Statistics() {
   Object.entries(zbuchSlotCountByType).forEach(([name, slotCounts]) => {
     revenueByType[name] = (revenueByType[name] || 0) + Object.values(slotCounts).reduce((a, n) => a + zbuchProfit(n), 0)
   })
-  // Březín: 500 Kč za každý slot s alespoň 1 rezervací
+  // Březín: 500 Kč za každý slot s alespoň 1 rezervací (jen Cvičení - Březín, ne Tabata)
   const brezinSlotsByType = {}
-  periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).forEach(b => {
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).forEach(b => {
     const name = b.training_slots.name
     if (!brezinSlotsByType[name]) brezinSlotsByType[name] = new Set()
     brezinSlotsByType[name].add(b.slot_id)
@@ -378,6 +390,11 @@ export default function Statistics() {
   Object.entries(brezinSlotsByType).forEach(([name, slotSet]) => {
     revenueByType[name] = (revenueByType[name] || 0) + slotSet.size * 500
   })
+  // Tabata - Březín: zaplacené platby po odečtení nákladů 250 Kč/lekce
+  const tabataBrezinPaid = periodConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín') && b.paid).reduce((a, b) => a + (b.price || 0), 0)
+  if (tabataBrezinSlotIds.size > 0 || tabataBrezinPaid > 0) {
+    revenueByType['Tabata - Březín'] = (revenueByType['Tabata - Březín'] || 0) + tabataBrezinPaid - tabataBrezinSlotIds.size * 250
+  }
   // Holýšov: 80 Kč čistého za osobu
   periodConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).forEach(b => {
     const name = b.training_slots.name
@@ -493,7 +510,7 @@ export default function Statistics() {
           .filter(([, v]) => v > 0)
           .sort((a, b) => b[1] - a[1])
           .map(([name, revenue]) => {
-            const isGroup = name.includes('Zbůch') || name.includes('Březín') || name.includes('Holýšov')
+            const isGroup = name.includes('Zbůch') || (name.includes('Březín') && !name.includes('Tabata')) || name.includes('Holýšov')
             return (
               <div key={name} style={s.barWrap}>
                 <div style={s.barLabel}>
@@ -510,8 +527,8 @@ export default function Statistics() {
             )
           })}
         <div style={{ marginTop: 12, fontSize: 11, color: '#BFA0AD' }}>
-          Osobní trénink a Stod: započítány jen zaplacené. Zbůch/Březín/Holýšov: dle klíče.
-          {salonCosts > 0 && ` Nájem Stod odečten (${salonCosts} Kč).`}
+          Osobní trénink, Stod a Tabata-Března: započítány jen zaplacené. Zbůch/Cvičení-Březín/Holýšov: dle klíče.
+          {salonCosts > 0 && ` Nájem odečten (${salonCosts} Kč).`}
         </div>
       </div>
 

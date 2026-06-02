@@ -167,7 +167,7 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
   }
 
   const today = new Date().toISOString().slice(0, 10)
-  const isGroupCash = name => name?.includes('Zbůch') || name?.includes('Březín') || name?.includes('Holýšov')
+  const isGroupCash = name => name?.includes('Zbůch') || (name?.includes('Březín') && !name?.includes('Tabata')) || name?.includes('Holýšov')
   const isGroupStod = name => name?.includes('- Stod')
   const confirmed = bookings.filter(b => b.status === 'confirmed')
   const cancelled = bookings.filter(b => b.status === 'cancelled')
