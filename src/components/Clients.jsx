@@ -57,15 +57,20 @@ export default function Clients({ refreshKey }) {
       ])
 
       const today = new Date().toISOString().slice(0, 10)
-      const isCash = name => name?.includes('Zbůch') || name?.includes('Březín') || name?.includes('Holýšov')
+      const isGroupCash = name => name?.includes('Zbůch') || name?.includes('Březín') || name?.includes('Holýšov')
+      const isGroupStod = name => name?.includes('- Stod')
       const map = {}
       data?.forEach(b => {
         const slotDate = b.training_slots?.slot_date
         const isPast = slotDate && slotDate <= today
+        const name = b.training_slots?.name
         const key = b.client_email
         if (!map[key]) map[key] = { name: b.client_name, email: b.client_email, phone: b.client_phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null }
         if (isPast) map[key].sessions++
-        if (isPast && b.paid && !isCash(b.training_slots?.name)) map[key].totalSpent += b.price || 0
+        if (isPast && !isGroupCash(name)) {
+          if (isGroupStod(name)) map[key].totalSpent += b.price || 0
+          else if (b.paid) map[key].totalSpent += b.price || 0
+        }
         if (!map[key].lastDate || b.created_at > map[key].lastDate) {
           map[key].lastDate = b.created_at
           map[key].lastSlot = b.training_slots

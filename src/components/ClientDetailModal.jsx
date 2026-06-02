@@ -166,9 +166,20 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
     onMerge ? onMerge() : onClose()
   }
 
+  const today = new Date().toISOString().slice(0, 10)
+  const isGroupCash = name => name?.includes('Zbůch') || name?.includes('Březín') || name?.includes('Holýšov')
+  const isGroupStod = name => name?.includes('- Stod')
   const confirmed = bookings.filter(b => b.status === 'confirmed')
   const cancelled = bookings.filter(b => b.status === 'cancelled')
-  const totalSpent = confirmed.reduce((a, b) => a + (b.price || 0), 0)
+  // Utraceno: jen proběhlé, Zbůch/Březín/Holýšov ignorovat, Stod skupinové počítat automaticky, osobní jen zaplacené
+  const totalSpent = confirmed.reduce((a, b) => {
+    const name = b.training_slots?.name
+    const slotDate = b.training_slots?.slot_date
+    if (!slotDate || slotDate > today) return a
+    if (isGroupCash(name)) return a
+    if (isGroupStod(name)) return a + (b.price || 0)
+    return b.paid ? a + (b.price || 0) : a
+  }, 0)
 
   const byType = {}
   confirmed.forEach(b => {
