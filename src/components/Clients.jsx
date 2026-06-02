@@ -137,7 +137,7 @@ export default function Clients({ refreshKey }) {
   const sorted = [...filtered].sort((a, b) => {
     if (!sortBy) return 0
     let av, bv
-    if (sortBy === 'name') { av = a.name.toLowerCase(); bv = b.name.toLowerCase() }
+    if (sortBy === 'name') { av = (a.name || '').toLowerCase(); bv = (b.name || '').toLowerCase() }
     else if (sortBy === 'email') { av = (a.email || '').toLowerCase(); bv = (b.email || '').toLowerCase() }
     else if (sortBy === 'sessions') { av = a.sessions; bv = b.sessions }
     else if (sortBy === 'totalSpent') { av = a.totalSpent; bv = b.totalSpent }
