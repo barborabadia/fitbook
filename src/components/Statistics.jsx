@@ -176,8 +176,6 @@ export default function Statistics() {
   const brezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
   const brezinTotalProfit = brezinSlotIds.size * 500
 
-  const nonCashRevenue = periodConfirmed.filter(b => !isCash(b)).reduce((a, b) => a + (b.price || 0), 0)
-
   // Holýšov per-person profit (150 Kč příjem - 70 Kč náklady = 80 Kč čistý zisk/os.)
   const holysovProfit = periodConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).length * 80
 
@@ -185,8 +183,8 @@ export default function Statistics() {
   const periodHistorical = historicalSessions.filter(h => !start || h.session_date >= start)
   const historicalRevenue = periodHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
 
-  const netRevenue = nonCashRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + holysovProfit + historicalRevenue
-
+  // Čistý příjem = pouze zaplacené přímé platby + skupinové dle klíče + historická data
+  const netRevenue = paidRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + holysovProfit + historicalRevenue
 
   // Previous period net
   const prevStodSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
@@ -197,11 +195,11 @@ export default function Statistics() {
   const prevZbuchProfit = Object.values(prevZbuchBySlot).reduce((a, n) => a + zbuchProfit(n), 0)
   const prevBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
   const prevBrezinProfit = prevBrezinSlotIds.size * 500
-  const prevNonCashRevenue = prevConfirmed.filter(b => !isCash(b)).reduce((a, b) => a + (b.price || 0), 0)
+  const prevPaidRevenue = prevConfirmed.filter(b => !isCash(b) && b.paid).reduce((a, b) => a + (b.price || 0), 0)
   const prevHolysovProfit = prevConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).length * 80
   const prevHistorical = historicalSessions.filter(h => prevStart && h.session_date >= prevStart && h.session_date <= prevEnd)
   const prevHistoricalRevenue = prevHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
-  const prevNetRevenue = prevNonCashRevenue - prevStodSlotIds.size * 200 + prevZbuchProfit + prevBrezinProfit + prevHolysovProfit + prevHistoricalRevenue
+  const prevNetRevenue = prevPaidRevenue - prevStodSlotIds.size * 200 + prevZbuchProfit + prevBrezinProfit + prevHolysovProfit + prevHistoricalRevenue
 
   const uniqueClients = new Set(periodConfirmed.map(b => b.client_email)).size
   const prevUniqueClients = new Set(prevConfirmed.map(b => b.client_email)).size
