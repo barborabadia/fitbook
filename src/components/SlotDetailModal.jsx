@@ -172,13 +172,22 @@ export default function SlotDetailModal({ slot, onClose }) {
       client_email: client.email || null,
       client_phone: client.phone || null,
       booking_type: bookingType,
-      price: bookingType === 'duo' ? 300 : (slot.price || 0),
+      price: bookingType === 'duo' ? 300 : resolveSlotPrice(),
       status: 'confirmed',
     })
     if (error) { setAddError('Chyba při ukládání: ' + error.message); setAddLoading(false); return }
     setShowAddBooking(false)
     loadBookings()
     setAddLoading(false)
+  }
+
+  function resolveSlotPrice() {
+    if (slot.price) return slot.price
+    if (slot.name === 'Osobní trénink') return 200
+    if (slot.name?.includes('Holýšov')) return 150
+    if (slot.name?.includes('Zbůch') || slot.name?.includes('Březín')) return 130
+    if (slot.name?.includes('Stod')) return 120
+    return 0
   }
 
   const confirmed = bookings.filter(b => b.status === 'confirmed')
