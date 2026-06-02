@@ -429,6 +429,14 @@ export default function Statistics() {
             {netRevenue.toLocaleString('cs-CZ')} Kč
             <Trend current={netRevenue} previous={prevNetRevenue} />
           </div>
+          <div style={{ marginTop: 8, fontSize: 11, color: '#BFA0AD', lineHeight: 1.7 }}>
+            {paidRevenue > 0 && <div>💳 Přímé platby: +{paidRevenue} Kč</div>}
+            {salonCosts > 0 && <div>🏠 Nájem Stod: −{salonCosts} Kč</div>}
+            {zbuchTotalProfit > 0 && <div>👥 Zbůch: +{zbuchTotalProfit} Kč</div>}
+            {brezinTotalProfit > 0 && <div>👥 Březín: +{brezinTotalProfit} Kč</div>}
+            {holysovProfit > 0 && <div>👥 Holýšov: +{holysovProfit} Kč</div>}
+            {historicalRevenue > 0 && <div>📋 Historická data: +{historicalRevenue} Kč</div>}
+          </div>
         </div>
         <div style={s.stat}>
           <div style={s.statLabel}>Obsazenost týden</div>
