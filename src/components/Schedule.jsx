@@ -216,11 +216,11 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     loadData()
   }
 
-  function getSlotDefaults(name) {
+  function getSlotDefaults(name = '') {
     if (name === 'Osobní trénink') return { color: '#C8516B', capacity: 1, price: 200 }
-    if (name.includes('Zbůch') || name.includes('Stod')) return { color: '#E74C3C', capacity: 10, price: name.includes('Zbůch') ? 130 : 120 }
-    if (name.includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130 }
-    if (name.includes('Holýšov')) return { color: '#E74C3C', capacity: 10, price: 150 }
+    if ((name || '').includes('Zbůch') || (name || '').includes('Stod')) return { color: '#E74C3C', capacity: 10, price: (name || '').includes('Zbůch') ? 130 : 120 }
+    if ((name || '').includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130 }
+    if ((name || '').includes('Holýšov')) return { color: '#E74C3C', capacity: 10, price: 150 }
     return { color: '#C8516B', capacity: 1, price: 0 }
   }
 

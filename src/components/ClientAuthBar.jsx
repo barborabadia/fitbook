@@ -81,7 +81,7 @@ export default function ClientAuthBar({ onUserChange }) {
     const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Uživatel'
     const avatar = user.user_metadata?.avatar_url
     const hue = getHue(user.email)
-    const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    const initials = (name || '?').split(' ').filter(n => n.length > 0).map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
 
     return (
       <div style={s.bar}>

@@ -176,8 +176,8 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
     byType[name] = (byType[name] || 0) + 1
   })
 
-  const hue = getHue(client.email)
-  const initials = client.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+  const hue = getHue(client.email || client.name || '')
+  const initials = (client.name || '?').split(' ').filter(n => n.length > 0).map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
 
   const typeColors = {
     'Osobní trénink': '#C8516B',

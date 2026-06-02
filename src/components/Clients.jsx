@@ -116,7 +116,7 @@ export default function Clients({ refreshKey }) {
   }
 
   const filtered = clients.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
     (c.email || '').toLowerCase().includes(search.toLowerCase())
   )
 
@@ -167,7 +167,7 @@ export default function Clients({ refreshKey }) {
         <div>
           {filtered.map(c => {
             const hue = getHue(c.email || c.name)
-            const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+            const initials = (c.name || '?').split(' ').filter(n => n.length > 0).map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
             const status = getStatus(c)
             return (
               <div key={c.manualId || c.email} style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '14px 16px', marginBottom: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(200,81,107,0.05)' }} onClick={() => setSelectedClient(c)}>
@@ -207,7 +207,7 @@ export default function Clients({ refreshKey }) {
           </div>
           {sorted.map((c, i) => {
             const hue = getHue(c.email || c.name)
-            const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+            const initials = (c.name || '?').split(' ').filter(n => n.length > 0).map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
             const status = getStatus(c)
             return (
               <div key={c.manualId || c.email} style={{ ...s.tRow, background: i % 2 === 0 ? 'transparent' : 'rgba(200,81,107,0.015)', cursor: 'pointer' }} onClick={() => setSelectedClient(c)}>

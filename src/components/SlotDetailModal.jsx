@@ -315,7 +315,7 @@ export default function SlotDetailModal({ slot, onClose }) {
 
         {confirmed.map(b => {
           const hue = getHue(b.client_email || b.client_name)
-          const initials = b.client_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+          const initials = (b.client_name || '?').split(' ').filter(n => n.length > 0).map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
           const isPersonal = slot.name === 'Osobní trénink'
           const paymentLabel = b.payment_method === 'cash' ? '💵 Hotově' : b.payment_method === 'transfer' ? '🏦 Na účet' : ''
           return (
@@ -390,7 +390,7 @@ export default function SlotDetailModal({ slot, onClose }) {
             <div style={{ ...s.sectionLabel, marginTop: 20 }}>Zrušené rezervace ({cancelled.length})</div>
             {cancelled.map(b => {
               const hue = getHue(b.client_email || b.client_name)
-              const initials = b.client_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+              const initials = (b.client_name || '?').split(' ').filter(n => n.length > 0).map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
               return (
                 <div key={b.id} style={{ ...s.clientCard(false), opacity: 0.4 }}>
                   <div style={s.avatar(hue)}>{initials}</div>

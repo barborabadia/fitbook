@@ -41,7 +41,7 @@ const DAYS_FULL = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sob
 const ICONS = { 'XXL': '🏆', 'Funkční': '⚡', 'Osobní': '💪', 'Posilování': '🎵', 'Orient': '🥋', default: '💪' }
 
 function getIcon(name) {
-  for (const [key, icon] of Object.entries(ICONS)) { if (name.includes(key)) return icon }
+  for (const [key, icon] of Object.entries(ICONS)) { if ((name || '').includes(key)) return icon }
   return ICONS.default
 }
 
