@@ -145,11 +145,14 @@ export default function Statistics() {
     return true
   }
 
+  const today = toDateStr(new Date())
   const confirmed = bookings.filter(b => b.status === 'confirmed')
   const cancelled = bookings.filter(b => b.status === 'cancelled')
 
-  const periodConfirmed = confirmed.filter(b => !start || inPeriod(b, start, null))
-  const prevConfirmed = confirmed.filter(b => prevStart && inPeriod(b, prevStart, prevEnd))
+  // Jen proběhlé termíny (slot_date <= dnes) – budoucí rezervace se do výpočtů nepočítají
+  const pastConfirmed = confirmed.filter(b => inPeriod(b, null, today))
+  const periodConfirmed = pastConfirmed.filter(b => !start || inPeriod(b, start, today))
+  const prevConfirmed = pastConfirmed.filter(b => prevStart && inPeriod(b, prevStart, prevEnd))
 
   // Skupinové tréninky kde klient platí organizátorovi, ne mně
   const isCash = b => b.training_slots?.name?.includes('Zbůch') || b.training_slots?.name?.includes('Březín') || b.training_slots?.name?.includes('Holýšov')
@@ -240,42 +243,42 @@ export default function Statistics() {
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
     monthlyData[key] = { count: 0, revenue: 0, label: MONTHS[d.getMonth()] }
   }
-  // Slot attendance map for Zbůch bracket
+  // Slot attendance map for Zbůch bracket (jen proběhlé)
   const slotAttendance = {}
-  confirmed.forEach(b => { slotAttendance[b.slot_id] = (slotAttendance[b.slot_id] || 0) + 1 })
+  pastConfirmed.forEach(b => { slotAttendance[b.slot_id] = (slotAttendance[b.slot_id] || 0) + 1 })
 
-  // Monthly Stod salon costs
+  // Monthly Stod salon costs (jen proběhlé)
   const stodSlotsByMonth = {}
-  confirmed.filter(b => b.training_slots?.name?.includes('- Stod')).forEach(b => {
+  pastConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).forEach(b => {
     const date = b.training_slots?.slot_date; if (!date) return
     const key = date.slice(0, 7)
     if (!stodSlotsByMonth[key]) stodSlotsByMonth[key] = new Set()
     stodSlotsByMonth[key].add(b.slot_id)
   })
 
-  // Monthly Zbůch slot groups
+  // Monthly Zbůch slot groups (jen proběhlé)
   const zbuchSlotsByMonth = {}
-  slots.filter(s => s.name?.includes('Zbůch')).forEach(s => {
+  slots.filter(s => s.name?.includes('Zbůch') && s.slot_date <= today).forEach(s => {
     const key = s.slot_date.slice(0, 7)
     if (!zbuchSlotsByMonth[key]) zbuchSlotsByMonth[key] = []
     zbuchSlotsByMonth[key].push(s)
   })
 
-  // Monthly Březín slot groups
+  // Monthly Březín slot groups (jen proběhlé)
   const brezinSlotsByMonth = {}
-  slots.filter(s => s.name?.includes('Březín')).forEach(s => {
+  slots.filter(s => s.name?.includes('Březín') && s.slot_date <= today).forEach(s => {
     const key = s.slot_date.slice(0, 7)
     if (!brezinSlotsByMonth[key]) brezinSlotsByMonth[key] = []
     brezinSlotsByMonth[key].push(s)
   })
 
-  confirmed.forEach(b => {
+  pastConfirmed.forEach(b => {
     const date = b.training_slots?.slot_date; if (!date) return
     const key = date.slice(0, 7)
     if (monthlyData[key]) {
       monthlyData[key].count++
       const name = b.training_slots?.name
-      if (!name?.includes('Zbůch') && !name?.includes('Březín') && !name?.includes('Holýšov')) monthlyData[key].revenue += b.price || 0
+      if (!name?.includes('Zbůch') && !name?.includes('Březín') && !name?.includes('Holýšov')) monthlyData[key].revenue += b.paid ? (b.price || 0) : 0
       if (name?.includes('Holýšov')) monthlyData[key].revenue += 80
     }
   })
