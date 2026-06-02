@@ -159,20 +159,23 @@ export default function SlotDetailModal({ slot, onClose }) {
 
   async function addManualBooking(client) {
     setAddLoading(true); setAddError('')
-    const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_email', client.email).eq('status', 'confirmed')
-    if (existing?.length > 0) { setAddError(`${client.name} má na tento termín již rezervaci.`); setAddLoading(false); return }
+    // Kontrola duplicity – null email řeším přes .is(), jinak .eq()
+    if (client.email) {
+      const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_email', client.email).eq('status', 'confirmed')
+      if (existing?.length > 0) { setAddError(`${client.name} má na tento termín již rezervaci.`); setAddLoading(false); return }
+    }
     const confirmed = bookings.filter(b => b.status === 'confirmed')
     if (confirmed.length >= slot.capacity) { setAddError('Termín je plný.'); setAddLoading(false); return }
     const { error } = await supabase.from('bookings').insert({
       slot_id: slot.id,
       client_name: client.name,
-      client_email: client.email,
+      client_email: client.email || null,
       client_phone: client.phone || null,
       booking_type: bookingType,
       price: bookingType === 'duo' ? 300 : (slot.price || 0),
       status: 'confirmed',
     })
-    if (error) { setAddError('Chyba při ukládání.'); setAddLoading(false); return }
+    if (error) { setAddError('Chyba při ukládání: ' + error.message); setAddLoading(false); return }
     setShowAddBooking(false)
     loadBookings()
     setAddLoading(false)
