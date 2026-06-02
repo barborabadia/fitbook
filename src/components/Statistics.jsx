@@ -122,7 +122,7 @@ export default function Statistics() {
   async function loadData() {
     setLoading(true)
     try {
-      const { data: bk } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time)').order('created_at', { ascending: false })
+      const { data: bk } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, is_cancelled)').order('created_at', { ascending: false })
       const { data: sl } = await supabase.from('training_slots').select('*').order('slot_date')
       const { data: hs } = await supabase.from('historical_sessions').select('*').order('session_date')
       if (bk) setBookings(bk)
@@ -146,7 +146,7 @@ export default function Statistics() {
   }
 
   const today = toDateStr(new Date())
-  const confirmed = bookings.filter(b => b.status === 'confirmed')
+  const confirmed = bookings.filter(b => b.status === 'confirmed' && !b.training_slots?.is_cancelled)
   const cancelled = bookings.filter(b => b.status === 'cancelled')
 
   // Jen proběhlé termíny (slot_date <= dnes) – budoucí rezervace se do výpočtů nepočítají
@@ -428,14 +428,6 @@ export default function Statistics() {
           <div style={{ ...s.statValue, fontSize: netRevenue.toString().length > 6 ? 18 : 26 }}>
             {netRevenue.toLocaleString('cs-CZ')} Kč
             <Trend current={netRevenue} previous={prevNetRevenue} />
-          </div>
-          <div style={{ marginTop: 8, fontSize: 11, color: '#BFA0AD', lineHeight: 1.7 }}>
-            {paidRevenue > 0 && <div>💳 Přímé platby: +{paidRevenue} Kč</div>}
-            {salonCosts > 0 && <div>🏠 Nájem Stod: −{salonCosts} Kč</div>}
-            {zbuchTotalProfit > 0 && <div>👥 Zbůch: +{zbuchTotalProfit} Kč</div>}
-            {brezinTotalProfit > 0 && <div>👥 Březín: +{brezinTotalProfit} Kč</div>}
-            {holysovProfit > 0 && <div>👥 Holýšov: +{holysovProfit} Kč</div>}
-            {historicalRevenue > 0 && <div>📋 Historická data: +{historicalRevenue} Kč</div>}
           </div>
         </div>
         <div style={s.stat}>
