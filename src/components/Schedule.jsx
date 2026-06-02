@@ -162,6 +162,9 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     try {
       const { data: sl } = await supabase.from('training_slots').select('*').gte('slot_date', weekDates[0]).lte('slot_date', weekDates[6]).order('slot_date').order('start_time')
       if (sl) setSlots(sl)
+      setBookingCounts({})
+      setBookingTypes({})
+      setPaidCounts({})
 
       if (sl && sl.length > 0) {
         const { data: bk } = await supabase.from('bookings').select('slot_id, booking_type, paid').in('slot_id', sl.map(s => s.id)).eq('status', 'confirmed')
