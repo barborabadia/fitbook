@@ -161,11 +161,21 @@ function CertifikatyModal({ onClose }) {
         </div>
 
         {preview ? (
-          <iframe
-            src={`/certifikaty/${encodeURIComponent(preview)}#toolbar=0&navpanes=0&scrollbar=0`}
-            style={{ width: '100%', height: '70vh', border: 'none', borderRadius: 8 }}
-            title={preview}
-          />
+          <>
+            <iframe
+              src={`https://docs.google.com/viewer?url=${encodeURIComponent(`${window.location.origin}/certifikaty/${encodeURIComponent(preview)}`)}&embedded=true`}
+              style={{ width: '100%', height: '70vh', border: 'none', borderRadius: 8 }}
+              title={preview}
+            />
+            <a
+              href={`/certifikaty/${encodeURIComponent(preview)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'block', textAlign: 'center', marginTop: 8, fontSize: 12, color: '#C8516B', fontWeight: 600 }}
+            >
+              Otevřít PDF v prohlížeči ↗
+            </a>
+          </>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {CERTIFIKATY.map(name => (
