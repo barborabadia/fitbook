@@ -52,16 +52,20 @@ export default function Clients({ refreshKey }) {
     setLoading(true)
     try {
       const [{ data }, { data: mc }] = await Promise.all([
-        supabase.from('bookings').select('client_name, client_email, client_phone, booking_type, price, status, created_at, slot_id, training_slots(name, slot_date, start_time)').eq('status', 'confirmed').order('created_at', { ascending: false }),
+        supabase.from('bookings').select('client_name, client_email, client_phone, booking_type, price, status, paid, created_at, slot_id, training_slots(name, slot_date, start_time)').eq('status', 'confirmed').order('created_at', { ascending: false }),
         supabase.from('manual_clients').select('*').order('name'),
       ])
 
+      const today = new Date().toISOString().slice(0, 10)
+      const isCash = name => name?.includes('Zbůch') || name?.includes('Březín') || name?.includes('Holýšov')
       const map = {}
       data?.forEach(b => {
+        const slotDate = b.training_slots?.slot_date
+        const isPast = slotDate && slotDate <= today
         const key = b.client_email
         if (!map[key]) map[key] = { name: b.client_name, email: b.client_email, phone: b.client_phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null }
-        map[key].sessions++
-        map[key].totalSpent += b.price || 0
+        if (isPast) map[key].sessions++
+        if (isPast && b.paid && !isCash(b.training_slots?.name)) map[key].totalSpent += b.price || 0
         if (!map[key].lastDate || b.created_at > map[key].lastDate) {
           map[key].lastDate = b.created_at
           map[key].lastSlot = b.training_slots
