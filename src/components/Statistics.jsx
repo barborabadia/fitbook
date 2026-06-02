@@ -148,6 +148,7 @@ export default function Statistics() {
   const today = toDateStr(new Date())
   const confirmed = bookings.filter(b => b.status === 'confirmed' && !b.training_slots?.is_cancelled)
   const cancelled = bookings.filter(b => b.status === 'cancelled')
+  const periodCancelled = cancelled.filter(b => inPeriod(b, start || null, today))
 
   // Jen proběhlé termíny (slot_date <= dnes) – budoucí rezervace se do výpočtů nepočítají
   const pastConfirmed = confirmed.filter(b => inPeriod(b, null, today))
@@ -323,7 +324,8 @@ export default function Statistics() {
   const weekCapacity = thisWeekSlots.reduce((a, s) => a + s.capacity, 0)
   const weekOccupancy = weekCapacity > 0 ? Math.round(thisWeekBookings.length / weekCapacity * 100) : 0
 
-  const cancellationRate = bookings.length > 0 ? Math.round(cancelled.length / bookings.length * 100) : 0
+  const periodTotal = periodConfirmed.length + periodCancelled.length
+  const cancellationRate = periodTotal > 0 ? Math.round(periodCancelled.length / periodTotal * 100) : 0
 
   // Normalizace historických názvů na aktuální (bez pomlčky → s pomlčkou)
   const HIST_NAME_MAP = {
@@ -413,7 +415,7 @@ export default function Statistics() {
             {periodConfirmed.length}
             <Trend current={periodConfirmed.length} previous={prevConfirmed.length} />
           </div>
-          <div style={s.statSub}>{cancelled.length} zrušeno celkem</div>
+          <div style={s.statSub}>{periodCancelled.length} zrušeno</div>
         </div>
         <div style={s.stat}>
           <div style={s.statLabel}>Klienti</div>
@@ -563,7 +565,7 @@ export default function Statistics() {
             <div style={{ ...s.cardTitle, marginBottom: 10 }}>Míra zrušení</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ fontSize: 30, fontWeight: 800, color: cancellationRate > 20 ? '#C8516B' : '#5B9E98' }}>{cancellationRate} %</div>
-              <div style={{ fontSize: 13, color: '#9B7E8A', lineHeight: 1.5 }}>{cancelled.length} zrušení<br />z {bookings.length} celkem</div>
+              <div style={{ fontSize: 13, color: '#9B7E8A', lineHeight: 1.5 }}>{periodCancelled.length} zrušení<br />z {periodTotal} celkem</div>
             </div>
           </div>
         </div>
