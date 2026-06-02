@@ -213,6 +213,23 @@ export default function ClientBooking() {
   const [showInstallBanner, setShowInstallBanner] = useState(false)
   const [showIOSBanner, setShowIOSBanner] = useState(false)
 
+  // Otevřít konkrétní lekci přes URL parametr ?slot=<id>
+  useEffect(() => {
+    const slotId = new URLSearchParams(window.location.search).get('slot')
+    if (!slotId) return
+    supabase.from('training_slots').select('*').eq('id', slotId).single().then(({ data }) => {
+      if (!data) return
+      // Přejít na týden dané lekce
+      const slotDate = new Date(data.slot_date + 'T12:00:00')
+      setMonday(getMonday(slotDate))
+      // Načíst počet rezervací a otevřít modal
+      supabase.from('bookings').select('slot_id').eq('slot_id', data.id).eq('status', 'confirmed').then(({ data: bk }) => {
+        const booked = bk?.length || 0
+        setSelected({ ...data, booked })
+      })
+    })
+  }, [])
+
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
 
   useEffect(() => {

@@ -45,6 +45,19 @@ const s = {
   saveBtn: { marginTop: 8, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#C8516B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
 }
 
+function CopyLinkBtn({ slotId }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    const url = `${window.location.origin}/book?slot=${slotId}`
+    navigator.clipboard.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+  }
+  return (
+    <button onClick={handleCopy} style={{ padding: '5px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: copied ? 'rgba(91,158,152,0.1)' : '#FBF6F8', color: copied ? '#5B9E98' : '#9B7E8A', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}>
+      {copied ? '✓ Zkopírováno' : '🔗 Sdílet'}
+    </button>
+  )
+}
+
 export default function SlotDetailModal({ slot, onClose }) {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -210,7 +223,10 @@ export default function SlotDetailModal({ slot, onClose }) {
             <div style={s.tag(slot.color)}>{dayName}, {formatDate(slot.slot_date)} • {slot.start_time}</div>
             <div style={s.title}>{slot.name}</div>
           </div>
-          <button style={s.closeBtn} onClick={onClose}>✕</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CopyLinkBtn slotId={slot.id} />
+            <button style={s.closeBtn} onClick={onClose}>✕</button>
+          </div>
         </div>
 
         <div style={s.statsRow}>
