@@ -208,14 +208,16 @@ export default function Statistics() {
   const prevHistoricalRevenue = prevHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
   const prevNetRevenue = prevPaidRevenue - prevStodSlotIds.size * 200 - prevTabataBrezinSlotIds.size * 250 + prevZbuchProfit + prevBrezinProfit + prevHolysovProfit + prevHistoricalRevenue
 
-  const uniqueClients = new Set(periodConfirmed.map(b => b.client_email)).size
-  const prevUniqueClients = new Set(prevConfirmed.map(b => b.client_email)).size
+  const clientKey = b => b.client_email || `__name__${b.client_name}`
+  const uniqueClients = new Set(periodConfirmed.map(clientKey)).size
+  const prevUniqueClients = new Set(prevConfirmed.map(clientKey)).size
 
   // Retence klientů
   const allClientMap = {}
   confirmed.forEach(b => {
-    if (!allClientMap[b.client_email]) allClientMap[b.client_email] = 0
-    allClientMap[b.client_email]++
+    const key = clientKey(b)
+    if (!allClientMap[key]) allClientMap[key] = 0
+    allClientMap[key]++
   })
   const returningClients = Object.values(allClientMap).filter(c => c > 1).length
   const totalClients = Object.keys(allClientMap).length
@@ -322,7 +324,7 @@ export default function Statistics() {
   // Top klienti
   const clientMap = {}
   periodConfirmed.forEach(b => {
-    const key = b.client_email
+    const key = clientKey(b)
     if (!clientMap[key]) clientMap[key] = { name: b.client_name, email: b.client_email, count: 0, spent: 0 }
     clientMap[key].count++; clientMap[key].spent += b.price || 0
   })
@@ -549,16 +551,16 @@ export default function Statistics() {
         <div style={s.card}>
           <div style={s.cardTitle}>Příjmy po měsících (Kč)</div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 120 }}>
-            {months.map((m, i) => {
+            {(() => {
               const maxRev = Math.max(...months.map(x => x.revenue), 1)
-              return (
+              return months.map((m, i) => (
                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end' }}>
                   <div style={s.monthVal}>{m.revenue > 0 ? m.revenue : ''}</div>
                   <div style={s.monthBar(Math.max(m.revenue / maxRev * 90, m.revenue > 0 ? 4 : 2), m.revenue > 0 ? '#5B9E98' : '#F0D9DF')} />
                   <div style={s.monthLabel}>{m.label}</div>
                 </div>
-              )
-            })}
+              ))
+            })()}
           </div>
         </div>
       </div>
