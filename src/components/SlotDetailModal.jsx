@@ -141,7 +141,7 @@ export default function SlotDetailModal({ slot, onClose }) {
 
   async function toggleBookingType(bookingId, currentType) {
     const newType = currentType === 'duo' ? 'solo' : 'duo'
-    const newPrice = newType === 'duo' ? 300 : (slot.price || 0)
+    const newPrice = newType === 'duo' ? 300 : resolveSlotPrice()
     await supabase.from('bookings').update({ booking_type: newType, price: newPrice }).eq('id', bookingId)
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, booking_type: newType, price: newPrice } : b))
   }

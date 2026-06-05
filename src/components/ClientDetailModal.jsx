@@ -165,6 +165,8 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
     }
     if (client.email) {
       await supabase.from('bookings').update({ client_name: newName }).eq('client_email', client.email)
+    } else {
+      await supabase.from('bookings').update({ client_name: newName }).eq('client_name', client.name).is('client_email', null)
     }
     setNameSaving(false)
     setEditName(null)
@@ -341,7 +343,7 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
                   <span style={s.bookingName}>{slot.name}</span>
                   {b.booking_type === 'duo' && <span style={{ fontSize: 10, color: '#9B72CF', fontWeight: 700 }}>DUO</span>}
                   <span style={s.badge(isCancelled ? 'cancelled' : 'confirmed')}>
-                    {isCancelled ? 'Zrušeno' : 'Absolvováno'}
+                    {isCancelled ? 'Zrušeno' : slot.slot_date <= today ? 'Absolvováno' : 'Rezervováno'}
                   </span>
                 </div>
                 <div style={s.bookingMeta}>{dayName}, {formatDate(slot.slot_date)} • {slot.start_time}</div>
