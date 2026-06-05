@@ -119,7 +119,7 @@ export default function AdminLogin({ onLogin }) {
             {error && <div style={s.error}>⚠️ {error}</div>}
             {!error && lockout.attempts > 0 && (
               <div style={s.warning}>
-                ⚠️ {lockout.attempts} neúspěšný {lockout.attempts === 1 ? 'pokus' : 'pokusů'} o přihlášení
+                ⚠️ {lockout.attempts} neúspěšn{lockout.attempts === 1 ? 'ý pokus' : lockout.attempts < 5 ? 'é pokusy' : 'ých pokusů'} o přihlášení
               </div>
             )}
           </>

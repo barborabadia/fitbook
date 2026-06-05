@@ -87,7 +87,7 @@ export default function App() {
         <div style={{ padding: '68px 12px 76px' }}>
           {view === 'schedule' && <Schedule onSelectSlot={setSelectedSlot} refreshKey={scheduleRefresh} isMobile />}
           {view === 'clients' && <Clients refreshKey={scheduleRefresh} />}
-          {view === 'stats' && <Statistics />}
+          {view === 'stats' && <Statistics refreshKey={scheduleRefresh} />}
         </div>
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #EBCFD8', display: 'flex', zIndex: 50 }}>
           {NAV_ITEMS.map(item => (
@@ -134,7 +134,7 @@ export default function App() {
       <div style={s.main}>
         {view === 'schedule' && <Schedule onSelectSlot={setSelectedSlot} refreshKey={scheduleRefresh} />}
         {view === 'clients' && <Clients refreshKey={scheduleRefresh} />}
-        {view === 'stats' && <Statistics />}
+        {view === 'stats' && <Statistics refreshKey={scheduleRefresh} />}
       </div>
       {selectedSlot && <SlotDetailModal slot={selectedSlot} onClose={() => { setSelectedSlot(null); setScheduleRefresh(r => r + 1) }} />}
     </div>

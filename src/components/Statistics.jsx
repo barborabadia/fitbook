@@ -109,7 +109,7 @@ function getPeriodRange(period) {
   return { start: null, prevStart: null, prevEnd: null }
 }
 
-export default function Statistics() {
+export default function Statistics({ refreshKey }) {
   const [bookings, setBookings] = useState([])
   const [slots, setSlots] = useState([])
   const [historicalSessions, setHistoricalSessions] = useState([])
@@ -118,7 +118,7 @@ export default function Statistics() {
   const [showUnpaidTooltip, setShowUnpaidTooltip] = useState(false)
   const isMobile = window.innerWidth < 768
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => { loadData() }, [refreshKey])
 
   async function loadData() {
     setLoading(true)
