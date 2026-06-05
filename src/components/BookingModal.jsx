@@ -5,13 +5,14 @@ const IBAN = 'CZ2403000000000260597819'
 
 function getPrice(slot, bookingType) {
   const name = slot?.name || ''
-  if (name === 'Osobní trénink') return bookingType === 'duo' ? 300 : 200
+  if (name === 'Osobní trénink') return bookingType === 'duo' ? 300 : (slot?.price || 200)
+  if (slot?.price) return slot.price
   if (name.includes('Zbůch')) return 130
   if (name === 'Tabata - Březín') return 150
   if (name.includes('Březín')) return 130
   if (name.includes('Holýšov')) return 150
   if (name.includes('Stod')) return 120
-  return slot?.price || 0
+  return 0
 }
 
 function buildQrString(price, message) {

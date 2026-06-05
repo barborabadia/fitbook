@@ -275,6 +275,7 @@ export default function ClientBooking() {
     setLoading(true)
     const { data: sl } = await supabase.from('training_slots').select('*').gte('slot_date', weekDates[0]).lte('slot_date', weekDates[6]).eq('is_cancelled', false).order('slot_date').order('start_time')
     if (sl) setSlots(sl)
+    if (!sl || sl.length === 0) { setBookingCounts({}); setLoading(false); return }
     if (sl && sl.length > 0) {
       const { data: bk } = await supabase.from('bookings').select('slot_id').in('slot_id', sl.map(s => s.id)).eq('status', 'confirmed')
       if (bk) {
