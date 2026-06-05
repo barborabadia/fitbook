@@ -236,7 +236,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
   }
 
   const activeSlots = slots.filter(s => !s.is_cancelled)
-  const totalBookings = Object.values(bookingCounts).reduce((a, b) => a + b, 0)
+  const totalBookings = activeSlots.reduce((a, s) => a + (bookingCounts[s.id] || 0), 0)
   const totalCapacity = activeSlots.reduce((a, s) => a + s.capacity, 0)
 
   const slotsByDate = {}
@@ -353,8 +353,10 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const name = e.target.value
                 setNewSlot({ ...newSlot, name, ...getSlotDefaults(name) })
               }}>
-                <optgroup label="Stod">
+                <optgroup label="Osobní">
                   <option>Osobní trénink</option>
+                </optgroup>
+                <optgroup label="Stod">
                   <option>XXL cvičení - Stod</option>
                   <option>Posilování na hudbu - Stod</option>
                   <option>Funkční trénink - Stod</option>
@@ -363,6 +365,13 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                   <option>XXL cvičení - Zbůch</option>
                   <option>Posilování na hudbu - Zbůch</option>
                   <option>FIT Orient - Zbůch</option>
+                </optgroup>
+                <optgroup label="Březín">
+                  <option>Cvičení - Březín</option>
+                  <option>Tabata - Březín</option>
+                </optgroup>
+                <optgroup label="Holýšov">
+                  <option>XXL cvičení - Holýšov</option>
                 </optgroup>
               </select>
               <label style={s.label}>Datum</label>
