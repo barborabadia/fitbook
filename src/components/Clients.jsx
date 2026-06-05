@@ -78,7 +78,8 @@ export default function Clients({ refreshKey }) {
       })
       mc?.forEach(c => {
         const key = c.email || `__mc_${c.id}`
-        if (!map[key]) map[key] = { name: c.name, email: c.email || '', phone: c.phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null, isManual: true, manualId: c.id }
+        if (!map[key]) map[key] = { name: c.name, email: c.email || null, phone: c.phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null, isManual: true, manualId: c.id }
+        else map[key].manualId = c.id
       })
       setClients(Object.values(map))
     } catch (err) {
@@ -183,12 +184,12 @@ export default function Clients({ refreshKey }) {
 
       {isMobile ? (
         <div>
-          {filtered.map(c => {
+          {sorted.map(c => {
             const hue = getHue(c.email || c.name)
             const initials = (c.name || '?').split(' ').filter(n => n.length > 0).map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
             const status = getStatus(c)
             return (
-              <div key={c.manualId || c.email} style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '14px 16px', marginBottom: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(200,81,107,0.05)' }} onClick={() => setSelectedClient(c)}>
+              <div key={c.manualId != null ? `mc_${c.manualId}` : c.email || `__name__${c.name}`} style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '14px 16px', marginBottom: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(200,81,107,0.05)' }} onClick={() => setSelectedClient(c)}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                   <div style={s.avatar(hue)}>{initials}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -228,7 +229,7 @@ export default function Clients({ refreshKey }) {
             const initials = (c.name || '?').split(' ').filter(n => n.length > 0).map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
             const status = getStatus(c)
             return (
-              <div key={c.manualId || c.email} style={{ ...s.tRow, background: i % 2 === 0 ? 'transparent' : 'rgba(200,81,107,0.015)', cursor: 'pointer' }} onClick={() => setSelectedClient(c)}>
+              <div key={c.manualId != null ? `mc_${c.manualId}` : c.email || `__name__${c.name}`} style={{ ...s.tRow, background: i % 2 === 0 ? 'transparent' : 'rgba(200,81,107,0.015)', cursor: 'pointer' }} onClick={() => setSelectedClient(c)}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={s.avatar(hue)}>{initials}</div>
                   <div>
