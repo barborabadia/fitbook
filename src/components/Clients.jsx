@@ -92,6 +92,15 @@ export default function Clients({ refreshKey }) {
     if (!newClient.name.trim()) { setAddError('Jméno je povinné.'); return }
     setAddLoading(true); setAddError('')
     const email = newClient.email.trim().toLowerCase() || null
+
+    // Kontrola duplicity
+    if (email) {
+      const { data: dupEmail } = await supabase.from('manual_clients').select('id').eq('email', email).limit(1)
+      if (dupEmail?.length > 0) { setAddError('Klient s tímto emailem již v databázi existuje.'); setAddLoading(false); return }
+    }
+    const { data: dupName } = await supabase.from('manual_clients').select('id').ilike('name', newClient.name.trim()).limit(1)
+    if (dupName?.length > 0) { setAddError(`Klient se jménem „${newClient.name.trim()}" již v databázi existuje.`); setAddLoading(false); return }
+
     const { error } = await supabase.from('manual_clients').insert({
       name: newClient.name.trim(),
       email,
