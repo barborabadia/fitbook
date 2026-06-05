@@ -169,8 +169,8 @@ export default function SlotDetailModal({ slot, onClose }) {
     const { data: bk } = await supabase.from('bookings').select('client_name, client_email, client_phone').eq('status', 'confirmed')
     const { data: mc } = await supabase.from('manual_clients').select('*').order('name')
     const map = {}
-    bk?.forEach(b => { if (b.client_email && !map[b.client_email]) map[b.client_email] = { name: b.client_name, email: b.client_email, phone: b.client_phone } })
-    mc?.forEach(c => { if (!map[c.email]) map[c.email] = { name: c.name, email: c.email, phone: c.phone } })
+    bk?.forEach(b => { const key = b.client_email || `__name__${b.client_name}`; if (!map[key]) map[key] = { name: b.client_name, email: b.client_email, phone: b.client_phone } })
+    mc?.forEach(c => { const key = c.email || `__name__${c.name}`; if (!map[key]) map[key] = { name: c.name, email: c.email, phone: c.phone } })
     setAllClients(Object.values(map).sort((a, b) => a.name.localeCompare(b.name, 'cs')))
   }
 
