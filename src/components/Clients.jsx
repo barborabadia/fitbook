@@ -77,7 +77,7 @@ export default function Clients({ refreshKey }) {
         }
       })
       mc?.forEach(c => {
-        const key = c.email || `__mc_${c.id}`
+        const key = c.email || `__name__${c.name}`
         if (!map[key]) map[key] = { name: c.name, email: c.email || null, phone: c.phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null, isManual: true, manualId: c.id }
         else map[key].manualId = c.id
       })
