@@ -91,9 +91,14 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
   }
 
   async function loadBookings() {
-    if (!client.email) { setLoading(false); return }
     setLoading(true)
-    const { data } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, duration_minutes, color)').eq('client_email', client.email).order('created_at', { ascending: false })
+    let query = supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, duration_minutes, color)')
+    if (client.email) {
+      query = query.eq('client_email', client.email)
+    } else {
+      query = query.is('client_email', null).eq('client_name', client.name)
+    }
+    const { data } = await query.order('created_at', { ascending: false })
     if (data) setBookings(data)
     setLoading(false)
   }
