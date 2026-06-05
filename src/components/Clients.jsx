@@ -64,7 +64,7 @@ export default function Clients({ refreshKey }) {
         const slotDate = b.training_slots?.slot_date
         const isPast = slotDate && slotDate <= today
         const name = b.training_slots?.name
-        const key = b.client_email
+        const key = b.client_email || `__name__${b.client_name}`
         if (!map[key]) map[key] = { name: b.client_name, email: b.client_email, phone: b.client_phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null }
         if (isPast) map[key].sessions++
         if (isPast && !isGroupCash(name)) {
