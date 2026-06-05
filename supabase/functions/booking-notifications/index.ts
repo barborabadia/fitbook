@@ -197,6 +197,21 @@ Deno.serve(async (req: Request) => {
 
     if (table !== 'bookings') return new Response('Ignored', { status: 200 })
 
+    // Smazání rezervace – jen smaž kalendářovou událost
+    if (type === 'DELETE') {
+      const deleted = old_record || record
+      if (deleted?.gcal_event_id) {
+        const sa = Deno.env.get('GOOGLE_SERVICE_ACCOUNT')
+        const cal = Deno.env.get('GOOGLE_CALENDAR_ID')
+        if (sa && cal) await deleteCalendarEvent(JSON.parse(sa), cal, deleted.gcal_event_id)
+      }
+      console.log('✅ Delete processed')
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
     // Načti detail slotu
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
