@@ -67,8 +67,11 @@ export default function BookingModal({ slot, prefill, onClose }) {
     if (!form.email.includes('@')) { setError('Zadej platný e-mail.'); return }
     setLoading(true); setError('')
 
-    const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_email', form.email.trim().toLowerCase()).eq('status', 'confirmed')
-    if (existing?.length > 0) { setError('Na tento termín již máš rezervaci.'); setLoading(false); return }
+    const isGroup = n => n?.includes('Zbůch') || (n?.includes('Březín') && !n?.includes('Tabata')) || n?.includes('Holýšov') || n?.includes('- Stod')
+    if (!isGroup(slot.name)) {
+      const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_email', form.email.trim().toLowerCase()).eq('status', 'confirmed')
+      if (existing?.length > 0) { setError('Na tento termín již máš rezervaci.'); setLoading(false); return }
+    }
 
     const { count } = await supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('slot_id', slot.id).eq('status', 'confirmed')
     if (count >= slot.capacity) { setError('Termín je bohužel plný.'); setLoading(false); return }
