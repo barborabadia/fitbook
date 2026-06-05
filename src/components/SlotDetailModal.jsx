@@ -176,9 +176,12 @@ export default function SlotDetailModal({ slot, onClose }) {
 
   async function addManualBooking(client) {
     setAddLoading(true); setAddError('')
-    // Kontrola duplicity – null email řeším přes .is(), jinak .eq()
+    // Kontrola duplicity na tento termín
     if (client.email) {
       const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_email', client.email).eq('status', 'confirmed')
+      if (existing?.length > 0) { setAddError(`${client.name} má na tento termín již rezervaci.`); setAddLoading(false); return }
+    } else {
+      const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_name', client.name).eq('status', 'confirmed')
       if (existing?.length > 0) { setAddError(`${client.name} má na tento termín již rezervaci.`); setAddLoading(false); return }
     }
     const confirmed = bookings.filter(b => b.status === 'confirmed')
