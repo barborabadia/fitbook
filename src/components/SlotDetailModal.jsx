@@ -177,7 +177,7 @@ export default function SlotDetailModal({ slot, onClose }) {
   async function addManualBooking(client) {
     setAddLoading(true); setAddError('')
     // Kontrola duplicity na tento termín (skupinové tréninky povolují více míst)
-    const isGroup = n => n?.includes('Zbůch') || (n?.includes('Březín') && !n?.includes('Tabata')) || n?.includes('Holýšov') || n?.includes('- Stod')
+    const isGroup = n => !n?.includes('Osobní trénink')
     if (!isGroup(slot.name)) {
       if (client.email) {
         const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_email', client.email).eq('status', 'confirmed')
