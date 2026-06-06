@@ -114,6 +114,10 @@ export default function SlotDetailModal({ slot, onClose }) {
   async function payFromCredit(bookingId, clientKey, price) {
     const cc = clientCredits[clientKey]
     if (!cc?.manualId) return
+    if (cc.credit < price) {
+      alert(`Nedostatečný kredit. Klient má ${cc.credit} Kč, trénink stojí ${price} Kč.`)
+      return
+    }
     await supabase.from('bookings').update({ paid: true, payment_method: 'credit' }).eq('id', bookingId)
     await supabase.from('manual_clients').update({ credit: cc.credit - price }).eq('id', cc.manualId)
     setPaymentPickerId(null)
