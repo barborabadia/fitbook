@@ -54,36 +54,43 @@ export default function BookingModal({ slot, prefill, onClose }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [unpaidWarning, setUnpaidWarning] = useState('')
   const isPersonal = slot?.name === 'Osobní trénink'
   const isZbuch = (slot?.name || '').includes('Zbůch') || ((slot?.name || '').includes('Březín') && !(slot?.name || '').includes('Tabata')) || (slot?.name || '').includes('Holýšov')
   const price = getPrice(slot, bookingType)
 
   useEffect(() => {
-    if (prefill) setForm({ name: prefill.name || '', email: prefill.email || '', phone: prefill.phone || '' })
+    if (prefill) {
+      setForm({ name: prefill.name || '', email: prefill.email || '', phone: prefill.phone || '' })
+      if (prefill.email) checkUnpaid(prefill.email)
+    }
   }, [prefill])
 
-  async function handleConfirm() {
-    if (!form.name.trim()) { setError('Zadej prosím jméno.'); return }
-    if (!form.email.trim()) { setError('Zadej prosím e-mail.'); return }
-    if (!form.email.includes('@')) { setError('Zadej platný e-mail.'); return }
-    setLoading(true); setError('')
-
-    // Kontrola neuhrazených tréninků
+  async function checkUnpaid(email) {
+    if (!email?.includes('@')) return
     const isCashTraining = n => n?.includes('Zbůch') || (n?.includes('Březín') && !n?.includes('Tabata')) || n?.includes('Holýšov')
     const today = new Date().toISOString().slice(0, 10)
     const { data: unpaid } = await supabase
       .from('bookings')
       .select('price, training_slots(name, slot_date)')
-      .eq('client_email', form.email.trim().toLowerCase())
+      .eq('client_email', email.trim().toLowerCase())
       .eq('status', 'confirmed')
       .eq('paid', false)
     const pastUnpaid = (unpaid || []).filter(b => b.training_slots?.slot_date < today && !isCashTraining(b.training_slots?.name))
     if (pastUnpaid.length > 0) {
       const total = pastUnpaid.reduce((a, b) => a + (b.price || 0), 0)
       const list = pastUnpaid.map(b => `• ${b.training_slots.name} – ${formatDate(b.training_slots.slot_date)} (${b.price} Kč)`).join('\n')
-      setError(`⚠️ Máš neuhrazené tréninky:\n${list}\n\nCelkem: ${total} Kč\nProsím uhraď před novou rezervací.`)
-      setLoading(false); return
+      setUnpaidWarning(`Máš neuhrazené tréninky:\n${list}\n\nCelkem: ${total} Kč`)
+    } else {
+      setUnpaidWarning('')
     }
+  }
+
+  async function handleConfirm() {
+    if (!form.name.trim()) { setError('Zadej prosím jméno.'); return }
+    if (!form.email.trim()) { setError('Zadej prosím e-mail.'); return }
+    if (!form.email.includes('@')) { setError('Zadej platný e-mail.'); return }
+    setLoading(true); setError('')
 
     const isGroup = n => !n?.includes('Osobní trénink')
     if (!isGroup(slot.name)) {
@@ -193,12 +200,17 @@ export default function BookingModal({ slot, prefill, onClose }) {
                 <label style={s.label}>Jméno a příjmení *</label>
                 <input style={s.input(!!prefill?.name)} placeholder="Jana Nováková" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                 <label style={s.label}>E-mail *</label>
-                <input style={s.input(!!prefill?.email)} placeholder="jana@email.cz" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                <input style={s.input(!!prefill?.email)} placeholder="jana@email.cz" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} onBlur={e => checkUnpaid(e.target.value)} />
                 <label style={s.label}>Telefon (volitelné)</label>
                 <input style={s.input(false)} placeholder="+420 777 888 999" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
                 <div style={{ fontSize: 13, color: '#C8516B', fontWeight: 600, marginTop: 10 }}>
                   Cena: {price} Kč{isPersonal && ` – ${bookingType === 'duo' ? 'Duo' : 'Sólo'}`}
                 </div>
+                {unpaidWarning && (
+                  <div style={{ background: 'rgba(212,148,90,0.1)', border: '1px solid rgba(212,148,90,0.35)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#B8722A', marginTop: 12, whiteSpace: 'pre-line', lineHeight: 1.6 }}>
+                    ⚠️ {unpaidWarning}
+                  </div>
+                )}
                 {error && <div style={s.error}>⚠️ {error}</div>}
                 <div style={s.btnRow}>
                   <button style={s.btn('secondary')} onClick={() => { setStep(1); setError('') }}>← Zpět</button>
