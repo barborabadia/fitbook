@@ -280,6 +280,20 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
           <button style={{ ...s.btn('primary'), flex: 1 }} onClick={() => setShowAddModal(true)}>+ Přidat termín</button>
         </div>
 
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 14, padding: '7px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: 8 }}>
+          {[
+            { color: '#27AE60', label: 'Zaplaceno' },
+            { color: '#E67E22', label: 'Nezaplaceno' },
+            { color: '#9E9E9E', label: 'Neproběhlo' },
+            { color: '#EBCFD8', label: 'Zrušeno', border: true },
+          ].map(({ color, label, border }) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 9, height: 9, borderRadius: '50%', background: border ? 'transparent' : color, border: `2px solid ${color}`, flexShrink: 0 }} />
+              <span style={{ fontSize: 10, color: '#BFA0AD' }}>{label}</span>
+            </div>
+          ))}
+        </div>
+
         {loading && <div style={{ textAlign: 'center', color: '#BFA0AD', padding: '24px 0' }}>Načítám...</div>}
         {!loading && Object.keys(slotsByDate).length === 0 && <div style={{ textAlign: 'center', color: '#BFA0AD', padding: '24px 0', fontSize: 14 }}>Tento týden nejsou žádné termíny.</div>}
 
@@ -434,6 +448,20 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
             <div style={s.statLabel}>{s2.label}</div>
             <div style={s.statValue}>{loading ? '…' : s2.value}</div>
             <div style={s.statSub}>{s2.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16, padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: 8 }}>
+        {[
+          { color: '#27AE60', label: 'Zaplaceno' },
+          { color: '#E67E22', label: 'Proběhlo – nezaplaceno' },
+          { color: '#9E9E9E', label: 'Neproběhlo' },
+          { color: '#EBCFD8', label: 'Zrušeno', border: true },
+        ].map(({ color, label, border }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: border ? 'transparent' : color, border: `2px solid ${color}`, flexShrink: 0 }} />
+            <span style={{ fontSize: 11, color: '#BFA0AD' }}>{label}</span>
           </div>
         ))}
       </div>
