@@ -297,10 +297,25 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const full = ratio >= 1
                 const allPaid = booked > 0 && (paidCounts[sl.id] || 0) >= booked
                 const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E74C3C')
-                const cardBg = sl.is_cancelled ? '#f5f5f5' : allPaid ? '#27AE60' : slotColor
-                const cardBorder = sl.is_cancelled ? '#EBCFD8' : allPaid ? '#27AE60' : slotColor
+                const slotDateTime = new Date(`${sl.slot_date}T${sl.start_time}`)
+                const isPast = slotDateTime < new Date()
+                const trainingHappened = !sl.is_cancelled && booked > 0
+                const isPastUnpaid = isPast && trainingHappened && !allPaid
+                const isPastNoTraining = isPast && !sl.is_cancelled && booked === 0
+                let cardBg, cardBorder, cardOpacity
+                if (sl.is_cancelled) {
+                  cardBg = '#f5f5f5'; cardBorder = '#EBCFD8'; cardOpacity = 0.4
+                } else if (isPastNoTraining) {
+                  cardBg = '#9E9E9E'; cardBorder = '#9E9E9E'; cardOpacity = 0.6
+                } else if (isPastUnpaid) {
+                  cardBg = '#E67E22'; cardBorder = '#E67E22'; cardOpacity = 1
+                } else if (allPaid) {
+                  cardBg = '#27AE60'; cardBorder = '#27AE60'; cardOpacity = 1
+                } else {
+                  cardBg = slotColor; cardBorder = slotColor; cardOpacity = 1
+                }
                 return (
-                  <div key={sl.id} style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 12, padding: '12px 14px', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: sl.is_cancelled ? 0.4 : 1 }}>
+                  <div key={sl.id} style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 12, padding: '12px 14px', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: cardOpacity }}>
                     <div style={{ flex: 1 }} onClick={() => !sl.is_cancelled && onSelectSlot({ ...sl, booked })}>
                       <div style={{ fontWeight: 700, fontSize: 15, color: sl.is_cancelled ? '#9B7E8A' : '#fff' }}>{sl.name}</div>
                       <div style={{ fontSize: 12, color: sl.is_cancelled ? '#BFA0AD' : 'rgba(255,255,255,0.8)', marginTop: 2 }}>
@@ -435,10 +450,25 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const full = ratio >= 1
                 const allPaid = booked > 0 && (paidCounts[sl.id] || 0) >= booked
                 const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E74C3C')
-                const cardBg = sl.is_cancelled ? 'transparent' : allPaid ? '#27AE60' : slotColor
-                const cardBorder = sl.is_cancelled ? '#EBCFD8' : allPaid ? '#27AE60' : slotColor
+                const slotDateTime = new Date(`${sl.slot_date}T${sl.start_time}`)
+                const isPast = slotDateTime < new Date()
+                const trainingHappened = !sl.is_cancelled && booked > 0
+                const isPastUnpaid = isPast && trainingHappened && !allPaid
+                const isPastNoTraining = isPast && !sl.is_cancelled && booked === 0
+                let cardBg, cardBorder, cardOpacity
+                if (sl.is_cancelled) {
+                  cardBg = 'transparent'; cardBorder = '#EBCFD8'; cardOpacity = 0.4
+                } else if (isPastNoTraining) {
+                  cardBg = '#9E9E9E'; cardBorder = '#9E9E9E'; cardOpacity = 0.6
+                } else if (isPastUnpaid) {
+                  cardBg = '#E67E22'; cardBorder = '#E67E22'; cardOpacity = 1
+                } else if (allPaid) {
+                  cardBg = '#27AE60'; cardBorder = '#27AE60'; cardOpacity = 1
+                } else {
+                  cardBg = slotColor; cardBorder = slotColor; cardOpacity = 1
+                }
                 return (
-                  <div key={sl.id} style={{ ...s.card(sl.color, full, sl.is_cancelled), background: cardBg, border: `1px solid ${cardBorder}` }}>
+                  <div key={sl.id} style={{ ...s.card(sl.color, full, sl.is_cancelled), background: cardBg, border: `1px solid ${cardBorder}`, opacity: cardOpacity }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ flex: 1 }} onClick={() => !sl.is_cancelled && onSelectSlot({ ...sl, booked })}>
                         <div style={s.cardTime}>{sl.start_time}</div>
