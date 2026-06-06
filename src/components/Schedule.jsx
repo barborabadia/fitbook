@@ -313,14 +313,17 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E74C3C')
                 const slotDateTime = new Date(`${sl.slot_date}T${sl.start_time}`)
                 const isPast = slotDateTime < new Date()
+                const isZbuch = (sl.name || '').includes('Zbůch')
                 const trainingHappened = !sl.is_cancelled && booked > 0
-                const isPastUnpaid = isPast && trainingHappened && !allPaid
+                const isPastUnpaid = isPast && trainingHappened && !allPaid && !isZbuch
                 const isPastNoTraining = isPast && !sl.is_cancelled && booked === 0
                 let cardBg, cardBorder, cardOpacity
                 if (sl.is_cancelled) {
                   cardBg = '#f5f5f5'; cardBorder = '#EBCFD8'; cardOpacity = 0.4
                 } else if (isPastNoTraining) {
                   cardBg = '#9E9E9E'; cardBorder = '#9E9E9E'; cardOpacity = 0.6
+                } else if (isPast && isZbuch && trainingHappened) {
+                  cardBg = '#27AE60'; cardBorder = '#27AE60'; cardOpacity = 1
                 } else if (isPastUnpaid) {
                   cardBg = '#E67E22'; cardBorder = '#E67E22'; cardOpacity = 1
                 } else if (allPaid) {
@@ -480,14 +483,17 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E74C3C')
                 const slotDateTime = new Date(`${sl.slot_date}T${sl.start_time}`)
                 const isPast = slotDateTime < new Date()
+                const isZbuch = (sl.name || '').includes('Zbůch')
                 const trainingHappened = !sl.is_cancelled && booked > 0
-                const isPastUnpaid = isPast && trainingHappened && !allPaid
+                const isPastUnpaid = isPast && trainingHappened && !allPaid && !isZbuch
                 const isPastNoTraining = isPast && !sl.is_cancelled && booked === 0
                 let cardBg, cardBorder, cardOpacity
                 if (sl.is_cancelled) {
                   cardBg = 'transparent'; cardBorder = '#EBCFD8'; cardOpacity = 0.4
                 } else if (isPastNoTraining) {
                   cardBg = '#9E9E9E'; cardBorder = '#9E9E9E'; cardOpacity = 0.6
+                } else if (isPast && isZbuch && trainingHappened) {
+                  cardBg = '#27AE60'; cardBorder = '#27AE60'; cardOpacity = 1
                 } else if (isPastUnpaid) {
                   cardBg = '#E67E22'; cardBorder = '#E67E22'; cardOpacity = 1
                 } else if (allPaid) {
