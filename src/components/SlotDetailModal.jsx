@@ -78,6 +78,7 @@ export default function SlotDetailModal({ slot, onClose }) {
   const [paymentPickerId, setPaymentPickerId] = useState(null)
   const [movingBookingId, setMovingBookingId] = useState(null)
   const [availableSlots, setAvailableSlots] = useState([])
+  const [clientCredits, setClientCredits] = useState({})
   const isMobile = window.innerWidth < 768
 
   useEffect(() => { loadBookings() }, [slot.id])
@@ -85,8 +86,39 @@ export default function SlotDetailModal({ slot, onClose }) {
   async function loadBookings() {
     setLoading(true)
     const { data } = await supabase.from('bookings').select('*').eq('slot_id', slot.id).order('created_at')
-    if (data) setBookings(data)
+    if (data) {
+      setBookings(data)
+      loadClientCredits(data)
+    }
     setLoading(false)
+  }
+
+  async function loadClientCredits(bookingsList) {
+    const active = bookingsList.filter(b => b.status === 'confirmed')
+    const emails = active.filter(b => b.client_email).map(b => b.client_email)
+    const names = active.filter(b => !b.client_email).map(b => b.client_name)
+    const promises = []
+    if (emails.length > 0) promises.push(supabase.from('manual_clients').select('id, email, credit').in('email', emails))
+    if (names.length > 0) promises.push(supabase.from('manual_clients').select('id, name, credit').in('name', names).is('email', null))
+    const results = await Promise.all(promises)
+    const map = {}
+    results.forEach(({ data }) => {
+      data?.forEach(mc => {
+        const key = mc.email || `__name__${mc.name}`
+        map[key] = { credit: mc.credit || 0, manualId: mc.id }
+      })
+    })
+    setClientCredits(map)
+  }
+
+  async function payFromCredit(bookingId, clientKey, price) {
+    const cc = clientCredits[clientKey]
+    if (!cc?.manualId) return
+    await supabase.from('bookings').update({ paid: true, payment_method: 'credit' }).eq('id', bookingId)
+    await supabase.from('manual_clients').update({ credit: cc.credit - price }).eq('id', cc.manualId)
+    setPaymentPickerId(null)
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, paid: true, payment_method: 'credit' } : b))
+    setClientCredits(prev => ({ ...prev, [clientKey]: { ...prev[clientKey], credit: prev[clientKey].credit - price } }))
   }
 
   async function cancelBooking(bookingId) {
@@ -344,7 +376,9 @@ export default function SlotDetailModal({ slot, onClose }) {
           const hue = getHue(b.client_email || b.client_name)
           const initials = (b.client_name || '?').split(' ').filter(n => n.length > 0).map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
           const isPersonal = slot.name === 'Osobní trénink'
-          const paymentLabel = b.payment_method === 'cash' ? '💵 Hotově' : b.payment_method === 'transfer' ? '🏦 Na účet' : ''
+          const paymentLabel = b.payment_method === 'cash' ? '💵 Hotově' : b.payment_method === 'transfer' ? '🏦 Na účet' : b.payment_method === 'credit' ? '💳 Kredit' : ''
+          const clientKey = b.client_email || `__name__${b.client_name}`
+          const cc = clientCredits[clientKey]
           return (
             <div key={b.id} style={{ ...s.clientCard(b.paid), flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
               {/* Řádek 1: avatar + jméno + zaplaceno */}
@@ -354,6 +388,7 @@ export default function SlotDetailModal({ slot, onClose }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <span style={s.clientName}>{b.client_name}</span>
                     {isPersonal && <span title="Klikni pro změnu" style={{ ...s.badge(b.booking_type), cursor: 'pointer' }} onClick={() => toggleBookingType(b.id, b.booking_type)}>{b.booking_type === 'duo' ? 'Duo' : 'Sólo'}</span>}
+                    {cc?.credit > 0 && <span style={{ fontSize: 10, color: '#5B9E98', fontWeight: 700, background: 'rgba(91,158,152,0.1)', border: '1px solid rgba(91,158,152,0.25)', borderRadius: 12, padding: '2px 7px' }}>💳 {cc.credit} Kč</span>}
                     {!isZbuch && (editingPriceId === b.id ? (
                       <input autoFocus type="number" value={editingPriceValue}
                         onChange={e => setEditingPriceValue(e.target.value)}
@@ -402,9 +437,14 @@ export default function SlotDetailModal({ slot, onClose }) {
                   </div>
                 )}
                 {paymentPickerId === b.id && (
-                  <div style={{ display: 'flex', gap: 6, position: 'absolute', top: '100%', right: 0, zIndex: 10, background: '#fff', border: '1px solid #EBCFD8', borderRadius: 10, padding: 8, boxShadow: '0 4px 16px rgba(200,81,107,0.12)', whiteSpace: 'nowrap' }}>
+                  <div style={{ display: 'flex', gap: 6, position: 'absolute', top: '100%', right: 0, zIndex: 10, background: '#fff', border: '1px solid #EBCFD8', borderRadius: 10, padding: 8, boxShadow: '0 4px 16px rgba(200,81,107,0.12)', whiteSpace: 'nowrap', flexWrap: 'wrap' }}>
                     <button onClick={() => setPaid(b.id, 'cash')} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: '#FBF6F8', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}>💵 Hotově</button>
                     <button onClick={() => setPaid(b.id, 'transfer')} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: '#FBF6F8', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}>🏦 Na účet</button>
+                    {cc?.credit > 0 && (
+                      <button onClick={() => payFromCredit(b.id, clientKey, b.price || 0)} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(91,158,152,0.4)', background: 'rgba(91,158,152,0.08)', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: 600, color: '#5B9E98' }}>
+                        💳 Z kreditu ({cc.credit} Kč)
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

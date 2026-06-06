@@ -54,8 +54,30 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
   const [emailSaving, setEmailSaving] = useState(false)
   const [editName, setEditName] = useState(null)
   const [nameSaving, setNameSaving] = useState(false)
+  const [credit, setCredit] = useState(0)
+  const [addCreditInput, setAddCreditInput] = useState('')
+  const [creditLoading, setCreditLoading] = useState(false)
+  const [creditSaved, setCreditSaved] = useState(false)
 
-  useEffect(() => { loadBookings(); loadNotes(); loadProfile() }, [client.email])
+  useEffect(() => { loadBookings(); loadNotes(); loadProfile(); loadCredit() }, [client.email, client.manualId])
+
+  async function loadCredit() {
+    if (!client.manualId) return
+    const { data } = await supabase.from('manual_clients').select('credit').eq('id', client.manualId).single()
+    if (data) setCredit(data.credit || 0)
+  }
+
+  async function addCredit() {
+    const amount = parseInt(addCreditInput, 10)
+    if (!amount || amount <= 0 || !client.manualId) return
+    setCreditLoading(true)
+    await supabase.from('manual_clients').update({ credit: credit + amount }).eq('id', client.manualId)
+    setCredit(prev => prev + amount)
+    setAddCreditInput('')
+    setCreditLoading(false)
+    setCreditSaved(true)
+    setTimeout(() => setCreditSaved(false), 2000)
+  }
 
   async function loadProfile() {
     if (!client.email) return
@@ -283,6 +305,31 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
             </div>
           ))}
         </div>
+
+        {client.manualId != null && (
+          <div style={{ background: 'rgba(91,158,152,0.08)', border: '1px solid rgba(91,158,152,0.28)', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontSize: 10, color: '#5B9E98', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Kredit</div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: credit > 0 ? '#5B9E98' : '#BFA0AD' }}>{credit} Kč</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  type="number"
+                  placeholder="Částka Kč"
+                  value={addCreditInput}
+                  onChange={e => setAddCreditInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addCredit()}
+                  min="1"
+                  style={{ width: 100, background: '#fff', border: '1px solid rgba(91,158,152,0.4)', borderRadius: 8, padding: '8px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+                />
+                <button onClick={addCredit} disabled={!addCreditInput || creditLoading} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: creditSaved ? '#27AE60' : '#5B9E98', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: (!addCreditInput || creditLoading) ? 0.5 : 1, transition: 'background 0.2s' }}>
+                  {creditSaved ? '✓ Přidáno' : '+ Přidat'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {Object.keys(byType).length > 0 && (
           <>

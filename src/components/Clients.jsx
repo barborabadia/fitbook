@@ -78,8 +78,8 @@ export default function Clients({ refreshKey }) {
       })
       mc?.forEach(c => {
         const key = c.email || `__name__${c.name}`
-        if (!map[key]) map[key] = { name: c.name, email: c.email || null, phone: c.phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null, isManual: true, manualId: c.id }
-        else map[key].manualId = c.id
+        if (!map[key]) map[key] = { name: c.name, email: c.email || null, phone: c.phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null, isManual: true, manualId: c.id, credit: c.credit || 0 }
+        else { map[key].manualId = c.id; map[key].credit = c.credit || 0 }
       })
       setClients(Object.values(map))
     } catch (err) {
@@ -208,6 +208,12 @@ export default function Clients({ refreshKey }) {
                     <div style={{ fontSize: 10, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Utraceno</div>
                     <div style={{ fontWeight: 700, fontSize: 16, color: '#D4945A', marginTop: 2 }}>{c.totalSpent > 0 ? `${c.totalSpent} Kč` : '–'}</div>
                   </div>
+                  {c.credit > 0 && (
+                    <div style={{ flex: 1, background: 'rgba(91,158,152,0.08)', border: '1px solid rgba(91,158,152,0.2)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 10, color: '#5B9E98', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Kredit</div>
+                      <div style={{ fontWeight: 700, fontSize: 16, color: '#5B9E98', marginTop: 2 }}>{c.credit} Kč</div>
+                    </div>
+                  )}
                 </div>
               </div>
             )
@@ -239,7 +245,10 @@ export default function Clients({ refreshKey }) {
                 </div>
                 <span style={{ color: '#9B7E8A', fontSize: 13 }}>{c.email || '–'}</span>
                 <span style={{ fontWeight: 700, color: '#2C1A22' }}>{c.sessions}</span>
-                <span style={{ fontWeight: 600, color: '#D4945A' }}>{c.totalSpent > 0 ? `${c.totalSpent} Kč` : '–'}</span>
+                <span>
+                  <div style={{ fontWeight: 600, color: '#D4945A' }}>{c.totalSpent > 0 ? `${c.totalSpent} Kč` : '–'}</div>
+                  {c.credit > 0 && <div style={{ fontSize: 11, color: '#5B9E98', fontWeight: 600, marginTop: 2 }}>💳 {c.credit} Kč</div>}
+                </span>
                 <span style={s.badge(status)}>{statusLabel[status]}</span>
                 <span onClick={e => e.stopPropagation()}>
                   <button onClick={() => deleteClient(c)} title="Smazat klienta" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4ABB4', fontSize: 16, padding: '2px 4px', lineHeight: 1, borderRadius: 6 }}
