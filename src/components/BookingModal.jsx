@@ -38,7 +38,7 @@ const s = {
   input: (prefilled) => ({ width: '100%', background: prefilled ? 'rgba(91,158,152,0.05)' : '#FBF6F8', border: `1px solid ${prefilled ? 'rgba(91,158,152,0.4)' : '#EBCFD8'}`, borderRadius: 10, padding: '11px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }),
   btnRow: { display: 'flex', gap: 10, marginTop: 20 },
   btn: (v) => ({ flex: v === 'primary' ? 2 : 1, padding: '12px', borderRadius: 10, border: v === 'secondary' ? '1px solid #EBCFD8' : 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', background: v === 'primary' ? '#C8516B' : '#F5E8EC', color: v === 'primary' ? '#fff' : '#9B7E8A' }),
-  error: { background: 'rgba(200,81,107,0.08)', border: '1px solid rgba(200,81,107,0.25)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#C8516B', marginTop: 12 },
+  error: { background: 'rgba(200,81,107,0.08)', border: '1px solid rgba(200,81,107,0.25)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#C8516B', marginTop: 12, whiteSpace: 'pre-line', lineHeight: 1.6 },
   successWrap: { textAlign: 'center' },
   successBox: (color) => ({ background: `${color}10`, border: `1px solid ${color}30`, borderRadius: 12, padding: '14px 16px', margin: '16px 0', textAlign: 'left' }),
   qrBox: { background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 16, padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, margin: '16px 0' },
@@ -67,6 +67,23 @@ export default function BookingModal({ slot, prefill, onClose }) {
     if (!form.email.trim()) { setError('Zadej prosím e-mail.'); return }
     if (!form.email.includes('@')) { setError('Zadej platný e-mail.'); return }
     setLoading(true); setError('')
+
+    // Kontrola neuhrazených tréninků
+    const isCashTraining = n => n?.includes('Zbůch') || (n?.includes('Březín') && !n?.includes('Tabata')) || n?.includes('Holýšov')
+    const today = new Date().toISOString().slice(0, 10)
+    const { data: unpaid } = await supabase
+      .from('bookings')
+      .select('price, training_slots(name, slot_date)')
+      .eq('client_email', form.email.trim().toLowerCase())
+      .eq('status', 'confirmed')
+      .eq('paid', false)
+    const pastUnpaid = (unpaid || []).filter(b => b.training_slots?.slot_date < today && !isCashTraining(b.training_slots?.name))
+    if (pastUnpaid.length > 0) {
+      const total = pastUnpaid.reduce((a, b) => a + (b.price || 0), 0)
+      const list = pastUnpaid.map(b => `• ${b.training_slots.name} – ${formatDate(b.training_slots.slot_date)} (${b.price} Kč)`).join('\n')
+      setError(`⚠️ Máš neuhrazené tréninky:\n${list}\n\nCelkem: ${total} Kč\nProsím uhraď před novou rezervací.`)
+      setLoading(false); return
+    }
 
     const isGroup = n => !n?.includes('Osobní trénink')
     if (!isGroup(slot.name)) {
