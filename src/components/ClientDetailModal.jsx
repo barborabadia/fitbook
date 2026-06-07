@@ -69,9 +69,19 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
 
   async function addCredit() {
     const amount = parseInt(addCreditInput, 10)
-    if (!amount || amount <= 0 || !client.manualId) return
+    if (!amount || amount <= 0) return
     setCreditLoading(true)
-    await supabase.from('manual_clients').update({ credit: credit + amount }).eq('id', client.manualId)
+    if (client.manualId) {
+      await supabase.from('manual_clients').update({ credit: credit + amount }).eq('id', client.manualId)
+    } else {
+      const { data: inserted } = await supabase.from('manual_clients').insert({
+        name: client.name,
+        email: client.email || null,
+        phone: client.phone || null,
+        credit: amount,
+      }).select('id').single()
+      if (inserted) client.manualId = inserted.id
+    }
     setCredit(prev => prev + amount)
     setAddCreditInput('')
     setCreditLoading(false)
@@ -306,8 +316,7 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
           ))}
         </div>
 
-        {client.manualId != null && (
-          <div style={{ background: 'rgba(91,158,152,0.08)', border: '1px solid rgba(91,158,152,0.28)', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
+        <div style={{ background: 'rgba(91,158,152,0.08)', border: '1px solid rgba(91,158,152,0.28)', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <div>
                 <div style={{ fontSize: 10, color: '#5B9E98', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>Kredit</div>
@@ -329,7 +338,6 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
               </div>
             </div>
           </div>
-        )}
 
         {Object.keys(byType).length > 0 && (
           <>
