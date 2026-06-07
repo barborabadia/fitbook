@@ -518,8 +518,7 @@ export default function Statistics({ refreshKey }) {
                 <div style={s.barLabel}>
                   <span style={{ color: '#2C1A22' }}>{name}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {isGroup && <span style={{ fontSize: 10, color: '#9B7E8A', fontStyle: 'italic' }}>dle klíče</span>}
-                    <span style={{ color: TYPE_COLORS[name] || '#5B9E98', fontWeight: 700 }}>{revenue.toLocaleString('cs-CZ')} Kč</span>
+                      <span style={{ color: TYPE_COLORS[name] || '#5B9E98', fontWeight: 700 }}>{revenue.toLocaleString('cs-CZ')} Kč</span>
                   </div>
                 </div>
                 <div style={s.barTrack}>
@@ -528,10 +527,6 @@ export default function Statistics({ refreshKey }) {
               </div>
             )
           })}
-        <div style={{ marginTop: 12, fontSize: 11, color: '#BFA0AD' }}>
-          Osobní trénink, Stod a Tabata-Března: započítány jen zaplacené. Zbůch/Cvičení-Březín/Holýšov: dle klíče.
-          {salonCosts > 0 && ` Nájem odečten (${salonCosts} Kč).`}
-        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: cardsGrid, gap: 16, marginBottom: 16 }}>
