@@ -216,6 +216,9 @@ export default function ClientBooking() {
   const [orderType, setOrderType] = useState(null)
   const [orderState, setOrderState] = useState('idle') // idle | loading | sent | error
   const [orderUser, setOrderUser] = useState(null)
+  const [hoveredOrder, setHoveredOrder] = useState(null)
+  const [orderGuestName, setOrderGuestName] = useState('')
+  const [orderGuestEmail, setOrderGuestEmail] = useState('')
 
   // Otevřít konkrétní lekci přes URL parametr ?slot=<id>
   useEffect(() => {
@@ -296,9 +299,14 @@ export default function ClientBooking() {
     setOrderUser(user)
     setOrderType(type)
     setOrderState('idle')
+    setOrderGuestName('')
+    setOrderGuestEmail('')
   }
 
   async function submitOrder() {
+    const clientName = orderUser ? (orderUser.user_metadata?.full_name || orderUser.email?.split('@')[0] || '') : orderGuestName.trim()
+    const clientEmail = orderUser ? orderUser.email : orderGuestEmail.trim()
+    if (!clientName || !clientEmail || !clientEmail.includes('@')) return
     setOrderState('loading')
     try {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-inquiry`, {
@@ -307,11 +315,7 @@ export default function ClientBooking() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({
-          service: orderType,
-          clientName: orderUser.user_metadata?.full_name || orderUser.email?.split('@')[0] || '',
-          clientEmail: orderUser.email,
-        }),
+        body: JSON.stringify({ service: orderType, clientName, clientEmail }),
       })
       if (!res.ok) throw new Error('Send failed')
       setOrderState('sent')
@@ -432,7 +436,12 @@ export default function ClientBooking() {
               </p>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #EBCFD8', paddingTop: 16 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: '#C8516B' }}>1 500 Kč</div>
-                <button onClick={() => handleOrderClick('vyziva')} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Objednat</button>
+                <button
+                  onClick={() => handleOrderClick('vyziva')}
+                  onMouseEnter={() => setHoveredOrder('vyziva')}
+                  onMouseLeave={() => setHoveredOrder(null)}
+                  style={{ padding: '9px 24px', borderRadius: 10, border: '1px solid rgba(200,81,107,0.6)', background: hoveredOrder === 'vyziva' ? '#C8516B' : 'transparent', color: hoveredOrder === 'vyziva' ? '#fff' : '#C8516B', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                >Objednat</button>
               </div>
             </div>
           )}
@@ -457,7 +466,12 @@ export default function ClientBooking() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #EBCFD8', paddingTop: 16 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: '#C8516B' }}>1 000 Kč</div>
-                <button onClick={() => handleOrderClick('trenink')} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Objednat</button>
+                <button
+                  onClick={() => handleOrderClick('trenink')}
+                  onMouseEnter={() => setHoveredOrder('trenink')}
+                  onMouseLeave={() => setHoveredOrder(null)}
+                  style={{ padding: '9px 24px', borderRadius: 10, border: '1px solid rgba(200,81,107,0.6)', background: hoveredOrder === 'trenink' ? '#C8516B' : 'transparent', color: hoveredOrder === 'trenink' ? '#fff' : '#C8516B', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                >Objednat</button>
               </div>
             </div>
           )}
@@ -503,15 +517,37 @@ export default function ClientBooking() {
                 <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 12 }}>✅</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22', marginBottom: 8, textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Objednávka odeslána!</div>
                 <p style={{ fontSize: 14, color: '#9B7E8A', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.6 }}>
-                  Budete v nejbližší době kontaktováni na email <strong style={{ color: '#2C1A22' }}>{orderUser?.email}</strong>.
+                  Budete v nejbližší době kontaktováni na email <strong style={{ color: '#2C1A22' }}>{orderUser?.email || orderGuestEmail}</strong>.
                 </p>
                 <button onClick={() => { setOrderType(null); setOrderState('idle') }} style={{ width: '100%', padding: '12px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Zavřít</button>
               </>
             ) : !orderUser ? (
               <>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22', marginBottom: 8, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Přihlaste se pro objednání</div>
-                <p style={{ fontSize: 14, color: '#9B7E8A', margin: '0 0 20px', lineHeight: 1.6 }}>Pro odeslání objednávky se prosím přihlaste.</p>
-                <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } })} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #EBCFD8', background: '#F5E8EC', color: '#2C1A22', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 10 }}>Přihlásit přes Google</button>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22', marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Objednat – {orderType === 'vyziva' ? 'Výživové poradenství' : 'Tréninkový plán'}</div>
+                <p style={{ fontSize: 14, color: '#9B7E8A', margin: '0 0 16px', lineHeight: 1.6 }}>Přihlaste se nebo vyplňte kontaktní údaje.</p>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                  <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } })} style={{ flex: 1, padding: '9px', borderRadius: 8, border: '1px solid #EBCFD8', background: '#F5E8EC', color: '#2C1A22', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <svg width="14" height="14" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.14 0 5.95 1.08 8.17 2.86L38.37 6C34.18 2.29 29.34 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.28 5.66C11.6 12.62 17.32 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                    Google
+                  </button>
+                  <button onClick={() => { const p = new URLSearchParams({ client_id: import.meta.env.VITE_SEZNAM_CLIENT_ID, redirect_uri: 'https://kkugctxybegcggiyxozj.supabase.co/functions/v1/seznam-callback', response_type: 'code', scope: 'identity' }); window.location.href = `https://login.szn.cz/api/v1/oauth/auth?${p}` }} style={{ flex: 1, padding: '9px', borderRadius: 8, border: '1px solid #FFD59E', background: '#FFF3E0', color: '#2C1A22', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <svg width="14" height="14" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#CC0000"/><text x="24" y="32" textAnchor="middle" fontSize="26" fontWeight="bold" fill="white" fontFamily="Arial">S</text></svg>
+                    Seznam
+                  </button>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <div style={{ flex: 1, height: 1, background: '#EBCFD8' }} />
+                  <span style={{ fontSize: 12, color: '#BFA0AD' }}>nebo</span>
+                  <div style={{ flex: 1, height: 1, background: '#EBCFD8' }} />
+                </div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6 }}>Jméno a příjmení *</label>
+                <input value={orderGuestName} onChange={e => setOrderGuestName(e.target.value)} placeholder="Jana Nováková" style={{ width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 10 }} />
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6 }}>E-mail *</label>
+                <input value={orderGuestEmail} onChange={e => setOrderGuestEmail(e.target.value)} placeholder="jana@email.cz" type="email" style={{ width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
+                {orderState === 'error' && <p style={{ fontSize: 13, color: '#C8516B', margin: '0 0 10px' }}>Něco se pokazilo. Zkuste to znovu.</p>}
+                <button onClick={submitOrder} disabled={!orderGuestName.trim() || !orderGuestEmail.includes('@') || orderState === 'loading'} style={{ width: '100%', padding: '12px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (!orderGuestName.trim() || !orderGuestEmail.includes('@') || orderState === 'loading') ? 0.5 : 1, marginBottom: 10 }}>
+                  {orderState === 'loading' ? 'Odesílám...' : 'Odeslat objednávku'}
+                </button>
                 <button onClick={() => setOrderType(null)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#9B7E8A', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušit</button>
               </>
             ) : (
