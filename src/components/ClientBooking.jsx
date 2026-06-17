@@ -517,7 +517,6 @@ export default function ClientBooking() {
                 <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 12 }}>✅</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22', marginBottom: 8, textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Objednávka odeslána!</div>
                 <p style={{ fontSize: 14, color: '#9B7E8A', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.6 }}>
-                  Budete v nejbližší době kontaktováni na email <strong style={{ color: '#2C1A22' }}>{orderUser?.email || orderGuestEmail}</strong>.
                 </p>
                 <button onClick={() => { setOrderType(null); setOrderState('idle') }} style={{ width: '100%', padding: '12px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Zavřít</button>
               </>
@@ -555,7 +554,7 @@ export default function ClientBooking() {
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22', marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Potvrdit objednávku</div>
                 <div style={{ fontSize: 14, color: '#C8516B', fontWeight: 600, marginBottom: 16 }}>{orderType === 'vyziva' ? '🥗 Výživové poradenství' : '📋 Tréninkový plán'}</div>
                 <p style={{ fontSize: 14, color: '#9B7E8A', margin: '0 0 24px', lineHeight: 1.6 }}>
-                  Objednávku odešleme Barboře. Budete kontaktováni na Váš email <strong style={{ color: '#2C1A22' }}>{orderUser.email}</strong>.
+                  Budete kontaktováni na Váš email <strong style={{ color: '#2C1A22' }}>{orderUser.email}</strong>.
                 </p>
                 {orderState === 'error' && <p style={{ fontSize: 13, color: '#C8516B', margin: '0 0 12px' }}>Něco se pokazilo. Zkuste to prosím znovu.</p>}
                 <button onClick={submitOrder} disabled={orderState === 'loading'} style={{ width: '100%', padding: '12px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 700, cursor: orderState === 'loading' ? 'default' : 'pointer', fontFamily: 'inherit', opacity: orderState === 'loading' ? 0.7 : 1, marginBottom: 10 }}>
