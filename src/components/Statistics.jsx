@@ -563,7 +563,7 @@ export default function Statistics({ refreshKey }) {
               </div>
             ))}
             <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #F0D9DF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Celkem Online spolupráce</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Celkem</span>
               <span style={{ fontSize: 18, fontWeight: 800, color: '#9B72CF' }}>{onlineRevenue.toLocaleString('cs-CZ')} Kč</span>
             </div>
           </>

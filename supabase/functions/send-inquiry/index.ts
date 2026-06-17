@@ -60,6 +60,23 @@ Deno.serve(async (req: Request) => {
       price,
     })
 
+    // Přidej klienta do databáze, pokud tam ještě není
+    if (clientEmail) {
+      const { data: existing } = await supabase
+        .from('manual_clients')
+        .select('id')
+        .eq('email', clientEmail)
+        .maybeSingle()
+      const { data: existingBooking } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('client_email', clientEmail)
+        .limit(1)
+      if (!existing && (!existingBooking || existingBooking.length === 0)) {
+        await supabase.from('manual_clients').insert({ name: clientName, email: clientEmail })
+      }
+    }
+
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #0A0A0F; color: #F0EDE8; border-radius: 16px; overflow: hidden;">
         <div style="background: #FF4D00; padding: 24px 32px;">
