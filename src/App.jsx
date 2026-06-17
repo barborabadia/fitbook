@@ -81,6 +81,7 @@ export default function App() {
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => setScheduleRefresh(r => r + 1)} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#C8516B', cursor: 'pointer', fontSize: 16, fontFamily: 'inherit' }}>↻</button>
+            <button onClick={() => navigator.share ? navigator.share({ title: 'Rezervace', url: bookingUrl }) : navigator.clipboard.writeText(bookingUrl)} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#C8516B', cursor: 'pointer', fontSize: 16, fontFamily: 'inherit' }}>📤</button>
             <button onClick={logout} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#BFA0AD', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' }}>Odhlásit</button>
           </div>
         </div>
