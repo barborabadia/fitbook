@@ -67,8 +67,8 @@ const s = {
   hero: { marginBottom: 24 },
   title: { fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', color: '#2C1A22', fontFamily: "'Plus Jakarta Sans', sans-serif" },
   sub: { fontSize: 14, color: '#9B7E8A', marginTop: 4 },
-  tabRow: { display: 'flex', gap: 8, marginBottom: 24 },
-  tab: (active) => ({ padding: '8px 18px', borderRadius: 10, border: `1px solid ${active ? 'rgba(200,81,107,0.3)' : '#EBCFD8'}`, background: active ? 'rgba(200,81,107,0.08)' : '#FFFFFF', color: active ? '#C8516B' : '#9B7E8A', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }),
+  tabRow: { display: 'flex', gap: 8, marginBottom: 24, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 2 },
+  tab: (active) => ({ padding: '8px 18px', borderRadius: 10, border: `1px solid ${active ? 'rgba(200,81,107,0.3)' : '#EBCFD8'}`, background: active ? 'rgba(200,81,107,0.08)' : '#FFFFFF', color: active ? '#C8516B' : '#9B7E8A', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0 }),
   weekNav: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 },
   weekLabel: { flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#9B7E8A' },
   navBtn: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 8, padding: '6px 12px', color: '#9B7E8A', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' },
@@ -212,6 +212,10 @@ export default function ClientBooking() {
   const [installPrompt, setInstallPrompt] = useState(null)
   const [showInstallBanner, setShowInstallBanner] = useState(false)
   const [showIOSBanner, setShowIOSBanner] = useState(false)
+  const [onlineSubTab, setOnlineSubTab] = useState('vyziva')
+  const [orderType, setOrderType] = useState(null)
+  const [orderState, setOrderState] = useState('idle') // idle | loading | sent | error
+  const [orderUser, setOrderUser] = useState(null)
 
   // Otevřít konkrétní lekci přes URL parametr ?slot=<id>
   useEffect(() => {
@@ -287,6 +291,36 @@ export default function ClientBooking() {
     setLoading(false)
   }
 
+  async function handleOrderClick(type) {
+    const { data: { user } } = await supabase.auth.getUser()
+    setOrderUser(user)
+    setOrderType(type)
+    setOrderState('idle')
+  }
+
+  async function submitOrder() {
+    setOrderState('loading')
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-inquiry`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          service: orderType,
+          clientName: orderUser.user_metadata?.full_name || orderUser.email?.split('@')[0] || '',
+          clientEmail: orderUser.email,
+        }),
+      })
+      if (!res.ok) throw new Error('Send failed')
+      setOrderState('sent')
+    } catch (e) {
+      console.error(e)
+      setOrderState('error')
+    }
+  }
+
   const prefill = loggedInUser ? { name: loggedInUser.user_metadata?.full_name || '', email: loggedInUser.email || '', phone: '' } : null
 
   const slotsByDate = {}
@@ -338,6 +372,7 @@ export default function ClientBooking() {
         <button style={s.tab(tab === 'book')} onClick={() => setTab('book')}>📅 Rezervovat trénink</button>
         <button style={s.tab(tab === 'my')} onClick={() => setTab('my')}>📋 Moje rezervace</button>
         <button style={s.tab(tab === 'info')} onClick={() => setTab('info')}>ℹ️ O tréninku</button>
+        <button style={s.tab(tab === 'online')} onClick={() => setTab('online')}>🤝 Online spolupráce</button>
       </div>
 
       {tab === 'my' && <MyBookings prefillEmail={loggedInUser?.email || null} />}
@@ -364,6 +399,68 @@ export default function ClientBooking() {
               <div style={{ fontSize: 13, color: '#9B7E8A', marginTop: 2 }}>U Elektrárny 902, 333 01 Stod</div>
             </div>
           </div>
+        </div>
+      )}
+
+      {tab === 'online' && (
+        <div>
+          <p style={{ fontSize: 14, color: '#5C3D4A', lineHeight: 1.65, margin: '0 0 20px' }}>
+            Vyberte si službu, která Vám pomůže dosáhnout Vašich cílů efektivně a pod odborným vedením.
+          </p>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+            <button style={s.tab(onlineSubTab === 'vyziva')} onClick={() => setOnlineSubTab('vyziva')}>🥗 Výživové poradenství</button>
+            <button style={s.tab(onlineSubTab === 'trenink')} onClick={() => setOnlineSubTab('trenink')}>📋 Tréninkový plán</button>
+          </div>
+
+          {onlineSubTab === 'vyziva' && (
+            <div style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '24px 22px' }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#2C1A22', marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>🥗 Výživové poradenství</div>
+              <p style={{ fontSize: 14, color: '#5C3D4A', lineHeight: 1.65, margin: '0 0 16px' }}>
+                Jídelníček sestavuji na míru podle Vašich cílů, životního stylu a individuálně vypočítaných hodnot.
+              </p>
+              <div style={{ fontSize: 13, color: '#5C3D4A', marginBottom: 12 }}>
+                <div style={{ fontWeight: 700, marginBottom: 8, color: '#2C1A22' }}>V ceně je zahrnuto:</div>
+                <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 2.1 }}>
+                  <li>sestavení jídelníčku na míru</li>
+                  <li>osobní předání jídelníčku</li>
+                  <li>online konzultace</li>
+                  <li>přepočítání a úprava jídelníčku po 6 měsících zdarma</li>
+                </ul>
+              </div>
+              <p style={{ fontSize: 13, color: '#9B7E8A', lineHeight: 1.65, margin: '0 0 20px' }}>
+                Specifické jídelníčky (vegetariánské, veganské, bezlepkové, při potravinových intolerancích apod.) jsou možné po individuální domluvě.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #EBCFD8', paddingTop: 16 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#C8516B' }}>1 500 Kč</div>
+                <button onClick={() => handleOrderClick('vyziva')} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Objednat</button>
+              </div>
+            </div>
+          )}
+
+          {onlineSubTab === 'trenink' && (
+            <div style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, padding: '24px 22px' }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#2C1A22', marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>📋 Tréninkový plán</div>
+              <p style={{ fontSize: 14, color: '#5C3D4A', lineHeight: 1.65, margin: '0 0 12px' }}>
+                Pro sestavení tréninkového plánu je nejprve nutné absolvovat osobní trénink, během kterého provedeme diagnostiku svalových dysbalancí, zhodnotíme Vaši kondici a stanovíme vhodný postup.
+              </p>
+              <p style={{ fontSize: 14, color: '#5C3D4A', lineHeight: 1.65, margin: '0 0 16px' }}>
+                Na základě získaných informací Vám následně sestavím individuální tréninkový plán na 4 týdny, který bude plně přizpůsoben Vašim cílům, možnostem a aktuální fyzické kondici.
+              </p>
+              <div style={{ fontSize: 13, color: '#5C3D4A', marginBottom: 20 }}>
+                <div style={{ fontWeight: 700, marginBottom: 8, color: '#2C1A22' }}>V ceně je zahrnuto:</div>
+                <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 2.1 }}>
+                  <li>vstupní osobní trénink a diagnostika</li>
+                  <li>individuální tréninkový plán na 4 týdny</li>
+                  <li>online konzultace</li>
+                  <li>osobní ukázka tréninkového plánu ve fitness centru</li>
+                </ul>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #EBCFD8', paddingTop: 16 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#C8516B' }}>1 000 Kč</div>
+                <button onClick={() => handleOrderClick('trenink')} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Objednat</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -397,6 +494,43 @@ export default function ClientBooking() {
 
       {selected && <BookingModal slot={selected} prefill={prefill} onClose={async () => { setSelected(null); await loadData() }} />}
       {showCerts && <CertifikatyModal onClose={() => setShowCerts(false)} />}
+
+      {orderType && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,34,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: '28px 24px', maxWidth: 400, width: '100%', boxShadow: '0 8px 32px rgba(200,81,107,0.15)' }}>
+            {orderState === 'sent' ? (
+              <>
+                <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 12 }}>✅</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22', marginBottom: 8, textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Objednávka odeslána!</div>
+                <p style={{ fontSize: 14, color: '#9B7E8A', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.6 }}>
+                  Budete v nejbližší době kontaktováni na email <strong style={{ color: '#2C1A22' }}>{orderUser?.email}</strong>.
+                </p>
+                <button onClick={() => { setOrderType(null); setOrderState('idle') }} style={{ width: '100%', padding: '12px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Zavřít</button>
+              </>
+            ) : !orderUser ? (
+              <>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22', marginBottom: 8, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Přihlaste se pro objednání</div>
+                <p style={{ fontSize: 14, color: '#9B7E8A', margin: '0 0 20px', lineHeight: 1.6 }}>Pro odeslání objednávky se prosím přihlaste.</p>
+                <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } })} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #EBCFD8', background: '#F5E8EC', color: '#2C1A22', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 10 }}>Přihlásit přes Google</button>
+                <button onClick={() => setOrderType(null)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#9B7E8A', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušit</button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#2C1A22', marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Potvrdit objednávku</div>
+                <div style={{ fontSize: 14, color: '#C8516B', fontWeight: 600, marginBottom: 16 }}>{orderType === 'vyziva' ? '🥗 Výživové poradenství' : '📋 Tréninkový plán'}</div>
+                <p style={{ fontSize: 14, color: '#9B7E8A', margin: '0 0 24px', lineHeight: 1.6 }}>
+                  Objednávku odešleme Barboře. Budete kontaktováni na Váš email <strong style={{ color: '#2C1A22' }}>{orderUser.email}</strong>.
+                </p>
+                {orderState === 'error' && <p style={{ fontSize: 13, color: '#C8516B', margin: '0 0 12px' }}>Něco se pokazilo. Zkuste to prosím znovu.</p>}
+                <button onClick={submitOrder} disabled={orderState === 'loading'} style={{ width: '100%', padding: '12px', borderRadius: 10, border: 'none', background: '#C8516B', color: '#fff', fontSize: 14, fontWeight: 700, cursor: orderState === 'loading' ? 'default' : 'pointer', fontFamily: 'inherit', opacity: orderState === 'loading' ? 0.7 : 1, marginBottom: 10 }}>
+                  {orderState === 'loading' ? 'Odesílám...' : 'Potvrdit objednávku'}
+                </button>
+                <button onClick={() => setOrderType(null)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #EBCFD8', background: 'transparent', color: '#9B7E8A', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Zrušit</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
     </>
   )
