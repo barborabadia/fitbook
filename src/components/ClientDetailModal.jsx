@@ -58,8 +58,9 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
   const [addCreditInput, setAddCreditInput] = useState('')
   const [creditLoading, setCreditLoading] = useState(false)
   const [creditSaved, setCreditSaved] = useState(false)
+  const [inquiries, setInquiries] = useState([])
 
-  useEffect(() => { loadBookings(); loadNotes(); loadProfile(); loadCredit() }, [client.email, client.manualId])
+  useEffect(() => { loadBookings(); loadNotes(); loadProfile(); loadCredit(); loadInquiries() }, [client.email, client.manualId])
 
   async function loadCredit() {
     if (!client.manualId) return
@@ -87,6 +88,17 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
     setCreditLoading(false)
     setCreditSaved(true)
     setTimeout(() => setCreditSaved(false), 2000)
+  }
+
+  async function loadInquiries() {
+    if (!client.email) return
+    const { data } = await supabase.from('inquiries').select('*').eq('client_email', client.email).order('created_at', { ascending: false })
+    if (data) setInquiries(data)
+  }
+
+  async function deleteInquiry(id) {
+    await supabase.from('inquiries').delete().eq('id', id)
+    setInquiries(prev => prev.filter(i => i.id !== id))
   }
 
   async function loadProfile() {
@@ -211,7 +223,7 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
   const confirmed = bookings.filter(b => b.status === 'confirmed')
   const cancelled = bookings.filter(b => b.status === 'cancelled')
   // Utraceno: jen proběhlé, Zbůch/Březín/Holýšov ignorovat, Stod skupinové počítat automaticky, osobní jen zaplacené
-  const totalSpent = confirmed.reduce((a, b) => {
+  const totalSpentTrainings = confirmed.reduce((a, b) => {
     const name = b.training_slots?.name
     const slotDate = b.training_slots?.slot_date
     if (!slotDate || slotDate > today) return a
@@ -219,6 +231,8 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
     if (isGroupStod(name)) return a + (b.price || 0)
     return b.paid ? a + (b.price || 0) : a
   }, 0)
+  const totalSpentInquiries = inquiries.reduce((a, i) => a + i.price, 0)
+  const totalSpent = totalSpentTrainings + totalSpentInquiries
 
   const byType = {}
   confirmed.forEach(b => {
@@ -350,6 +364,28 @@ export default function ClientDetailModal({ client, onClose, onDelete, onMerge }
                 </div>
               ))}
             </div>
+          </>
+        )}
+
+        {inquiries.length > 0 && (
+          <>
+            <div style={s.sectionLabel}>Online spolupráce</div>
+            {inquiries.map(i => (
+              <div key={i.id} style={{ background: 'rgba(155,114,207,0.06)', border: '1px solid rgba(155,114,207,0.2)', borderRadius: 10, padding: '12px 16px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#2C1A22' }}>
+                    {i.service === 'vyziva' ? '🥗 Výživové poradenství' : '📋 Tréninkový plán'}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#BFA0AD', marginTop: 3 }}>
+                    {new Date(i.created_at).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#9B72CF' }}>{i.price} Kč</span>
+                  <button onClick={() => deleteInquiry(i.id)} title="Smazat objednávku" style={{ background: 'none', border: 'none', color: '#C4ABB4', cursor: 'pointer', fontSize: 16, lineHeight: 1, flexShrink: 0 }}>✕</button>
+                </div>
+              </div>
+            ))}
           </>
         )}
 

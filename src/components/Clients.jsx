@@ -51,10 +51,14 @@ export default function Clients({ refreshKey }) {
   async function loadClients() {
     setLoading(true)
     try {
-      const [{ data }, { data: mc }] = await Promise.all([
+      const [{ data }, { data: mc }, { data: inq }] = await Promise.all([
         supabase.from('bookings').select('client_name, client_email, client_phone, booking_type, price, status, paid, created_at, slot_id, training_slots(name, slot_date, start_time)').eq('status', 'confirmed').order('created_at', { ascending: false }),
         supabase.from('manual_clients').select('*').order('name'),
+        supabase.from('inquiries').select('client_email, price'),
       ])
+
+      const inquiryByEmail = {}
+      inq?.forEach(i => { if (i.client_email) inquiryByEmail[i.client_email] = (inquiryByEmail[i.client_email] || 0) + i.price })
 
       const today = new Date().toISOString().slice(0, 10)
       const isGroupCash = name => name?.includes('Zbůch') || (name?.includes('Březín') && !name?.includes('Tabata')) || name?.includes('Holýšov')
@@ -80,6 +84,10 @@ export default function Clients({ refreshKey }) {
         const key = c.email || `__name__${c.name}`
         if (!map[key]) map[key] = { name: c.name, email: c.email || null, phone: c.phone, sessions: 0, totalSpent: 0, lastSlot: null, lastDate: null, isManual: true, manualId: c.id, credit: c.credit || 0 }
         else { map[key].manualId = c.id; map[key].credit = c.credit || 0 }
+      })
+      // Přičti inquiry částky ke klientům
+      Object.entries(inquiryByEmail).forEach(([email, amount]) => {
+        if (map[email]) map[email].totalSpent += amount
       })
       setClients(Object.values(map))
     } catch (err) {

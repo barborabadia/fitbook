@@ -113,6 +113,7 @@ export default function Statistics({ refreshKey }) {
   const [bookings, setBookings] = useState([])
   const [slots, setSlots] = useState([])
   const [historicalSessions, setHistoricalSessions] = useState([])
+  const [inquiries, setInquiries] = useState([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('month')
   const [showUnpaidTooltip, setShowUnpaidTooltip] = useState(false)
@@ -126,9 +127,11 @@ export default function Statistics({ refreshKey }) {
       const { data: bk } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, is_cancelled)').order('created_at', { ascending: false })
       const { data: sl } = await supabase.from('training_slots').select('*').order('slot_date')
       const { data: hs } = await supabase.from('historical_sessions').select('*').order('session_date')
+      const { data: inq } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false })
       if (bk) setBookings(bk)
       if (sl) setSlots(sl)
       if (hs) setHistoricalSessions(hs)
+      if (inq) setInquiries(inq)
     } catch (err) {
       console.error('Chyba načítání statistik:', err)
     } finally {
@@ -409,6 +412,14 @@ export default function Statistics({ refreshKey }) {
   })
   const maxTypeRevenue = Math.max(...Object.values(revenueByType).filter(v => v > 0), 1)
 
+  // Online spolupráce – poptávky filtrované dle období
+  const periodInquiries = inquiries.filter(i => !start || i.created_at.slice(0, 10) >= start)
+  const vyzivaInquiries = periodInquiries.filter(i => i.service === 'vyziva')
+  const treninkInquiries = periodInquiries.filter(i => i.service === 'trenink')
+  const vyzivaRevenue = vyzivaInquiries.reduce((a, i) => a + i.price, 0)
+  const treninkRevenue = treninkInquiries.reduce((a, i) => a + i.price, 0)
+  const onlineRevenue = vyzivaRevenue + treninkRevenue
+
   if (loading) return <div style={{ color: '#BFA0AD', padding: '40px 0' }}>Načítám statistiky...</div>
 
   const statsGrid = isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)'
@@ -527,6 +538,36 @@ export default function Statistics({ refreshKey }) {
               </div>
             )
           })}
+      </div>
+
+      <div style={{ ...s.card, marginBottom: 16 }}>
+        <div style={s.cardTitle}>Online spolupráce</div>
+        {onlineRevenue === 0 && <div style={s.empty}>Žádné poptávky v tomto období</div>}
+        {onlineRevenue > 0 && (
+          <>
+            {[
+              { label: '🥗 Výživové poradenství', count: vyzivaInquiries.length, revenue: vyzivaRevenue },
+              { label: '📋 Tréninkový plán', count: treninkInquiries.length, revenue: treninkRevenue },
+            ].filter(r => r.count > 0).map(row => (
+              <div key={row.label} style={s.barWrap}>
+                <div style={s.barLabel}>
+                  <span style={{ color: '#2C1A22' }}>{row.label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ color: '#BFA0AD', fontSize: 12 }}>{row.count}×</span>
+                    <span style={{ color: '#9B72CF', fontWeight: 700 }}>{row.revenue.toLocaleString('cs-CZ')} Kč</span>
+                  </div>
+                </div>
+                <div style={s.barTrack}>
+                  <div style={s.barFill('#9B72CF', Math.round(row.revenue / onlineRevenue * 100))} />
+                </div>
+              </div>
+            ))}
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #F0D9DF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Celkem Online spolupráce</span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: '#9B72CF' }}>{onlineRevenue.toLocaleString('cs-CZ')} Kč</span>
+            </div>
+          </>
+        )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: cardsGrid, gap: 16, marginBottom: 16 }}>
