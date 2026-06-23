@@ -149,7 +149,7 @@ export default function Statistics({ refreshKey }) {
   async function addExpense() {
     if (!newExpDesc.trim() || !newExpAmount || isNaN(Number(newExpAmount))) return
     setSavingExp(true)
-    const { data, error } = await supabase.from('expenses').insert({ description: newExpDesc.trim(), amount: Number(newExpAmount), date: newExpDate }).select().single()
+    const { data, error } = await supabase.from('expenses').insert({ description: newExpDesc.trim(), amount: Number(newExpAmount), expense_date: newExpDate }).select().single()
     if (error) {
       console.error('Chyba při ukládání nákladu:', error)
       alert(`Nepodařilo se uložit náklad: ${error.message}`)
@@ -225,7 +225,7 @@ export default function Statistics({ refreshKey }) {
   const netRevenue = paidRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + holysovProfit + historicalRevenue
 
   // Náklady za období
-  const periodExpenses = expenses.filter(e => !start || e.date >= start)
+  const periodExpenses = expenses.filter(e => !start || e.expense_date >= start)
   const totalExpenses = periodExpenses.reduce((a, e) => a + (e.amount || 0), 0)
   const netProfit = netRevenue - totalExpenses
 
@@ -643,7 +643,7 @@ export default function Statistics({ refreshKey }) {
           <div key={e.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid #FAF0F3' }}>
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#2C1A22' }}>{e.description}</div>
-              <div style={{ fontSize: 11, color: '#9B7E8A', marginTop: 2 }}>{new Date(e.date).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+              <div style={{ fontSize: 11, color: '#9B7E8A', marginTop: 2 }}>{new Date(e.expense_date).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#C8516B' }}>−{e.amount.toLocaleString('cs-CZ')} Kč</div>
