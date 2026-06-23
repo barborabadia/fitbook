@@ -114,9 +114,14 @@ export default function Statistics({ refreshKey }) {
   const [slots, setSlots] = useState([])
   const [historicalSessions, setHistoricalSessions] = useState([])
   const [inquiries, setInquiries] = useState([])
+  const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('month')
   const [showUnpaidTooltip, setShowUnpaidTooltip] = useState(false)
+  const [newExpDesc, setNewExpDesc] = useState('')
+  const [newExpAmount, setNewExpAmount] = useState('')
+  const [newExpDate, setNewExpDate] = useState(toDateStr(new Date()))
+  const [savingExp, setSavingExp] = useState(false)
   const isMobile = window.innerWidth < 768
 
   useEffect(() => { loadData() }, [refreshKey])
@@ -128,15 +133,33 @@ export default function Statistics({ refreshKey }) {
       const { data: sl } = await supabase.from('training_slots').select('*').order('slot_date')
       const { data: hs } = await supabase.from('historical_sessions').select('*').order('session_date')
       const { data: inq } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false })
+      const { data: exp } = await supabase.from('expenses').select('*').order('date', { ascending: false })
       if (bk) setBookings(bk)
       if (sl) setSlots(sl)
       if (hs) setHistoricalSessions(hs)
       if (inq) setInquiries(inq)
+      if (exp) setExpenses(exp)
     } catch (err) {
       console.error('Chyba načítání statistik:', err)
     } finally {
       setLoading(false)
     }
+  }
+
+  async function addExpense() {
+    if (!newExpDesc.trim() || !newExpAmount || isNaN(Number(newExpAmount))) return
+    setSavingExp(true)
+    const { data } = await supabase.from('expenses').insert({ description: newExpDesc.trim(), amount: Number(newExpAmount), date: newExpDate }).select().single()
+    if (data) setExpenses(prev => [data, ...prev])
+    setNewExpDesc('')
+    setNewExpAmount('')
+    setNewExpDate(toDateStr(new Date()))
+    setSavingExp(false)
+  }
+
+  async function deleteExpense(id) {
+    await supabase.from('expenses').delete().eq('id', id)
+    setExpenses(prev => prev.filter(e => e.id !== id))
   }
 
   const { start, prevStart, prevEnd } = getPeriodRange(period)
@@ -194,6 +217,11 @@ export default function Statistics({ refreshKey }) {
 
   // Čistý příjem = pouze zaplacené přímé platby + skupinové dle klíče + historická data
   const netRevenue = paidRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + holysovProfit + historicalRevenue
+
+  // Náklady za období
+  const periodExpenses = expenses.filter(e => !start || e.date >= start)
+  const totalExpenses = periodExpenses.reduce((a, e) => a + (e.amount || 0), 0)
+  const netProfit = netRevenue - totalExpenses
 
   // Previous period net
   const prevStodSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
@@ -456,11 +484,12 @@ export default function Statistics({ refreshKey }) {
           <div style={s.statSub}>retence {retentionRate} %</div>
         </div>
         <div style={s.stat}>
-          <div style={s.statLabel}>Čistý příjem</div>
-          <div style={{ ...s.statValue, fontSize: netRevenue.toString().length > 6 ? 18 : 26 }}>
-            {netRevenue.toLocaleString('cs-CZ')} Kč
-            <Trend current={netRevenue} previous={prevNetRevenue} />
+          <div style={s.statLabel}>Čistý zisk</div>
+          <div style={{ ...s.statValue, fontSize: netProfit.toString().length > 6 ? 18 : 26 }}>
+            {netProfit.toLocaleString('cs-CZ')} Kč
+            <Trend current={netProfit} previous={prevNetRevenue} />
           </div>
+          {totalExpenses > 0 && <div style={{ ...s.statSub, color: '#C8516B' }}>náklady: −{totalExpenses.toLocaleString('cs-CZ')} Kč</div>}
         </div>
         <div style={s.stat}>
           <div style={s.statLabel}>Obsazenost týden</div>
@@ -567,6 +596,60 @@ export default function Statistics({ refreshKey }) {
               <span style={{ fontSize: 18, fontWeight: 800, color: '#9B72CF' }}>{onlineRevenue.toLocaleString('cs-CZ')} Kč</span>
             </div>
           </>
+        )}
+      </div>
+
+      <div style={{ ...s.card, marginBottom: 16 }}>
+        <div style={s.cardTitle}>Náklady</div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <input
+            value={newExpDesc}
+            onChange={e => setNewExpDesc(e.target.value)}
+            placeholder="Popis (např. gumy na cvičení)"
+            style={{ flex: 2, minWidth: 140, padding: '8px 12px', borderRadius: 8, border: '1px solid #EBCFD8', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+            onKeyDown={e => e.key === 'Enter' && addExpense()}
+          />
+          <input
+            value={newExpAmount}
+            onChange={e => setNewExpAmount(e.target.value)}
+            placeholder="Částka (Kč)"
+            type="number"
+            min="0"
+            style={{ flex: 1, minWidth: 100, padding: '8px 12px', borderRadius: 8, border: '1px solid #EBCFD8', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+            onKeyDown={e => e.key === 'Enter' && addExpense()}
+          />
+          <input
+            value={newExpDate}
+            onChange={e => setNewExpDate(e.target.value)}
+            type="date"
+            style={{ flex: 1, minWidth: 120, padding: '8px 12px', borderRadius: 8, border: '1px solid #EBCFD8', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+          />
+          <button
+            onClick={addExpense}
+            disabled={savingExp || !newExpDesc.trim() || !newExpAmount}
+            style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#C8516B', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', opacity: savingExp || !newExpDesc.trim() || !newExpAmount ? 0.5 : 1 }}
+          >
+            + Přidat
+          </button>
+        </div>
+        {periodExpenses.length === 0 && <div style={s.empty}>Žádné náklady v tomto období</div>}
+        {periodExpenses.map(e => (
+          <div key={e.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid #FAF0F3' }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#2C1A22' }}>{e.description}</div>
+              <div style={{ fontSize: 11, color: '#9B7E8A', marginTop: 2 }}>{new Date(e.date).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#C8516B' }}>−{e.amount.toLocaleString('cs-CZ')} Kč</div>
+              <button onClick={() => deleteExpense(e.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D4B8C2', fontSize: 16, lineHeight: 1, padding: 2 }}>✕</button>
+            </div>
+          </div>
+        ))}
+        {totalExpenses > 0 && (
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F0D9DF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Celkem náklady</span>
+            <span style={{ fontSize: 18, fontWeight: 800, color: '#C8516B' }}>−{totalExpenses.toLocaleString('cs-CZ')} Kč</span>
+          </div>
         )}
       </div>
 
