@@ -1,171 +1,339 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
-function addDays(date, days) {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
-}
-
 function toDateStr(date) {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
 }
-
 function getMonday(d = new Date()) {
-  const date = new Date(d)
-  const day = date.getDay()
+  const date = new Date(d); const day = date.getDay()
   const diff = date.getDate() - day + (day === 0 ? -6 : 1)
-  date.setDate(diff)
-  date.setHours(0, 0, 0, 0)
-  return date
+  date.setDate(diff); date.setHours(0,0,0,0); return date
+}
+function addDays(date, days) {
+  const d = new Date(date); d.setDate(d.getDate() + days); return d
 }
 
 const MONTHS = ['Led','Úno','Bře','Dub','Kvě','Čer','Čvc','Srp','Zář','Říj','Lis','Pro']
+const DAYS_SHORT = ['Po','Út','St','Čt','Pá','So','Ne']
 const TYPE_COLORS = {
   'Osobní trénink': '#C8516B',
-  'XXL cvičení': '#E8956D',
-  'Funkční trénink': '#9B6EA8',
+  'XXL cvičení - Stod': '#E74C3C',
+  'Posilování na hudbu - Stod': '#E74C3C',
+  'Funkční trénink - Stod': '#E74C3C',
+  'XXL cvičení - Zbůch': '#E74C3C',
+  'Posilování na hudbu - Zbůch': '#E74C3C',
+  'FIT Orient - Zbůch': '#E74C3C',
+  'Cvičení - Březín': '#E74C3C',
+  'Tabata - Březín': '#E74C3C',
+  // historické názvy z Tabidoo
+  'XXL cvičení Stod': '#E74C3C',
+  'XXL cvičení Zbůch': '#E74C3C',
+  'FIT Orient Zbůch': '#E74C3C',
+  'Funkční trénink pro ženy Stod': '#E74C3C',
+  'Cvičení Březín': '#E74C3C',
+  'XXL cvičení Holýšov': '#E74C3C',
+  'XXL cvičení - Holýšov': '#E74C3C',
+}
+
+function zbuchProfit(count) {
+  if (count >= 9) return 300
+  if (count >= 5) return 250
+  return 200
 }
 
 const s = {
-  header: { marginBottom: 32 },
-  title: { fontSize: 32, fontWeight: 800, letterSpacing: '-1px' },
-  subtitle: { fontSize: 14, color: '#A08090', marginTop: 4 },
-  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 },
-  stat: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, padding: '20px 24px' },
-  statLabel: { fontSize: 11, color: '#C4ABB4', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 },
-  statValue: { fontSize: 28, fontWeight: 800, letterSpacing: '-1px', color: '#2C1A22' },
-  statSub: { fontSize: 12, color: '#C4ABB4', marginTop: 4 },
-  row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 },
-  card: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, padding: '24px' },
-  cardTitle: { fontSize: 13, fontWeight: 700, color: '#C4ABB4', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 20 },
+  title: { fontSize: 32, fontWeight: 700, letterSpacing: '-1px', color: '#2C1A22', fontFamily: "'Plus Jakarta Sans', sans-serif" },
+  subtitle: { fontSize: 14, color: '#9B7E8A', marginTop: 4 },
+  stat: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, padding: '20px 24px', boxShadow: '0 2px 12px rgba(200,81,107,0.05)' },
+  statLabel: { fontSize: 11, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 },
+  statValue: { fontSize: 26, fontWeight: 800, letterSpacing: '-1px', color: '#2C1A22' },
+  statSub: { fontSize: 12, color: '#BFA0AD', marginTop: 4 },
+  card: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, padding: '24px', boxShadow: '0 2px 12px rgba(200,81,107,0.05)' },
+  cardTitle: { fontSize: 13, fontWeight: 700, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 20 },
   barWrap: { marginBottom: 12 },
   barLabel: { display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 },
-  barTrack: { height: 8, background: '#F5EEF1', borderRadius: 4, overflow: 'hidden' },
+  barTrack: { height: 8, background: '#F0D9DF', borderRadius: 4, overflow: 'hidden' },
   barFill: (color, pct) => ({ height: '100%', width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 0.5s ease' }),
   monthBar: (height, color) => ({ width: '100%', background: color, borderRadius: '4px 4px 0 0', height: `${height}px`, transition: 'height 0.4s ease', minHeight: 2 }),
-  monthLabel: { fontSize: 10, color: '#C4ABB4', textAlign: 'center', marginTop: 6 },
-  monthVal: { fontSize: 10, color: '#A08090', textAlign: 'center', marginBottom: 4 },
-  clientRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #F0D9DF' },
-  avatar: (hue) => ({ width: 32, height: 32, borderRadius: '50%', background: `hsl(${hue}, 60%, 90%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: `hsl(${hue}, 50%, 40%)`, flexShrink: 0 }),
-  empty: { color: '#C4ABB4', fontSize: 13, padding: '20px 0', textAlign: 'center' },
+  monthLabel: { fontSize: 10, color: '#BFA0AD', textAlign: 'center', marginTop: 6 },
+  monthVal: { fontSize: 10, color: '#9B7E8A', textAlign: 'center', marginBottom: 4 },
+  clientRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #FAF0F3' },
+  avatar: (hue) => ({ width: 32, height: 32, borderRadius: '50%', background: `hsl(${hue}, 60%, 88%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: `hsl(${hue}, 50%, 40%)`, flexShrink: 0 }),
+  empty: { color: '#BFA0AD', fontSize: 13, padding: '20px 0', textAlign: 'center' },
+  periodBtn: (active) => ({ padding: '6px 14px', borderRadius: 8, border: `1px solid ${active ? '#C8516B' : '#EBCFD8'}`, background: active ? 'rgba(200,81,107,0.08)' : '#fff', color: active ? '#C8516B' : '#9B7E8A', cursor: 'pointer', fontSize: 12, fontWeight: active ? 700 : 400, fontFamily: 'inherit', transition: 'all 0.15s' }),
 }
 
 function getHue(str = '') {
-  let h = 0
-  for (const c of str) h = (h * 31 + c.charCodeAt(0)) % 360
-  return h
+  let h = 0; for (const c of str) h = (h * 31 + c.charCodeAt(0)) % 360; return h
 }
 
-export default function Statistics() {
+function Trend({ current, previous }) {
+  if (!previous || previous === 0) return null
+  const diff = Math.round((current - previous) / previous * 100)
+  if (diff === 0) return null
+  const up = diff > 0
+  return (
+    <span style={{ fontSize: 11, fontWeight: 700, color: up ? '#27AE60' : '#C8516B', marginLeft: 6 }}>
+      {up ? '↑' : '↓'} {Math.abs(diff)} %
+    </span>
+  )
+}
+
+const PERIODS = [
+  { id: 'month', label: 'Tento měsíc' },
+  { id: '3months', label: '3 měsíce' },
+  { id: 'year', label: 'Tento rok' },
+  { id: 'all', label: 'Vše' },
+]
+
+function getPeriodRange(period) {
+  const now = new Date()
+  if (period === 'month') {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1)
+    const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const prevEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+    return { start: toDateStr(start), prevStart: toDateStr(prevStart), prevEnd: toDateStr(prevEnd) }
+  }
+  if (period === '3months') {
+    const start = new Date(now.getFullYear(), now.getMonth() - 2, 1)
+    const prevStart = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+    const prevEnd = new Date(now.getFullYear(), now.getMonth() - 2, 0)
+    return { start: toDateStr(start), prevStart: toDateStr(prevStart), prevEnd: toDateStr(prevEnd) }
+  }
+  if (period === 'year') {
+    const start = new Date(now.getFullYear(), 0, 1)
+    const prevStart = new Date(now.getFullYear() - 1, 0, 1)
+    const prevEnd = new Date(now.getFullYear(), 0, 0)
+    return { start: toDateStr(start), prevStart: toDateStr(prevStart), prevEnd: toDateStr(prevEnd) }
+  }
+  return { start: null, prevStart: null, prevEnd: null }
+}
+
+export default function Statistics({ refreshKey }) {
   const [bookings, setBookings] = useState([])
   const [slots, setSlots] = useState([])
-  const [expenses, setExpenses] = useState([])
+  const [historicalSessions, setHistoricalSessions] = useState([])
+  const [inquiries, setInquiries] = useState([])
   const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState('month')
+  const [showUnpaidTooltip, setShowUnpaidTooltip] = useState(false)
+  const isMobile = window.innerWidth < 768
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => { loadData() }, [refreshKey])
 
   async function loadData() {
     setLoading(true)
-    const { data: bk } = await supabase
-      .from('bookings')
-      .select('*, training_slots(name, slot_date, start_time)')
-      .order('created_at', { ascending: false })
-
-    const { data: sl } = await supabase
-      .from('training_slots')
-      .select('*')
-      .order('slot_date')
-
-    const { data: ex } = await supabase
-      .from('expenses')
-      .select('*')
-
-    if (bk) setBookings(bk)
-    if (sl) setSlots(sl)
-    if (ex) setExpenses(ex)
-    setLoading(false)
+    try {
+      const { data: bk } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, is_cancelled)').order('created_at', { ascending: false })
+      const { data: sl } = await supabase.from('training_slots').select('*').order('slot_date')
+      const { data: hs } = await supabase.from('historical_sessions').select('*').order('session_date')
+      const { data: inq } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false })
+      if (bk) setBookings(bk)
+      if (sl) setSlots(sl)
+      if (hs) setHistoricalSessions(hs)
+      if (inq) setInquiries(inq)
+    } catch (err) {
+      console.error('Chyba načítání statistik:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const confirmed = bookings.filter(b => b.status === 'confirmed')
+  const { start, prevStart, prevEnd } = getPeriodRange(period)
+
+  function inPeriod(b, from, to) {
+    const date = b.training_slots?.slot_date
+    if (!date) return false
+    if (from && date < from) return false
+    if (to && date > to) return false
+    return true
+  }
+
+  const today = toDateStr(new Date())
+  const confirmed = bookings.filter(b => b.status === 'confirmed' && !b.training_slots?.is_cancelled)
   const cancelled = bookings.filter(b => b.status === 'cancelled')
-  const totalRevenue = confirmed.reduce((a, b) => a + (b.price || 0), 0)
+  const periodCancelled = cancelled.filter(b => inPeriod(b, start || null, today))
 
-  // Náklady na sál – 200 Kč za každou lekci XXL/Funkční kde byla alespoň 1 rezervace
-  const groupSlotIds = new Set(
-    confirmed
-      .filter(b => b.training_slots?.name === 'XXL cvičení' || b.training_slots?.name === 'Funkční trénink')
-      .map(b => b.slot_id)
-  )
-  const salonCosts = groupSlotIds.size * 200
-  const totalManualExpenses = expenses.reduce((a, e) => a + e.amount, 0)
-  const netRevenue = totalRevenue - salonCosts - totalManualExpenses
-  const uniqueClients = new Set(confirmed.map(b => b.client_email)).size
+  // Jen proběhlé termíny (slot_date <= dnes) – budoucí rezervace se do výpočtů nepočítají
+  const pastConfirmed = confirmed.filter(b => inPeriod(b, null, today))
+  const periodConfirmed = pastConfirmed.filter(b => !start || inPeriod(b, start, today))
+  const prevConfirmed = pastConfirmed.filter(b => prevStart && inPeriod(b, prevStart, prevEnd))
 
-  // Rezervace podle typu tréninku
-  const byType = {}
-  confirmed.forEach(b => {
-    const name = b.training_slots?.name || 'Neznámý'
-    byType[name] = (byType[name] || 0) + 1
+  // Skupinové tréninky kde klient platí organizátorovi, ne mně
+  const isCash = b => b.training_slots?.name?.includes('Zbůch') || (b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')) || b.training_slots?.name?.includes('Holýšov')
+
+  // Pouze tréninky kde klient platí přímo mně
+  const directPayConfirmed = periodConfirmed.filter(b => !isCash(b))
+  const totalRevenue = directPayConfirmed.reduce((a, b) => a + (b.price || 0), 0)
+  const paidRevenue = directPayConfirmed.filter(b => b.paid).reduce((a, b) => a + (b.price || 0), 0)
+  const unpaidRevenue = totalRevenue - paidRevenue
+  const unpaidBookings = directPayConfirmed.filter(b => !b.paid && b.price > 0)
+
+  // Salon costs for Stod group trainings + Tabata - Březín
+  const stodSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
+  const tabataBrezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
+  const salonCosts = stodSlotIds.size * 200 + tabataBrezinSlotIds.size * 250
+
+  // Zbůch bracket profit
+  const zbuchBySlot = {}
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
+    zbuchBySlot[b.slot_id] = (zbuchBySlot[b.slot_id] || 0) + 1
   })
+  const zbuchTotalProfit = Object.values(zbuchBySlot).reduce((a, n) => a + zbuchProfit(n), 0)
+
+  // Březín flat profit (500 Kč per slot with at least 1 booking) - jen Cvičení - Březín, ne Tabata
+  const brezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).map(b => b.slot_id))
+  const brezinTotalProfit = brezinSlotIds.size * 500
+
+  // Holýšov per-person profit (150 Kč příjem - 70 Kč náklady = 80 Kč čistý zisk/os.)
+  const holysovProfit = periodConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).length * 80
+
+  // Historical sessions for period
+  const periodHistorical = historicalSessions.filter(h => !start || h.session_date >= start)
+  const historicalRevenue = periodHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
+
+  // Čistý příjem = pouze zaplacené přímé platby + skupinové dle klíče + historická data
+  const netRevenue = paidRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + holysovProfit + historicalRevenue
+
+  // Previous period net
+  const prevStodSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
+  const prevZbuchBySlot = {}
+  prevConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
+    prevZbuchBySlot[b.slot_id] = (prevZbuchBySlot[b.slot_id] || 0) + 1
+  })
+  const prevZbuchProfit = Object.values(prevZbuchBySlot).reduce((a, n) => a + zbuchProfit(n), 0)
+  const prevBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).map(b => b.slot_id))
+  const prevBrezinProfit = prevBrezinSlotIds.size * 500
+  const prevTabataBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
+  const prevPaidRevenue = prevConfirmed.filter(b => !isCash(b) && b.paid).reduce((a, b) => a + (b.price || 0), 0)
+  const prevHolysovProfit = prevConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).length * 80
+  const prevHistorical = historicalSessions.filter(h => prevStart && h.session_date >= prevStart && h.session_date <= prevEnd)
+  const prevHistoricalRevenue = prevHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
+  const prevNetRevenue = prevPaidRevenue - prevStodSlotIds.size * 200 - prevTabataBrezinSlotIds.size * 250 + prevZbuchProfit + prevBrezinProfit + prevHolysovProfit + prevHistoricalRevenue
+
+  const clientKey = b => b.client_email || `__name__${b.client_name}`
+  const uniqueClients = new Set(periodConfirmed.map(clientKey)).size
+  const prevUniqueClients = new Set(prevConfirmed.map(clientKey)).size
+
+  // Retence klientů
+  const allClientMap = {}
+  confirmed.forEach(b => {
+    const key = clientKey(b)
+    if (!allClientMap[key]) allClientMap[key] = 0
+    allClientMap[key]++
+  })
+  const returningClients = Object.values(allClientMap).filter(c => c > 1).length
+  const totalClients = Object.keys(allClientMap).length
+  const retentionRate = totalClients > 0 ? Math.round(returningClients / totalClients * 100) : 0
+
+  // Oblíbenost tréninků (live + historická data)
+  const byType = {}
+  periodConfirmed.forEach(b => { const name = b.training_slots?.name || 'Neznámý'; byType[name] = (byType[name] || 0) + 1 })
+  periodHistorical.forEach(h => { byType[h.session_name] = (byType[h.session_name] || 0) + h.attendance })
   const maxByType = Math.max(...Object.values(byType), 1)
 
-  // Rezervace po měsících (posledních 6 měsíců)
-  const monthlyData = {}
-  const now = new Date()
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    monthlyData[key] = { count: 0, revenue: 0, label: MONTHS[d.getMonth()] }
-  }
-  const groupSlotsByMonth = {}
-  confirmed
-    .filter(b => b.training_slots?.name === 'XXL cvičení' || b.training_slots?.name === 'Funkční trénink')
-    .forEach(b => {
-      const date = b.training_slots?.slot_date
-      if (!date) return
-      const key = date.slice(0, 7)
-      if (!groupSlotsByMonth[key]) groupSlotsByMonth[key] = new Set()
-      groupSlotsByMonth[key].add(b.slot_id)
-    })
-
-  confirmed.forEach(b => {
+  // Nejoblíbenější den v týdnu
+  const byDayOfWeek = [0, 0, 0, 0, 0, 0, 0]
+  periodConfirmed.filter(b => b.training_slots?.name === 'Osobní trénink').forEach(b => {
     const date = b.training_slots?.slot_date
     if (!date) return
+    const day = new Date(date).getDay()
+    const idx = day === 0 ? 6 : day - 1
+    byDayOfWeek[idx]++
+  })
+  const maxDay = Math.max(...byDayOfWeek, 1)
+
+  // Měsíční data (posledních 6 nebo 12 měsíců)
+  const monthCount = period === 'year' ? 12 : period === 'all' ? 12 : 6
+  const monthlyData = {}
+  const now = new Date()
+  for (let i = monthCount - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+    monthlyData[key] = { count: 0, revenue: 0, label: MONTHS[d.getMonth()] }
+  }
+  // Slot attendance map for Zbůch bracket (jen proběhlé)
+  const slotAttendance = {}
+  pastConfirmed.forEach(b => { slotAttendance[b.slot_id] = (slotAttendance[b.slot_id] || 0) + 1 })
+
+  // Monthly Stod salon costs (jen proběhlé)
+  const stodSlotsByMonth = {}
+  pastConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).forEach(b => {
+    const date = b.training_slots?.slot_date; if (!date) return
+    const key = date.slice(0, 7)
+    if (!stodSlotsByMonth[key]) stodSlotsByMonth[key] = new Set()
+    stodSlotsByMonth[key].add(b.slot_id)
+  })
+
+  // Monthly Zbůch slot groups (jen proběhlé)
+  const zbuchSlotsByMonth = {}
+  slots.filter(s => s.name?.includes('Zbůch') && s.slot_date <= today).forEach(s => {
+    const key = s.slot_date.slice(0, 7)
+    if (!zbuchSlotsByMonth[key]) zbuchSlotsByMonth[key] = []
+    zbuchSlotsByMonth[key].push(s)
+  })
+
+  // Monthly Březín slot groups (jen proběhlé, jen Cvičení - Březín, ne Tabata)
+  const brezinSlotsByMonth = {}
+  slots.filter(s => s.name?.includes('Březín') && !s.name?.includes('Tabata') && s.slot_date <= today).forEach(s => {
+    const key = s.slot_date.slice(0, 7)
+    if (!brezinSlotsByMonth[key]) brezinSlotsByMonth[key] = []
+    brezinSlotsByMonth[key].push(s)
+  })
+  // Monthly Tabata - Březín salon costs (250 Kč/lekce)
+  const tabataBrezinSlotsByMonth = {}
+  pastConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).forEach(b => {
+    const date = b.training_slots?.slot_date; if (!date) return
+    const key = date.slice(0, 7)
+    if (!tabataBrezinSlotsByMonth[key]) tabataBrezinSlotsByMonth[key] = new Set()
+    tabataBrezinSlotsByMonth[key].add(b.slot_id)
+  })
+
+  pastConfirmed.forEach(b => {
+    const date = b.training_slots?.slot_date; if (!date) return
     const key = date.slice(0, 7)
     if (monthlyData[key]) {
       monthlyData[key].count++
-      monthlyData[key].revenue += b.price || 0
+      const name = b.training_slots?.name
+      if (!name?.includes('Zbůch') && !(name?.includes('Březín') && !name?.includes('Tabata')) && !name?.includes('Holýšov')) monthlyData[key].revenue += b.paid ? (b.price || 0) : 0
+      if (name?.includes('Holýšov')) monthlyData[key].revenue += 80
     }
   })
-
-  Object.entries(groupSlotsByMonth).forEach(([key, slotSet]) => {
-    if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 200
+  Object.entries(stodSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 200 })
+  Object.entries(tabataBrezinSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 250 })
+  Object.entries(zbuchSlotsByMonth).forEach(([key, zbuchSlots]) => {
+    if (monthlyData[key]) zbuchSlots.forEach(s => {
+      const count = slotAttendance[s.id] || 0
+      if (count > 0) monthlyData[key].revenue += zbuchProfit(count)
+    })
   })
-
-  // Odečti manuální náklady po měsících
-  expenses.forEach(e => {
-    const key = e.expense_date.slice(0, 7)
-    if (monthlyData[key]) monthlyData[key].revenue -= e.amount
+  Object.entries(brezinSlotsByMonth).forEach(([key, brezinSlots]) => {
+    if (monthlyData[key]) brezinSlots.forEach(s => {
+      const count = slotAttendance[s.id] || 0
+      if (count > 0) monthlyData[key].revenue += 500
+    })
   })
-
+  // Historická data do měsíčního grafu
+  historicalSessions.forEach(h => {
+    const key = h.session_date.slice(0, 7)
+    if (monthlyData[key]) {
+      monthlyData[key].count += h.attendance
+      monthlyData[key].revenue += h.revenue || 0
+    }
+  })
   const months = Object.values(monthlyData)
   const maxCount = Math.max(...months.map(m => m.count), 1)
 
-  // Nejaktivnější klienti
+  // Top klienti
   const clientMap = {}
-  confirmed.forEach(b => {
-    const key = b.client_email
+  periodConfirmed.forEach(b => {
+    const key = clientKey(b)
     if (!clientMap[key]) clientMap[key] = { name: b.client_name, email: b.client_email, count: 0, spent: 0 }
-    clientMap[key].count++
-    clientMap[key].spent += b.price || 0
+    clientMap[key].count++; clientMap[key].spent += b.price || 0
   })
   const topClients = Object.values(clientMap).sort((a, b) => b.count - a.count).slice(0, 5)
 
-  // Obsazenost tento týden
+  // Obsazenost tohoto týdne
   const monday = getMonday()
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
   const thisWeekSlots = slots.filter(s => weekDates.includes(s.slot_date) && !s.is_cancelled)
@@ -173,37 +341,239 @@ export default function Statistics() {
   const weekCapacity = thisWeekSlots.reduce((a, s) => a + s.capacity, 0)
   const weekOccupancy = weekCapacity > 0 ? Math.round(thisWeekBookings.length / weekCapacity * 100) : 0
 
-  // Míra zrušení
-  const cancellationRate = bookings.length > 0 ? Math.round(cancelled.length / bookings.length * 100) : 0
+  const periodTotal = periodConfirmed.length + periodCancelled.length
+  const cancellationRate = periodTotal > 0 ? Math.round(periodCancelled.length / periodTotal * 100) : 0
 
-  if (loading) return <div style={{ color: '#C4ABB4', padding: '40px 0' }}>Načítám statistiky...</div>
+  // Normalizace historických názvů na aktuální (bez pomlčky → s pomlčkou)
+  const HIST_NAME_MAP = {
+    'XXL cvičení Zbůch': 'XXL cvičení - Zbůch',
+    'FIT Orient Zbůch': 'FIT Orient - Zbůch',
+    'Posilování na hudbu Zbůch': 'Posilování na hudbu - Zbůch',
+    'XXL cvičení Stod': 'XXL cvičení - Stod',
+    'Funkční trénink pro ženy Stod': 'Funkční trénink - Stod',
+    'XXL cvičení Holýšov': 'XXL cvičení - Holýšov',
+    'Cvičení Březín': 'Cvičení Březín',
+  }
+  function normalizeSessionName(name) { return HIST_NAME_MAP[name] || name }
+
+  // Příjmy dle typu tréninku – jen zaplacené (kromě skupinových dle klíče)
+  const revenueByType = {}
+
+  // Osobní trénink + Stod: pouze paid rezervace
+  directPayConfirmed.filter(b => b.paid).forEach(b => {
+    const name = b.training_slots?.name
+    if (!name) return
+    revenueByType[name] = (revenueByType[name] || 0) + (b.price || 0)
+  })
+  // Stod: odečíst 200 Kč nájem za každý unikátní slot
+  const stodSlotsByTypeName = {}
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).forEach(b => {
+    const name = b.training_slots.name
+    if (!stodSlotsByTypeName[name]) stodSlotsByTypeName[name] = new Set()
+    stodSlotsByTypeName[name].add(b.slot_id)
+  })
+  Object.entries(stodSlotsByTypeName).forEach(([name, slotSet]) => {
+    revenueByType[name] = (revenueByType[name] || 0) - slotSet.size * 200
+  })
+  // Zbůch: klíč dle počtu za každý slot, seskupeno dle názvu
+  const zbuchSlotCountByType = {}
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
+    const name = b.training_slots.name
+    if (!zbuchSlotCountByType[name]) zbuchSlotCountByType[name] = {}
+    zbuchSlotCountByType[name][b.slot_id] = (zbuchSlotCountByType[name][b.slot_id] || 0) + 1
+  })
+  Object.entries(zbuchSlotCountByType).forEach(([name, slotCounts]) => {
+    revenueByType[name] = (revenueByType[name] || 0) + Object.values(slotCounts).reduce((a, n) => a + zbuchProfit(n), 0)
+  })
+  // Březín: 500 Kč za každý slot s alespoň 1 rezervací (jen Cvičení - Březín, ne Tabata)
+  const brezinSlotsByType = {}
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).forEach(b => {
+    const name = b.training_slots.name
+    if (!brezinSlotsByType[name]) brezinSlotsByType[name] = new Set()
+    brezinSlotsByType[name].add(b.slot_id)
+  })
+  Object.entries(brezinSlotsByType).forEach(([name, slotSet]) => {
+    revenueByType[name] = (revenueByType[name] || 0) + slotSet.size * 500
+  })
+  // Tabata - Březín: zaplacené platby po odečtení nákladů 250 Kč/lekce
+  const tabataBrezinPaid = periodConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín') && b.paid).reduce((a, b) => a + (b.price || 0), 0)
+  if (tabataBrezinSlotIds.size > 0 || tabataBrezinPaid > 0) {
+    revenueByType['Tabata - Březín'] = (revenueByType['Tabata - Březín'] || 0) + tabataBrezinPaid - tabataBrezinSlotIds.size * 250
+  }
+  // Holýšov: 80 Kč čistého za osobu
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).forEach(b => {
+    const name = b.training_slots.name
+    revenueByType[name] = (revenueByType[name] || 0) + 80
+  })
+  // Historická data – revenue je již čistý zisk (u Stod po odečtení nájmu)
+  periodHistorical.forEach(h => {
+    const name = normalizeSessionName(h.session_name)
+    revenueByType[name] = (revenueByType[name] || 0) + (h.revenue || 0)
+  })
+  const maxTypeRevenue = Math.max(...Object.values(revenueByType).filter(v => v > 0), 1)
+
+  // Online spolupráce – poptávky filtrované dle období
+  const periodInquiries = inquiries.filter(i => !start || i.created_at.slice(0, 10) >= start)
+  const vyzivaInquiries = periodInquiries.filter(i => i.service === 'vyziva')
+  const treninkInquiries = periodInquiries.filter(i => i.service === 'trenink')
+  const vyzivaRevenue = vyzivaInquiries.reduce((a, i) => a + i.price, 0)
+  const treninkRevenue = treninkInquiries.reduce((a, i) => a + i.price, 0)
+  const onlineRevenue = vyzivaRevenue + treninkRevenue
+
+  if (loading) return <div style={{ color: '#BFA0AD', padding: '40px 0' }}>Načítám statistiky...</div>
+
+  const statsGrid = isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)'
+  const cardsGrid = isMobile ? '1fr' : '1fr 1fr'
 
   return (
     <div>
-      <div style={s.header}>
+      <div style={{ marginBottom: 24 }}>
         <div style={s.title}>Statistiky</div>
         <div style={s.subtitle}>Přehled výkonu a aktivit</div>
       </div>
 
-      <div style={s.statsRow}>
-        {[
-          { label: 'Celkem rezervací', value: confirmed.length, sub: `${cancelled.length} zrušeno` },
-          { label: 'Aktivní klienti', value: uniqueClients, sub: 'unikátních emailů' },
-          { label: 'Čistý příjem', value: `${netRevenue.toLocaleString('cs-CZ')} Kč`, sub: `sál: ${salonCosts} Kč · výdaje: ${totalManualExpenses.toLocaleString('cs-CZ')} Kč` },
-          { label: 'Obsazenost tento týden', value: `${weekOccupancy}%`, sub: `${thisWeekBookings.length} z ${weekCapacity} míst` },
-        ].map((s2, i) => (
-          <div key={i} style={s.stat}>
-            <div style={s.statLabel}>{s2.label}</div>
-            <div style={{ ...s.statValue, fontSize: s2.value.toString().length > 8 ? 20 : 28 }}>{s2.value}</div>
-            <div style={s.statSub}>{s2.sub}</div>
-          </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
+        {PERIODS.map(p => (
+          <button key={p.id} style={s.periodBtn(period === p.id)} onClick={() => setPeriod(p.id)}>{p.label}</button>
         ))}
       </div>
 
-      <div style={s.row}>
+      <div style={{ display: 'grid', gridTemplateColumns: statsGrid, gap: 12, marginBottom: 20 }}>
+        <div style={s.stat}>
+          <div style={s.statLabel}>Rezervací</div>
+          <div style={s.statValue}>
+            {periodConfirmed.length}
+            <Trend current={periodConfirmed.length} previous={prevConfirmed.length} />
+          </div>
+          <div style={s.statSub}>{periodCancelled.length} zrušeno</div>
+        </div>
+        <div style={s.stat}>
+          <div style={s.statLabel}>Klienti</div>
+          <div style={s.statValue}>
+            {uniqueClients}
+            <Trend current={uniqueClients} previous={prevUniqueClients} />
+          </div>
+          <div style={s.statSub}>retence {retentionRate} %</div>
+        </div>
+        <div style={s.stat}>
+          <div style={s.statLabel}>Čistý příjem</div>
+          <div style={{ ...s.statValue, fontSize: netRevenue.toString().length > 6 ? 18 : 26 }}>
+            {netRevenue.toLocaleString('cs-CZ')} Kč
+            <Trend current={netRevenue} previous={prevNetRevenue} />
+          </div>
+        </div>
+        <div style={s.stat}>
+          <div style={s.statLabel}>Obsazenost týden</div>
+          <div style={s.statValue}>{weekOccupancy} %</div>
+          <div style={s.statSub}>{thisWeekBookings.length} z {weekCapacity} míst</div>
+        </div>
+      </div>
+
+      {totalRevenue > 0 && (
+        <div style={{ ...s.card, marginBottom: 16 }}>
+          <div style={s.cardTitle}>Zaplaceno vs nezaplaceno</div>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 120 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
+                <span style={{ color: '#27AE60', fontWeight: 600 }}>✓ Zaplaceno</span>
+                <span style={{ fontWeight: 700 }}>{paidRevenue.toLocaleString('cs-CZ')} Kč</span>
+              </div>
+              <div style={{ height: 10, background: '#F0D9DF', borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${totalRevenue > 0 ? Math.round(paidRevenue / totalRevenue * 100) : 0}%`, background: '#27AE60', borderRadius: 5, transition: 'width 0.5s' }} />
+              </div>
+            </div>
+            <div style={{ flex: 1, minWidth: 120, position: 'relative' }}
+              onMouseEnter={() => unpaidBookings.length > 0 && setShowUnpaidTooltip(true)}
+              onMouseLeave={() => setShowUnpaidTooltip(false)}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
+                <span style={{ color: '#C8516B', fontWeight: 600, cursor: unpaidBookings.length > 0 ? 'pointer' : 'default' }}>
+                  ⏳ Čeká na platbu {unpaidBookings.length > 0 && <span style={{ fontSize: 10, background: 'rgba(200,81,107,0.12)', border: '1px solid rgba(200,81,107,0.25)', borderRadius: 10, padding: '1px 6px', marginLeft: 4 }}>{unpaidBookings.length}</span>}
+                </span>
+                <span style={{ fontWeight: 700 }}>{unpaidRevenue.toLocaleString('cs-CZ')} Kč</span>
+              </div>
+              <div style={{ height: 10, background: '#F0D9DF', borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${totalRevenue > 0 ? Math.round(unpaidRevenue / totalRevenue * 100) : 0}%`, background: '#C8516B', borderRadius: 5, transition: 'width 0.5s' }} />
+              </div>
+              {showUnpaidTooltip && unpaidBookings.length > 0 && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 10px)', left: 0, zIndex: 50, background: '#fff', border: '1px solid #EBCFD8', borderRadius: 14, boxShadow: '0 8px 32px rgba(200,81,107,0.15)', padding: '14px 16px', minWidth: 260, maxWidth: 320, maxHeight: 320, overflowY: 'auto' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 10 }}>Nezaplacené rezervace</div>
+                  {unpaidBookings.map(b => (
+                    <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '7px 0', borderBottom: '1px solid #FAF0F3' }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#2C1A22' }}>{b.client_name}</div>
+                        <div style={{ fontSize: 11, color: '#9B7E8A', marginTop: 2 }}>
+                          {b.training_slots?.name} · {b.training_slots?.slot_date ? new Date(b.training_slots.slot_date).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' }) : '–'}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#C8516B', flexShrink: 0, marginLeft: 10 }}>{b.price} Kč</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ ...s.card, marginBottom: 16 }}>
+        <div style={s.cardTitle}>Příjmy podle typu tréninku</div>
+        {Object.keys(revenueByType).length === 0 && <div style={s.empty}>Žádná data</div>}
+        {Object.entries(revenueByType)
+          .filter(([, v]) => v > 0)
+          .sort((a, b) => b[1] - a[1])
+          .map(([name, revenue]) => {
+            const isGroup = name.includes('Zbůch') || (name.includes('Březín') && !name.includes('Tabata')) || name.includes('Holýšov')
+            return (
+              <div key={name} style={s.barWrap}>
+                <div style={s.barLabel}>
+                  <span style={{ color: '#2C1A22' }}>{name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ color: TYPE_COLORS[name] || '#5B9E98', fontWeight: 700 }}>{revenue.toLocaleString('cs-CZ')} Kč</span>
+                  </div>
+                </div>
+                <div style={s.barTrack}>
+                  <div style={s.barFill(TYPE_COLORS[name] || '#5B9E98', Math.round(revenue / maxTypeRevenue * 100))} />
+                </div>
+              </div>
+            )
+          })}
+      </div>
+
+      <div style={{ ...s.card, marginBottom: 16 }}>
+        <div style={s.cardTitle}>Online spolupráce</div>
+        {onlineRevenue === 0 && <div style={s.empty}>Žádné poptávky v tomto období</div>}
+        {onlineRevenue > 0 && (
+          <>
+            {[
+              { label: '🥗 Výživové poradenství', count: vyzivaInquiries.length, revenue: vyzivaRevenue },
+              { label: '📋 Tréninkový plán', count: treninkInquiries.length, revenue: treninkRevenue },
+            ].filter(r => r.count > 0).map(row => (
+              <div key={row.label} style={s.barWrap}>
+                <div style={s.barLabel}>
+                  <span style={{ color: '#2C1A22' }}>{row.label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ color: '#BFA0AD', fontSize: 12 }}>{row.count}×</span>
+                    <span style={{ color: '#9B72CF', fontWeight: 700 }}>{row.revenue.toLocaleString('cs-CZ')} Kč</span>
+                  </div>
+                </div>
+                <div style={s.barTrack}>
+                  <div style={s.barFill('#9B72CF', Math.round(row.revenue / onlineRevenue * 100))} />
+                </div>
+              </div>
+            ))}
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #F0D9DF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Celkem</span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: '#9B72CF' }}>{onlineRevenue.toLocaleString('cs-CZ')} Kč</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: cardsGrid, gap: 16, marginBottom: 16 }}>
         <div style={s.card}>
           <div style={s.cardTitle}>Rezervace po měsících</div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 120 }}>
             {months.map((m, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end' }}>
                 <div style={s.monthVal}>{m.count > 0 ? m.count : ''}</div>
@@ -216,22 +586,22 @@ export default function Statistics() {
 
         <div style={s.card}>
           <div style={s.cardTitle}>Příjmy po měsících (Kč)</div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120 }}>
-            {months.map((m, i) => {
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 120 }}>
+            {(() => {
               const maxRev = Math.max(...months.map(x => x.revenue), 1)
-              return (
+              return months.map((m, i) => (
                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end' }}>
                   <div style={s.monthVal}>{m.revenue > 0 ? m.revenue : ''}</div>
-                  <div style={s.monthBar(Math.max(m.revenue / maxRev * 90, m.revenue > 0 ? 4 : 2), m.revenue > 0 ? '#9B6EA8' : '#F0D9DF')} />
+                  <div style={s.monthBar(Math.max(m.revenue / maxRev * 90, m.revenue > 0 ? 4 : 2), m.revenue > 0 ? '#5B9E98' : '#F0D9DF')} />
                   <div style={s.monthLabel}>{m.label}</div>
                 </div>
-              )
-            })}
+              ))
+            })()}
           </div>
         </div>
       </div>
 
-      <div style={s.row}>
+      <div style={{ display: 'grid', gridTemplateColumns: cardsGrid, gap: 16, marginBottom: 16 }}>
         <div style={s.card}>
           <div style={s.cardTitle}>Oblíbenost tréninků</div>
           {Object.keys(byType).length === 0 && <div style={s.empty}>Žádná data</div>}
@@ -239,43 +609,55 @@ export default function Statistics() {
             <div key={name} style={s.barWrap}>
               <div style={s.barLabel}>
                 <span style={{ color: '#2C1A22' }}>{name}</span>
-                <span style={{ color: TYPE_COLORS[name] || '#A08090', fontWeight: 700 }}>{count}×</span>
+                <span style={{ color: TYPE_COLORS[name] || '#9B7E8A', fontWeight: 700 }}>{count}×</span>
               </div>
               <div style={s.barTrack}>
-                <div style={s.barFill(TYPE_COLORS[name] || '#A08090', Math.round(count / maxByType * 100))} />
+                <div style={s.barFill(TYPE_COLORS[name] || '#9B7E8A', Math.round(count / maxByType * 100))} />
               </div>
             </div>
           ))}
-
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F0D9DF' }}>
-            <div style={{ ...s.cardTitle, marginBottom: 12 }}>Míra zrušení</div>
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #F0D9DF' }}>
+            <div style={{ ...s.cardTitle, marginBottom: 10 }}>Míra zrušení</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ fontSize: 32, fontWeight: 800, color: cancellationRate > 20 ? '#C8516B' : '#9B6EA8' }}>{cancellationRate}%</div>
-              <div style={{ fontSize: 13, color: '#A08090', lineHeight: 1.5 }}>
-                {cancelled.length} zrušení<br />z {bookings.length} celkem
-              </div>
+              <div style={{ fontSize: 30, fontWeight: 800, color: cancellationRate > 20 ? '#C8516B' : '#5B9E98' }}>{cancellationRate} %</div>
+              <div style={{ fontSize: 13, color: '#9B7E8A', lineHeight: 1.5 }}>{periodCancelled.length} zrušení<br />z {periodTotal} celkem</div>
             </div>
           </div>
         </div>
 
         <div style={s.card}>
-          <div style={s.cardTitle}>Nejaktivnější klienti</div>
-          {topClients.length === 0 && <div style={s.empty}>Žádná data</div>}
-          {topClients.map((c, i) => {
-            const hue = getHue(c.email)
-            const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-            return (
-              <div key={c.email} style={s.clientRow}>
-                <div style={{ fontSize: 12, color: '#C4ABB4', fontWeight: 700, width: 16 }}>{i + 1}</div>
-                <div style={s.avatar(hue)}>{initials}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#2C1A22', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
-                  <div style={{ fontSize: 11, color: '#A08090' }}>{c.count} tréninků{c.spent > 0 ? ` · ${c.spent} Kč` : ''}</div>
+          <div style={s.cardTitle}>Nejoblíbenější den (osobní tréninky)</div>
+          {byDayOfWeek.every(v => v === 0) && <div style={s.empty}>Žádná data</div>}
+          {!byDayOfWeek.every(v => v === 0) && (
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 100, marginBottom: 16 }}>
+              {byDayOfWeek.map((count, i) => (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end' }}>
+                  <div style={{ fontSize: 10, color: '#9B7E8A', marginBottom: 4 }}>{count > 0 ? count : ''}</div>
+                  <div style={{ width: '100%', background: count === maxDay ? '#C8516B' : count > 0 ? 'rgba(200,81,107,0.3)' : '#F0D9DF', borderRadius: '4px 4px 0 0', height: `${Math.max(count / maxDay * 80, count > 0 ? 4 : 2)}px`, transition: 'height 0.4s' }} />
+                  <div style={{ fontSize: 10, color: count === maxDay ? '#C8516B' : '#BFA0AD', fontWeight: count === maxDay ? 700 : 400, marginTop: 6 }}>{DAYS_SHORT[i]}</div>
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#C8516B' }}>{c.count}×</div>
-              </div>
-            )
-          })}
+              ))}
+            </div>
+          )}
+          <div style={{ paddingTop: 16, borderTop: '1px solid #F0D9DF' }}>
+            <div style={{ ...s.cardTitle, marginBottom: 12 }}>Nejaktivnější klienti</div>
+            {topClients.length === 0 && <div style={s.empty}>Žádná data</div>}
+            {topClients.map((c, i) => {
+              const hue = getHue(c.email || c.name || '')
+              const initials = (c.name || '?').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+              return (
+                <div key={c.email || c.name} style={s.clientRow}>
+                  <div style={{ fontSize: 12, color: '#D4B8C2', fontWeight: 700, width: 16 }}>{i + 1}</div>
+                  <div style={s.avatar(hue)}>{initials}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#2C1A22', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                    <div style={{ fontSize: 11, color: '#9B7E8A' }}>{c.count} tréninků{c.spent > 0 ? ` · ${c.spent} Kč` : ''}</div>
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#C8516B' }}>{c.count}×</div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>
