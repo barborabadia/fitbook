@@ -25,33 +25,33 @@ function getMonday(d = new Date()) {
 
 const MONTHS = ['Led','Úno','Bře','Dub','Kvě','Čer','Čvc','Srp','Zář','Říj','Lis','Pro']
 const TYPE_COLORS = {
-  'Osobní trénink': '#FF4D00',
-  'XXL cvičení': '#FFB800',
-  'Funkční trénink': '#7C3AED',
+  'Osobní trénink': '#C8516B',
+  'XXL cvičení': '#E8956D',
+  'Funkční trénink': '#9B6EA8',
 }
 
 const s = {
   header: { marginBottom: 32 },
   title: { fontSize: 32, fontWeight: 800, letterSpacing: '-1px' },
-  subtitle: { fontSize: 14, color: '#666', marginTop: 4 },
+  subtitle: { fontSize: 14, color: '#A08090', marginTop: 4 },
   statsRow: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 },
-  stat: { background: '#111118', border: '1px solid #1E1E2E', borderRadius: 16, padding: '20px 24px' },
-  statLabel: { fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 },
-  statValue: { fontSize: 28, fontWeight: 800, letterSpacing: '-1px' },
-  statSub: { fontSize: 12, color: '#444', marginTop: 4 },
+  stat: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, padding: '20px 24px' },
+  statLabel: { fontSize: 11, color: '#C4ABB4', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 },
+  statValue: { fontSize: 28, fontWeight: 800, letterSpacing: '-1px', color: '#2C1A22' },
+  statSub: { fontSize: 12, color: '#C4ABB4', marginTop: 4 },
   row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 },
-  card: { background: '#111118', border: '1px solid #1E1E2E', borderRadius: 16, padding: '24px' },
-  cardTitle: { fontSize: 13, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 20 },
+  card: { background: '#FFFFFF', border: '1px solid #EBCFD8', borderRadius: 16, padding: '24px' },
+  cardTitle: { fontSize: 13, fontWeight: 700, color: '#C4ABB4', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 20 },
   barWrap: { marginBottom: 12 },
   barLabel: { display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 },
-  barTrack: { height: 8, background: '#1E1E2E', borderRadius: 4, overflow: 'hidden' },
+  barTrack: { height: 8, background: '#F5EEF1', borderRadius: 4, overflow: 'hidden' },
   barFill: (color, pct) => ({ height: '100%', width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 0.5s ease' }),
   monthBar: (height, color) => ({ width: '100%', background: color, borderRadius: '4px 4px 0 0', height: `${height}px`, transition: 'height 0.4s ease', minHeight: 2 }),
-  monthLabel: { fontSize: 10, color: '#444', textAlign: 'center', marginTop: 6 },
-  monthVal: { fontSize: 10, color: '#666', textAlign: 'center', marginBottom: 4 },
-  clientRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #0F0F1A' },
-  avatar: (hue) => ({ width: 32, height: 32, borderRadius: '50%', background: `hsl(${hue}, 50%, 20%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: `hsl(${hue}, 70%, 65%)`, flexShrink: 0 }),
-  empty: { color: '#444', fontSize: 13, padding: '20px 0', textAlign: 'center' },
+  monthLabel: { fontSize: 10, color: '#C4ABB4', textAlign: 'center', marginTop: 6 },
+  monthVal: { fontSize: 10, color: '#A08090', textAlign: 'center', marginBottom: 4 },
+  clientRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #F0D9DF' },
+  avatar: (hue) => ({ width: 32, height: 32, borderRadius: '50%', background: `hsl(${hue}, 60%, 90%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: `hsl(${hue}, 50%, 40%)`, flexShrink: 0 }),
+  empty: { color: '#C4ABB4', fontSize: 13, padding: '20px 0', textAlign: 'center' },
 }
 
 function getHue(str = '') {
@@ -121,7 +121,6 @@ export default function Statistics() {
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     monthlyData[key] = { count: 0, revenue: 0, label: MONTHS[d.getMonth()] }
   }
-  // Spočítej náklady na sál po měsících
   const groupSlotsByMonth = {}
   confirmed
     .filter(b => b.training_slots?.name === 'XXL cvičení' || b.training_slots?.name === 'Funkční trénink')
@@ -143,10 +142,16 @@ export default function Statistics() {
     }
   })
 
-  // Odečti náklady na sál od měsíčních příjmů
   Object.entries(groupSlotsByMonth).forEach(([key, slotSet]) => {
     if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 200
   })
+
+  // Odečti manuální náklady po měsících
+  expenses.forEach(e => {
+    const key = e.expense_date.slice(0, 7)
+    if (monthlyData[key]) monthlyData[key].revenue -= e.amount
+  })
+
   const months = Object.values(monthlyData)
   const maxCount = Math.max(...months.map(m => m.count), 1)
 
@@ -171,7 +176,7 @@ export default function Statistics() {
   // Míra zrušení
   const cancellationRate = bookings.length > 0 ? Math.round(cancelled.length / bookings.length * 100) : 0
 
-  if (loading) return <div style={{ color: '#444', padding: '40px 0' }}>Načítám statistiky...</div>
+  if (loading) return <div style={{ color: '#C4ABB4', padding: '40px 0' }}>Načítám statistiky...</div>
 
   return (
     <div>
@@ -180,7 +185,6 @@ export default function Statistics() {
         <div style={s.subtitle}>Přehled výkonu a aktivit</div>
       </div>
 
-      {/* Klíčové metriky */}
       <div style={s.statsRow}>
         {[
           { label: 'Celkem rezervací', value: confirmed.length, sub: `${cancelled.length} zrušeno` },
@@ -197,21 +201,19 @@ export default function Statistics() {
       </div>
 
       <div style={s.row}>
-        {/* Graf po měsících */}
         <div style={s.card}>
           <div style={s.cardTitle}>Rezervace po měsících</div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120 }}>
             {months.map((m, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end' }}>
                 <div style={s.monthVal}>{m.count > 0 ? m.count : ''}</div>
-                <div style={s.monthBar(Math.max(m.count / maxCount * 90, m.count > 0 ? 4 : 2), m.count > 0 ? '#FF4D00' : '#1E1E2E')} />
+                <div style={s.monthBar(Math.max(m.count / maxCount * 90, m.count > 0 ? 4 : 2), m.count > 0 ? '#C8516B' : '#F0D9DF')} />
                 <div style={s.monthLabel}>{m.label}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Příjmy po měsících */}
         <div style={s.card}>
           <div style={s.cardTitle}>Příjmy po měsících (Kč)</div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120 }}>
@@ -220,7 +222,7 @@ export default function Statistics() {
               return (
                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end' }}>
                   <div style={s.monthVal}>{m.revenue > 0 ? m.revenue : ''}</div>
-                  <div style={s.monthBar(Math.max(m.revenue / maxRev * 90, m.revenue > 0 ? 4 : 2), m.revenue > 0 ? '#00C2A8' : '#1E1E2E')} />
+                  <div style={s.monthBar(Math.max(m.revenue / maxRev * 90, m.revenue > 0 ? 4 : 2), m.revenue > 0 ? '#9B6EA8' : '#F0D9DF')} />
                   <div style={s.monthLabel}>{m.label}</div>
                 </div>
               )
@@ -230,34 +232,32 @@ export default function Statistics() {
       </div>
 
       <div style={s.row}>
-        {/* Oblíbenost tréninků */}
         <div style={s.card}>
           <div style={s.cardTitle}>Oblíbenost tréninků</div>
           {Object.keys(byType).length === 0 && <div style={s.empty}>Žádná data</div>}
           {Object.entries(byType).sort((a, b) => b[1] - a[1]).map(([name, count]) => (
             <div key={name} style={s.barWrap}>
               <div style={s.barLabel}>
-                <span style={{ color: '#F0EDE8' }}>{name}</span>
-                <span style={{ color: TYPE_COLORS[name] || '#666', fontWeight: 700 }}>{count}×</span>
+                <span style={{ color: '#2C1A22' }}>{name}</span>
+                <span style={{ color: TYPE_COLORS[name] || '#A08090', fontWeight: 700 }}>{count}×</span>
               </div>
               <div style={s.barTrack}>
-                <div style={s.barFill(TYPE_COLORS[name] || '#666', Math.round(count / maxByType * 100))} />
+                <div style={s.barFill(TYPE_COLORS[name] || '#A08090', Math.round(count / maxByType * 100))} />
               </div>
             </div>
           ))}
 
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #1E1E2E' }}>
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F0D9DF' }}>
             <div style={{ ...s.cardTitle, marginBottom: 12 }}>Míra zrušení</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ fontSize: 32, fontWeight: 800, color: cancellationRate > 20 ? '#FF4D00' : '#00C2A8' }}>{cancellationRate}%</div>
-              <div style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>
+              <div style={{ fontSize: 32, fontWeight: 800, color: cancellationRate > 20 ? '#C8516B' : '#9B6EA8' }}>{cancellationRate}%</div>
+              <div style={{ fontSize: 13, color: '#A08090', lineHeight: 1.5 }}>
                 {cancelled.length} zrušení<br />z {bookings.length} celkem
               </div>
             </div>
           </div>
         </div>
 
-        {/* Nejaktivnější klienti */}
         <div style={s.card}>
           <div style={s.cardTitle}>Nejaktivnější klienti</div>
           {topClients.length === 0 && <div style={s.empty}>Žádná data</div>}
@@ -266,13 +266,13 @@ export default function Statistics() {
             const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
             return (
               <div key={c.email} style={s.clientRow}>
-                <div style={{ fontSize: 12, color: '#333', fontWeight: 700, width: 16 }}>{i + 1}</div>
+                <div style={{ fontSize: 12, color: '#C4ABB4', fontWeight: 700, width: 16 }}>{i + 1}</div>
                 <div style={s.avatar(hue)}>{initials}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
-                  <div style={{ fontSize: 11, color: '#555' }}>{c.count} tréninků{c.spent > 0 ? ` · ${c.spent} Kč` : ''}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#2C1A22', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                  <div style={{ fontSize: 11, color: '#A08090' }}>{c.count} tréninků{c.spent > 0 ? ` · ${c.spent} Kč` : ''}</div>
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#FF4D00' }}>{c.count}×</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#C8516B' }}>{c.count}×</div>
               </div>
             )
           })}
