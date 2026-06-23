@@ -149,7 +149,13 @@ export default function Statistics({ refreshKey }) {
   async function addExpense() {
     if (!newExpDesc.trim() || !newExpAmount || isNaN(Number(newExpAmount))) return
     setSavingExp(true)
-    const { data } = await supabase.from('expenses').insert({ description: newExpDesc.trim(), amount: Number(newExpAmount), date: newExpDate }).select().single()
+    const { data, error } = await supabase.from('expenses').insert({ description: newExpDesc.trim(), amount: Number(newExpAmount), date: newExpDate }).select().single()
+    if (error) {
+      console.error('Chyba při ukládání nákladu:', error)
+      alert(`Nepodařilo se uložit náklad: ${error.message}`)
+      setSavingExp(false)
+      return
+    }
     if (data) setExpenses(prev => [data, ...prev])
     setNewExpDesc('')
     setNewExpAmount('')
