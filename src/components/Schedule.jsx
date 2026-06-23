@@ -397,6 +397,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                   <option>XXL cvičení - Zbůch</option>
                   <option>Posilování na hudbu - Zbůch</option>
                   <option>FIT Orient - Zbůch</option>
+                  <option>Zdravá chodidla a nohy - Zbůch</option>
                 </optgroup>
                 <optgroup label="Březín">
                   <option>Cvičení - Březín</option>
@@ -572,6 +573,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 <option>XXL cvičení - Zbůch</option>
                 <option>Posilování na hudbu - Zbůch</option>
                 <option>FIT Orient - Zbůch</option>
+                <option>Zdravá chodidla a nohy - Zbůch</option>
               </optgroup>
               <optgroup label="Březín">
                 <option>Cvičení - Březín</option>

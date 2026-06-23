@@ -23,6 +23,7 @@ const TYPE_COLORS = {
   'XXL cvičení - Zbůch': '#E74C3C',
   'Posilování na hudbu - Zbůch': '#E74C3C',
   'FIT Orient - Zbůch': '#E74C3C',
+  'Zdravá chodidla a nohy - Zbůch': '#E74C3C',
   'Cvičení - Březín': '#E74C3C',
   'Tabata - Březín': '#E74C3C',
   // historické názvy z Tabidoo
