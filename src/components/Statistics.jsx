@@ -394,10 +394,11 @@ export default function Statistics({ refreshKey }) {
   // Příjmy dle typu tréninku – jen zaplacené (kromě skupinových dle klíče)
   const revenueByType = {}
 
-  // Osobní trénink + Stod: pouze paid rezervace
+  // Osobní trénink + Stod: pouze paid rezervace (Tabata - Březín se zpracovává samostatně níže)
   directPayConfirmed.filter(b => b.paid).forEach(b => {
     const name = b.training_slots?.name
     if (!name) return
+    if (name.includes('Tabata') && name.includes('Březín')) return
     revenueByType[name] = (revenueByType[name] || 0) + (b.price || 0)
   })
   // Stod: odečíst 200 Kč nájem za každý unikátní slot
