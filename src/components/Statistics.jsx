@@ -203,6 +203,7 @@ export default function Statistics({ refreshKey }) {
   const stodSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
   const tabataBrezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
   const salonCosts = stodSlotIds.size * 200 + tabataBrezinSlotIds.size * 250
+  console.log('[DEBUG Tabata] tabataBrezinSlotIds:', tabataBrezinSlotIds.size, '| names:', [...new Set(periodConfirmed.map(b => b.training_slots?.name).filter(n => n?.toLowerCase().includes('tabata')))])
 
   // Zbůch bracket profit
   const zbuchBySlot = {}
