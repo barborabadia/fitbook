@@ -134,7 +134,7 @@ export default function Statistics({ refreshKey }) {
       const { data: sl } = await supabase.from('training_slots').select('*').order('slot_date')
       const { data: hs } = await supabase.from('historical_sessions').select('*').order('session_date')
       const { data: inq } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false })
-      const { data: exp } = await supabase.from('expenses').select('*').order('date', { ascending: false })
+      const { data: exp } = await supabase.from('expenses').select('*').order('expense_date', { ascending: false })
       if (bk) setBookings(bk)
       if (sl) setSlots(sl)
       if (hs) setHistoricalSessions(hs)
@@ -203,7 +203,6 @@ export default function Statistics({ refreshKey }) {
   const stodSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
   const tabataBrezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
   const salonCosts = stodSlotIds.size * 200 + tabataBrezinSlotIds.size * 250
-  console.log('[DEBUG Tabata] tabataBrezinSlotIds:', tabataBrezinSlotIds.size, '| names:', [...new Set(periodConfirmed.map(b => b.training_slots?.name).filter(n => n?.toLowerCase().includes('tabata')))])
 
   // Zbůch bracket profit
   const zbuchBySlot = {}
