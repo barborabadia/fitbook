@@ -4,12 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#C03468" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="BK Rezervace" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest-book.json" />
     <title>Barbora Knížková</title>
     <script>
-      var l = document.createElement('link')
-      l.rel = 'manifest'
-      l.href = window.location.pathname.startsWith('/book') ? '/manifest-book.json' : '/manifest.json'
-      document.head.appendChild(l)
+      var l = document.querySelector('link[rel="manifest"]')
+      if (!window.location.pathname.startsWith('/book')) {
+        l.href = '/manifest.json'
+        document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'FitBook'
+      }
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
           navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
