@@ -172,6 +172,38 @@ async function getGcalToken(serviceAccount: any): Promise<string> {
   return data.access_token
 }
 
+async function createCalendarEvent(token: string, calendarId: string, slot: any, booking: any): Promise<any> {
+  const endTime = new Date(`${slot.slot_date}T${slot.start_time}:00`)
+  endTime.setMinutes(endTime.getMinutes() + slot.duration_minutes)
+  const endHH = String(endTime.getHours()).padStart(2, '0')
+  const endMM = String(endTime.getMinutes()).padStart(2, '0')
+  const typeLabel = booking.booking_type === 'duo' ? ' – Duo' : ' – Sólo'
+
+  const res = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
+    {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        summary: `${slot.start_time.slice(0, 5)} ${slot.name}${typeLabel} – ${booking.client_name}`,
+        description: [
+          `👤 ${booking.client_name}`,
+          `📧 ${booking.client_email}`,
+          booking.client_phone ? `📱 ${booking.client_phone}` : '',
+          booking.price > 0 ? `💰 ${booking.price} Kč` : '',
+          `🆔 ${booking.id}`,
+        ].filter(Boolean).join('\n'),
+        start: { dateTime: `${slot.slot_date}T${slot.start_time}:00`, timeZone: 'Europe/Prague' },
+        end: { dateTime: `${slot.slot_date}T${endHH}:${endMM}:00`, timeZone: 'Europe/Prague' },
+        colorId: '6',
+        reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 60 }] },
+      }),
+    }
+  )
+  if (!res.ok) throw new Error(`GCal CREATE failed: ${await res.text()}`)
+  return res.json()
+}
+
 async function deleteCalendarEvent(serviceAccount: any, calendarId: string, eventId: string): Promise<void> {
   try {
     const token = await getGcalToken(serviceAccount)
@@ -246,6 +278,26 @@ Deno.serve(async (req: Request) => {
         if (sa && cal) await deleteCalendarEvent(JSON.parse(sa), cal, record.gcal_event_id)
       }
       console.log('✅ Cancellation processed')
+    }
+
+    // Přesun rezervace na jiný termín
+    if (type === 'UPDATE' && record.status === 'confirmed' && old_record?.slot_id && record.slot_id !== old_record.slot_id) {
+      const sa = Deno.env.get('GOOGLE_SERVICE_ACCOUNT')
+      const cal = Deno.env.get('GOOGLE_CALENDAR_ID')
+      if (sa && cal) {
+        const serviceAccount = JSON.parse(sa)
+        // Smaž starý event
+        if (old_record.gcal_event_id) {
+          await deleteCalendarEvent(serviceAccount, cal, old_record.gcal_event_id)
+        }
+        // Vytvoř nový event (jen pro Osobní trénink)
+        if (slot.name === 'Osobní trénink') {
+          const token = await getGcalToken(serviceAccount)
+          const newEvent = await createCalendarEvent(token, cal, slot, record)
+          await supabase.from('bookings').update({ gcal_event_id: newEvent.id }).eq('id', record.id)
+          console.log('✅ Calendar event moved:', newEvent.id)
+        }
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {
