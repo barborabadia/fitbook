@@ -16,6 +16,11 @@
         l.href = '/manifest.json'
         document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'FitBook'
       }
+      // Zachytit beforeinstallprompt co nejdříve – před načtením React bundle
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault()
+        window.__pwaInstallPrompt = e
+      })
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
           navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })

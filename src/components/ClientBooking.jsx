@@ -197,8 +197,8 @@ function CertifikatyModal({ onClose }) {
   )
 }
 
-const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) ||
-  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
 const isInStandaloneMode = () => window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches
 
 export default function ClientBooking() {
@@ -245,6 +245,12 @@ export default function ClientBooking() {
     if (isInStandaloneMode()) return
     if (isIOS) {
       setShowIOSBanner(true)
+      return
+    }
+    // Zkontrolovat, zda event nepřišel ještě před načtením React bundle
+    if (window.__pwaInstallPrompt) {
+      setInstallPrompt(window.__pwaInstallPrompt)
+      setShowInstallBanner(true)
       return
     }
     const handler = (e) => { e.preventDefault(); setInstallPrompt(e); setShowInstallBanner(true) }
