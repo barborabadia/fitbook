@@ -197,7 +197,8 @@ function CertifikatyModal({ onClose }) {
   )
 }
 
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 const isInStandaloneMode = () => window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches
 
 export default function ClientBooking() {
@@ -253,9 +254,15 @@ export default function ClientBooking() {
 
   const handleInstall = async () => {
     if (!installPrompt) return
-    installPrompt.prompt()
-    const { outcome } = await installPrompt.userChoice
-    if (outcome === 'accepted') { setShowInstallBanner(false); setInstallPrompt(null) }
+    try {
+      installPrompt.prompt()
+      const { outcome } = await installPrompt.userChoice
+      setShowInstallBanner(false)
+      setInstallPrompt(null)
+    } catch {
+      setShowInstallBanner(false)
+      setInstallPrompt(null)
+    }
   }
 
   const handleDismissInstall = () => {
