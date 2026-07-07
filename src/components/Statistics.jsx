@@ -118,6 +118,7 @@ export default function Statistics({ refreshKey }) {
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('month')
+  const [revenueMonth, setRevenueMonth] = useState(null)
   const [showUnpaidTooltip, setShowUnpaidTooltip] = useState(false)
   const [newExpDesc, setNewExpDesc] = useState('')
   const [newExpAmount, setNewExpAmount] = useState('')
@@ -126,6 +127,7 @@ export default function Statistics({ refreshKey }) {
   const isMobile = window.innerWidth < 768
 
   useEffect(() => { loadData() }, [refreshKey])
+  useEffect(() => { setRevenueMonth(null) }, [period])
 
   async function loadData() {
     setLoading(true)
@@ -221,6 +223,22 @@ export default function Statistics({ refreshKey }) {
   // Historical sessions for period
   const periodHistorical = historicalSessions.filter(h => !start || h.session_date >= start)
   const historicalRevenue = periodHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
+
+  // Dostupné měsíce pro filtr příjmů podle typu
+  const revenueMonthSet = new Set()
+  periodConfirmed.forEach(b => { const d = b.training_slots?.slot_date; if (d) revenueMonthSet.add(d.slice(0, 7)) })
+  periodHistorical.forEach(h => { if (h.session_date) revenueMonthSet.add(h.session_date.slice(0, 7)) })
+  const availableRevenueMonths = Array.from(revenueMonthSet).sort().reverse()
+
+  // Filtrovaná data pro výpočet příjmů podle typu (dle zvoleného měsíce)
+  const revTypeConfirmed = revenueMonth
+    ? periodConfirmed.filter(b => b.training_slots?.slot_date?.startsWith(revenueMonth))
+    : periodConfirmed
+  const revTypeHistorical = revenueMonth
+    ? periodHistorical.filter(h => h.session_date?.startsWith(revenueMonth))
+    : periodHistorical
+  const revTypeDirectPay = revTypeConfirmed.filter(b => !isCash(b))
+  const revTypeTabataBrezinSlotIds = new Set(revTypeConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
 
   // Čistý příjem = pouze zaplacené přímé platby + skupinové dle klíče + historická data
   const netRevenue = paidRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + holysovProfit + historicalRevenue
@@ -395,7 +413,7 @@ export default function Statistics({ refreshKey }) {
   const revenueByType = {}
 
   // Osobní trénink + Stod: pouze paid rezervace (Tabata - Březín se zpracovává samostatně níže)
-  directPayConfirmed.filter(b => b.paid).forEach(b => {
+  revTypeDirectPay.filter(b => b.paid).forEach(b => {
     const name = b.training_slots?.name
     if (!name) return
     if (name.includes('Tabata') && name.includes('Březín')) return
@@ -403,7 +421,7 @@ export default function Statistics({ refreshKey }) {
   })
   // Stod: odečíst 200 Kč nájem za každý unikátní slot
   const stodSlotsByTypeName = {}
-  periodConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).forEach(b => {
+  revTypeConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).forEach(b => {
     const name = b.training_slots.name
     if (!stodSlotsByTypeName[name]) stodSlotsByTypeName[name] = new Set()
     stodSlotsByTypeName[name].add(b.slot_id)
@@ -413,7 +431,7 @@ export default function Statistics({ refreshKey }) {
   })
   // Zbůch: klíč dle počtu za každý slot, seskupeno dle názvu
   const zbuchSlotCountByType = {}
-  periodConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
+  revTypeConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
     const name = b.training_slots.name
     if (!zbuchSlotCountByType[name]) zbuchSlotCountByType[name] = {}
     zbuchSlotCountByType[name][b.slot_id] = (zbuchSlotCountByType[name][b.slot_id] || 0) + 1
@@ -423,7 +441,7 @@ export default function Statistics({ refreshKey }) {
   })
   // Březín: 500 Kč za každý slot s alespoň 1 rezervací (jen Cvičení - Březín, ne Tabata)
   const brezinSlotsByType = {}
-  periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).forEach(b => {
+  revTypeConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).forEach(b => {
     const name = b.training_slots.name
     if (!brezinSlotsByType[name]) brezinSlotsByType[name] = new Set()
     brezinSlotsByType[name].add(b.slot_id)
@@ -432,17 +450,17 @@ export default function Statistics({ refreshKey }) {
     revenueByType[name] = (revenueByType[name] || 0) + slotSet.size * 500
   })
   // Tabata - Březín: zaplacené platby po odečtení nákladů 250 Kč/lekce
-  const tabataBrezinPaid = periodConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín') && b.paid).reduce((a, b) => a + (b.price || 0), 0)
-  if (tabataBrezinSlotIds.size > 0 || tabataBrezinPaid > 0) {
-    revenueByType['Tabata - Březín'] = (revenueByType['Tabata - Březín'] || 0) + tabataBrezinPaid - tabataBrezinSlotIds.size * 250
+  const tabataBrezinPaid = revTypeConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín') && b.paid).reduce((a, b) => a + (b.price || 0), 0)
+  if (revTypeTabataBrezinSlotIds.size > 0 || tabataBrezinPaid > 0) {
+    revenueByType['Tabata - Březín'] = (revenueByType['Tabata - Březín'] || 0) + tabataBrezinPaid - revTypeTabataBrezinSlotIds.size * 250
   }
   // Holýšov: 80 Kč čistého za osobu
-  periodConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).forEach(b => {
+  revTypeConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).forEach(b => {
     const name = b.training_slots.name
     revenueByType[name] = (revenueByType[name] || 0) + 80
   })
   // Historická data – revenue je již čistý zisk (u Stod po odečtení nájmu)
-  periodHistorical.forEach(h => {
+  revTypeHistorical.forEach(h => {
     const name = normalizeSessionName(h.session_name)
     revenueByType[name] = (revenueByType[name] || 0) + (h.revenue || 0)
   })
@@ -554,7 +572,21 @@ export default function Statistics({ refreshKey }) {
       )}
 
       <div style={{ ...s.card, marginBottom: 16 }}>
-        <div style={s.cardTitle}>Příjmy podle typu tréninku</div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+          <div style={{ ...s.cardTitle, marginBottom: 0 }}>Příjmy podle typu tréninku</div>
+          {availableRevenueMonths.length > 1 && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <button style={s.periodBtn(revenueMonth === null)} onClick={() => setRevenueMonth(null)}>Vše</button>
+              {availableRevenueMonths.map(m => {
+                const [y, mo] = m.split('-')
+                const label = `${MONTHS[parseInt(mo, 10) - 1]} ${y}`
+                return (
+                  <button key={m} style={s.periodBtn(revenueMonth === m)} onClick={() => setRevenueMonth(revenueMonth === m ? null : m)}>{label}</button>
+                )
+              })}
+            </div>
+          )}
+        </div>
         {Object.keys(revenueByType).length === 0 && <div style={s.empty}>Žádná data</div>}
         {Object.entries(revenueByType)
           .filter(([, v]) => v > 0)
