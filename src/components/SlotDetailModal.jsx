@@ -224,18 +224,34 @@ export default function SlotDetailModal({ slot, onClose }) {
     const { data: bk } = await supabase.from('bookings').select('client_name, client_email, client_phone').eq('status', 'confirmed')
     const { data: mc } = await supabase.from('manual_clients').select('*').order('name')
     const map = {}
-    bk?.forEach(b => { const key = b.client_email || `__name__${b.client_name}`; if (!map[key]) map[key] = { name: b.client_name, email: b.client_email, phone: b.client_phone } })
-    mc?.forEach(c => { const key = c.email || `__name__${c.name}`; if (!map[key]) map[key] = { name: c.name, email: c.email, phone: c.phone } })
-    setAllClients(Object.values(map).sort((a, b) => a.name.localeCompare(b.name, 'cs')))
+    bk?.forEach(b => {
+      const email = b.client_email?.toLowerCase() || null
+      const key = email || `__name__${b.client_name}`
+      if (!map[key]) map[key] = { name: b.client_name, email, phone: b.client_phone }
+    })
+    mc?.forEach(c => {
+      const email = c.email?.toLowerCase() || null
+      const key = email || `__name__${c.name}`
+      if (!map[key]) map[key] = { name: c.name, email, phone: c.phone }
+    })
+    // Deduplicate by name: prefer entries with email over those without
+    const nameMap = {}
+    Object.values(map).forEach(c => {
+      if (!nameMap[c.name] || (!nameMap[c.name].email && c.email)) {
+        nameMap[c.name] = c
+      }
+    })
+    setAllClients(Object.values(nameMap).sort((a, b) => a.name.localeCompare(b.name, 'cs')))
   }
 
   async function addManualBooking(client) {
     setAddLoading(true); setAddError('')
+    const clientEmail = client.email?.trim().toLowerCase() || null
     // Kontrola duplicity na tento termín (skupinové tréninky povolují více míst)
     const isGroup = n => !n?.includes('Osobní trénink')
     if (!isGroup(slot.name)) {
-      if (client.email) {
-        const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_email', client.email).eq('status', 'confirmed')
+      if (clientEmail) {
+        const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_email', clientEmail).eq('status', 'confirmed')
         if (existing?.length > 0) { setAddError(`${client.name} má na tento termín již rezervaci.`); setAddLoading(false); return }
       } else {
         const { data: existing } = await supabase.from('bookings').select('id').eq('slot_id', slot.id).eq('client_name', client.name).eq('status', 'confirmed')
@@ -247,7 +263,7 @@ export default function SlotDetailModal({ slot, onClose }) {
     const { error } = await supabase.from('bookings').insert({
       slot_id: slot.id,
       client_name: client.name,
-      client_email: client.email || null,
+      client_email: clientEmail,
       client_phone: client.phone || null,
       booking_type: bookingType,
       price: bookingType === 'duo' ? 300 : resolveSlotPrice(),
