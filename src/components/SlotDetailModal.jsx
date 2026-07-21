@@ -126,6 +126,23 @@ export default function SlotDetailModal({ slot, onClose }) {
   }
 
   async function cancelBooking(bookingId) {
+    const booking = bookings.find(b => b.id === bookingId)
+
+    // Pokud byla zaplacena kreditem, vrátit kredit klientovi
+    if (booking?.paid && booking?.payment_method === 'credit' && booking?.price) {
+      let manualClient = null
+      if (booking.client_email) {
+        const { data } = await supabase.from('manual_clients').select('id, credit').eq('email', booking.client_email).single()
+        manualClient = data
+      } else if (booking.client_name) {
+        const { data } = await supabase.from('manual_clients').select('id, credit').eq('name', booking.client_name).is('email', null).single()
+        manualClient = data
+      }
+      if (manualClient) {
+        await supabase.from('manual_clients').update({ credit: (manualClient.credit || 0) + booking.price }).eq('id', manualClient.id)
+      }
+    }
+
     await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId)
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'cancelled' } : b))
   }
