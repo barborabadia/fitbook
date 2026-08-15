@@ -34,6 +34,7 @@ const s = {
 export default function MyBookings({ prefillEmail }) {
   const [email, setEmail] = useState(prefillEmail || '')
   const [bookings, setBookings] = useState(null)
+  const [credit, setCredit] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -50,13 +51,14 @@ export default function MyBookings({ prefillEmail }) {
   async function fetchBookings(emailVal) {
     if (!emailVal?.trim()) return
     setLoading(true); setError(''); setSuccess('')
-    const { data, error: err } = await supabase
-      .from('bookings')
-      .select('*, training_slots(name, slot_date, start_time, duration_minutes, color, price)')
-      .eq('client_email', emailVal.trim().toLowerCase())
-      .order('created_at', { ascending: false })
+    const trimmed = emailVal.trim().toLowerCase()
+    const [{ data, error: err }, { data: mc }] = await Promise.all([
+      supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, duration_minutes, color, price)').eq('client_email', trimmed).order('created_at', { ascending: false }),
+      supabase.from('manual_clients').select('credit').eq('email', trimmed).maybeSingle()
+    ])
     if (err) { setError('Chyba při načítání.'); setLoading(false); return }
     setBookings(data || [])
+    setCredit(mc?.credit ?? null)
     setLoading(false)
   }
 
@@ -97,6 +99,16 @@ export default function MyBookings({ prefillEmail }) {
         <div style={{ marginBottom: 20 }}>
           <div style={s.title}>Moje rezervace</div>
           <div style={s.sub}>{prefillEmail}</div>
+        </div>
+      )}
+
+      {credit !== null && (
+        <div style={{ background: credit > 0 ? 'rgba(0,194,168,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${credit > 0 ? 'rgba(0,194,168,0.25)' : '#1E1E2E'}`, borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ fontSize: 22 }}>💳</div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Tvůj kredit</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: credit > 0 ? '#00C2A8' : '#444' }}>{credit} Kč</div>
+          </div>
         </div>
       )}
 
