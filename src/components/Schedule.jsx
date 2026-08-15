@@ -338,7 +338,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                       <div style={{ fontWeight: 700, fontSize: 15, color: sl.is_cancelled ? '#9B7E8A' : '#fff' }}>{sl.name}</div>
                       <div style={{ fontSize: 12, color: sl.is_cancelled ? '#BFA0AD' : 'rgba(255,255,255,0.8)', marginTop: 2 }}>
                         {sl.start_time} • {sl.duration_minutes} min
-                        {!sl.is_cancelled && ` • ${full ? '🔴 plno' : `${booked}/${sl.capacity}`}`}
+                        {!sl.is_cancelled && ` • ${full ? '🔴 plno' : sl.capacity >= 999 ? `${booked}/∞` : `${booked}/${sl.capacity}`}`}
                         {sl.is_cancelled && ' • zrušeno'}
                       </div>
                       {!sl.is_cancelled && sl.name === 'Osobní trénink' && booked > 0 && (
@@ -514,7 +514,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                         <div style={{ ...s.cardName, color: sl.is_cancelled ? '#BFA0AD' : '#fff' }}>{sl.name}</div>
                         {!sl.is_cancelled && <>
                           <div style={s.bar}><div style={s.fill(sl.color, ratio)} /></div>
-                          <div style={s.cardSub}>{full ? '🔴 plno' : `${booked}/${sl.capacity}`}</div>
+                          <div style={s.cardSub}>{full ? '🔴 plno' : sl.capacity >= 999 ? `${booked}/∞` : `${booked}/${sl.capacity}`}</div>
                           {sl.name === 'Osobní trénink' && booked > 0 && (
                             <div style={{ marginTop: 4, display: 'inline-block', fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,0.25)', color: '#fff', borderRadius: 6, padding: '2px 6px' }}>
                               {bookingTypes[sl.id] === 'duo' ? '👯 Duo' : '🧘 Sólo'}

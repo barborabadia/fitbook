@@ -188,7 +188,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
                 )}
                 {!isPersonal && (
                   <div style={{ background: `${slot.color}10`, border: `1px solid ${slot.color}30`, borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
-                    <div style={{ fontSize: 13, color: '#9B7E8A' }}>Délka: {slot.duration_minutes} min • Volná místa: {slot.capacity - slot.booked}</div>
+                    <div style={{ fontSize: 13, color: '#9B7E8A' }}>Délka: {slot.duration_minutes} min • Volná místa: {slot.capacity >= 999 ? 'neomezeně' : slot.capacity - slot.booked}</div>
                     <div style={{ fontSize: 14, color: '#C8516B', fontWeight: 700, marginTop: 4 }}>Cena: {price} Kč{isZbuch ? ' – platba v hotovosti' : ''}</div>
                   </div>
                 )}

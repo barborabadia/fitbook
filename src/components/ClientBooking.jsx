@@ -93,8 +93,9 @@ const s = {
 
 function SlotCard({ sl, booked, onSelect }) {
   const [hov, setHov] = useState(false)
-  const free = sl.capacity - booked
-  const full = free <= 0
+  const unlimited = sl.capacity >= 999
+  const free = unlimited ? Infinity : sl.capacity - booked
+  const full = !unlimited && free <= 0
   const isPersonal = sl.name === 'Osobní trénink'
   const hours = hoursUntilSlot(sl.slot_date, sl.start_time)
   const tooLate = isPersonal ? hours < 24 : hours < 0
@@ -113,7 +114,7 @@ function SlotCard({ sl, booked, onSelect }) {
         <div style={{ ...s.cardName, color: '#2C1A22' }}>{sl.name}</div>
         <div style={{ ...s.cardMeta, color: '#9B7E8A' }}>
           {sl.start_time} • {sl.duration_minutes} min
-          {!isPersonal && free > 0 && !full && <span style={{ marginLeft: 8, color: '#BFA0AD' }}>{free} volných míst</span>}
+          {!isPersonal && !full && <span style={{ marginLeft: 8, color: '#BFA0AD' }}>{unlimited ? 'neomezeně míst' : `${free} volných míst`}</span>}
         </div>
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>

@@ -330,7 +330,7 @@ export default function SlotDetailModal({ slot, onClose }) {
         <div style={s.statsRow}>
           <div style={s.stat}>
             <div style={s.statLabel}>Kapacita</div>
-            <div style={s.statVal}>{slot.capacity}</div>
+            <div style={s.statVal}>{slot.capacity >= 999 ? '∞' : slot.capacity}</div>
           </div>
           <div style={s.stat}>
             <div style={s.statLabel}>Rezervováno</div>
@@ -344,7 +344,7 @@ export default function SlotDetailModal({ slot, onClose }) {
           ) : (
             <div style={s.stat}>
               <div style={s.statLabel}>Volná místa</div>
-              <div style={{ ...s.statVal, color: '#5B9E98' }}>{Math.max(0, slot.capacity - confirmed.length)}</div>
+              <div style={{ ...s.statVal, color: '#5B9E98' }}>{slot.capacity >= 999 ? '∞' : Math.max(0, slot.capacity - confirmed.length)}</div>
             </div>
           )}
         </div>
