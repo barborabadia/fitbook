@@ -151,7 +151,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
   const [templates, setTemplates] = useState([])
   const [bookingTypes, setBookingTypes] = useState({})
   const [paidCounts, setPaidCounts] = useState({})
-  const [newSlot, setNewSlot] = useState({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B', price: 200 })
+  const [newSlot, setNewSlot] = useState({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B', price: 300 })
 
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
 
@@ -215,14 +215,14 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     if (!newSlot.date || !newSlot.time) return
     await supabase.from('training_slots').insert({ name: newSlot.name, slot_date: newSlot.date, start_time: newSlot.time, duration_minutes: parseInt(newSlot.duration), capacity: parseInt(newSlot.capacity), color: newSlot.color, price: newSlot.price })
     setShowAddModal(false)
-    setNewSlot({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B', price: 200 })
+    setNewSlot({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B', price: 300 })
     loadData()
   }
 
   function getSlotDefaults(name = '') {
-    if (name === 'Osobní trénink') return { color: '#C8516B', capacity: 1, price: 200 }
+    if (name === 'Osobní trénink') return { color: '#C8516B', capacity: 1, price: 300 }
     if ((name || '').includes('Zbůch') || (name || '').includes('Stod')) return { color: '#E74C3C', capacity: 10, price: (name || '').includes('Zbůch') ? 130 : 120 }
-    if (name === 'Tabata - Březín') return { color: '#E74C3C', capacity: 12, price: 150 }
+    if (name === 'Tabata - Březín') return { color: '#E74C3C', capacity: 10, price: 150 }
     if ((name || '').includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130 }
     if ((name || '').includes('Holýšov')) return { color: '#E74C3C', capacity: 10, price: 150 }
     return { color: '#C8516B', capacity: 1, price: 0 }
