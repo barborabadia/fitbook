@@ -5,7 +5,10 @@ const IBAN = 'CZ2403000000000260597819'
 
 function getPrice(slot, bookingType) {
   const name = slot?.name || ''
-  if (name === 'Osobní trénink') return bookingType === 'duo' ? 400 : (slot?.price || 300)
+  if (name === 'Osobní trénink') {
+    const isSep = (slot?.slot_date || '') >= '2026-09-01'
+    return bookingType === 'duo' ? (isSep ? 400 : 300) : (slot?.price || (isSep ? 300 : 200))
+  }
   if (slot?.price) return slot.price
   if (name.includes('Zbůch')) return 130
   if (name === 'Tabata - Březín') return 150
@@ -57,6 +60,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
   const [unpaidWarning, setUnpaidWarning] = useState('')
   const isPersonal = slot?.name === 'Osobní trénink'
   const isZbuch = (slot?.name || '').includes('Zbůch') || ((slot?.name || '').includes('Březín') && !(slot?.name || '').includes('Tabata')) || (slot?.name || '').includes('Holýšov')
+  const isSep = (slot?.slot_date || '') >= '2026-09-01'
   const price = getPrice(slot, bookingType)
 
   useEffect(() => {
@@ -172,12 +176,12 @@ export default function BookingModal({ slot, prefill, onClose }) {
                       <div style={s.typeCard(bookingType === 'solo', '#C8516B')} onClick={() => setBookingType('solo')}>
                         <div style={{ fontSize: 24 }}>🧘</div>
                         <div style={s.typeLabel(bookingType === 'solo', '#C8516B')}>Sólo</div>
-                        <div style={s.typePrice}>300 Kč / 60 min</div>
+                        <div style={s.typePrice}>{isSep ? 300 : 200} Kč / 60 min</div>
                       </div>
                       <div style={s.typeCard(bookingType === 'duo', '#C8516B')} onClick={() => setBookingType('duo')}>
                         <div style={{ fontSize: 24 }}>👯</div>
                         <div style={s.typeLabel(bookingType === 'duo', '#C8516B')}>Duo</div>
-                        <div style={s.typePrice}>400 Kč / 60 min</div>
+                        <div style={s.typePrice}>{isSep ? 400 : 300} Kč / 60 min</div>
                       </div>
                     </div>
                   </>

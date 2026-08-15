@@ -213,7 +213,7 @@ export default function SlotDetailModal({ slot, onClose }) {
 
   async function toggleBookingType(bookingId, currentType) {
     const newType = currentType === 'duo' ? 'solo' : 'duo'
-    const newPrice = newType === 'duo' ? 400 : resolveSlotPrice()
+    const newPrice = newType === 'duo' ? ((slot.slot_date || '') >= '2026-09-01' ? 400 : 300) : resolveSlotPrice()
     await supabase.from('bookings').update({ booking_type: newType, price: newPrice }).eq('id', bookingId)
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, booking_type: newType, price: newPrice } : b))
   }
@@ -283,7 +283,7 @@ export default function SlotDetailModal({ slot, onClose }) {
       client_email: clientEmail,
       client_phone: client.phone || null,
       booking_type: bookingType,
-      price: bookingType === 'duo' ? 400 : resolveSlotPrice(),
+      price: bookingType === 'duo' ? ((slot.slot_date || '') >= '2026-09-01' ? 400 : 300) : resolveSlotPrice(),
       status: 'confirmed',
     })
     if (error) { setAddError('Chyba při ukládání: ' + error.message); setAddLoading(false); return }
@@ -294,7 +294,7 @@ export default function SlotDetailModal({ slot, onClose }) {
 
   function resolveSlotPrice() {
     if (slot.price) return slot.price
-    if (slot.name === 'Osobní trénink') return 300
+    if (slot.name === 'Osobní trénink') return (slot.slot_date || '') >= '2026-09-01' ? 300 : 200
     if (slot.name?.includes('Holýšov')) return 150
     if (slot.name === 'Tabata - Březín') return 150
     if (slot.name?.includes('Zbůch') || slot.name?.includes('Březín')) return 130
