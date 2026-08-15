@@ -75,6 +75,7 @@ export default function MyBookings({ prefillEmail }) {
 
   const upcoming = bookings?.filter(b => b.training_slots && new Date(`${b.training_slots.slot_date}T${b.training_slots.start_time}:00`) > new Date()) || []
   const past = bookings?.filter(b => b.training_slots && new Date(`${b.training_slots.slot_date}T${b.training_slots.start_time}:00`) <= new Date()) || []
+  const orphaned = bookings?.filter(b => !b.training_slots) || []
 
   return (
     <div style={s.wrap}>
@@ -145,10 +146,29 @@ export default function MyBookings({ prefillEmail }) {
             </>
           )}
 
+          {orphaned.length > 0 && (
+            <>
+              <div style={{ ...s.sectionLabel, marginTop: 24 }}>Ostatní rezervace</div>
+              {orphaned.map(b => (
+                <div key={b.id} style={s.card(b.status === 'cancelled')}>
+                  <div style={s.cardTop}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <div style={s.cardName}>Osobní trénink</div>
+                        <span style={s.badge(b.status === 'cancelled' ? 'cancelled' : 'confirmed')}>{b.status === 'cancelled' ? 'Zrušeno' : 'Potvrzeno'}</span>
+                      </div>
+                      {b.price > 0 && <div style={s.cardPrice}>{b.price} Kč</div>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+
           {past.length > 0 && (
             <>
               <div style={{ ...s.sectionLabel, marginTop: 24 }}>Historie</div>
-              {past.slice(0, 5).map(b => {
+              {past.slice(0, 10).map(b => {
                 const slot = b.training_slots
                 return (
                   <div key={b.id} style={s.card(b.status === 'cancelled')}>
