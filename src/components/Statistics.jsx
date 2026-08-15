@@ -401,6 +401,7 @@ export default function Statistics({ refreshKey }) {
   const occStod = weekLocationOccupancy('Stod')
   const occZbuch = weekLocationOccupancy('Zbůch')
   const occBrezin = weekLocationOccupancy('Březín')
+  const occPersonal = weekLocationOccupancy('Osobní trénink')
 
   const periodTotal = periodConfirmed.length + periodCancelled.length
   const cancellationRate = periodTotal > 0 ? Math.round(periodCancelled.length / periodTotal * 100) : 0
@@ -539,6 +540,11 @@ export default function Statistics({ refreshKey }) {
           <div style={s.statLabel}>Obsazenost Březín</div>
           <div style={s.statValue}>{occBrezin.pct !== null ? `${occBrezin.pct} %` : '–'}</div>
           <div style={s.statSub}>{occBrezin.cap > 0 ? `${occBrezin.booked} z ${occBrezin.cap} míst` : 'žádné termíny'}</div>
+        </div>
+        <div style={s.stat}>
+          <div style={s.statLabel}>Osobní tréninky</div>
+          <div style={s.statValue}>{occPersonal.pct !== null ? `${occPersonal.pct} %` : '–'}</div>
+          <div style={s.statSub}>{occPersonal.cap > 0 ? `${occPersonal.booked} z ${occPersonal.cap} míst` : 'žádné termíny'}</div>
         </div>
       </div>
 
