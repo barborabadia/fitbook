@@ -240,6 +240,13 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
   const totalBookings = activeSlots.reduce((a, s) => a + (bookingCounts[s.id] || 0), 0)
   const totalCapacity = activeSlots.reduce((a, s) => a + s.capacity, 0)
 
+  function locationOccupancy(keyword) {
+    const loc = activeSlots.filter(s => s.name?.includes(keyword) && s.capacity < 999)
+    const cap = loc.reduce((a, s) => a + s.capacity, 0)
+    const booked = loc.reduce((a, s) => a + (bookingCounts[s.id] || 0), 0)
+    return cap > 0 ? `${Math.round(booked / cap * 100)} %` : '–'
+  }
+
   const slotsByDate = {}
   slots.forEach(sl => {
     if (!sl.slot_date) return
@@ -260,8 +267,9 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
           {[
             { label: 'Termínů', value: activeSlots.length },
             { label: 'Rezervací', value: totalBookings },
-            { label: 'Obsazenost', value: totalCapacity ? `${Math.round(totalBookings / totalCapacity * 100)}%` : '0%' },
-            { label: 'Volná místa', value: totalCapacity - totalBookings },
+            { label: 'Obsazenost Stod', value: locationOccupancy('Stod') },
+            { label: 'Obsazenost Zbůch', value: locationOccupancy('Zbůch') },
+            { label: 'Obsazenost Březín', value: locationOccupancy('Březín') },
           ].map((st, i) => (
             <div key={i} style={s.stat}>
               <div style={s.statLabel}>{st.label}</div>
@@ -449,8 +457,9 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
         {[
           { label: 'Termínů tento týden', value: activeSlots.length, sub: 'aktivních' },
           { label: 'Celkem rezervací', value: totalBookings, sub: `z ${totalCapacity} míst` },
-          { label: 'Obsazenost', value: totalCapacity ? `${Math.round(totalBookings / totalCapacity * 100)}%` : '0%', sub: 'průměrné využití' },
-          { label: 'Volná místa', value: totalCapacity - totalBookings, sub: 'zbývá' },
+          { label: 'Obsazenost Stod', value: locationOccupancy('Stod'), sub: 'skupinové' },
+          { label: 'Obsazenost Zbůch', value: locationOccupancy('Zbůch'), sub: 'skupinové' },
+          { label: 'Obsazenost Březín', value: locationOccupancy('Březín'), sub: 'skupinové' },
         ].map((s2, i) => (
           <div key={i} style={s.stat}>
             <div style={s.statLabel}>{s2.label}</div>

@@ -391,8 +391,16 @@ export default function Statistics({ refreshKey }) {
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
   const thisWeekSlots = slots.filter(s => weekDates.includes(s.slot_date) && !s.is_cancelled)
   const thisWeekBookings = confirmed.filter(b => thisWeekSlots.some(s => s.id === b.slot_id))
-  const weekCapacity = thisWeekSlots.reduce((a, s) => a + s.capacity, 0)
-  const weekOccupancy = weekCapacity > 0 ? Math.round(thisWeekBookings.length / weekCapacity * 100) : 0
+
+  function weekLocationOccupancy(keyword) {
+    const loc = thisWeekSlots.filter(s => s.name?.includes(keyword) && s.capacity < 999)
+    const cap = loc.reduce((a, s) => a + s.capacity, 0)
+    const booked = thisWeekBookings.filter(b => loc.some(s => s.id === b.slot_id)).length
+    return { pct: cap > 0 ? Math.round(booked / cap * 100) : null, booked, cap }
+  }
+  const occStod = weekLocationOccupancy('Stod')
+  const occZbuch = weekLocationOccupancy('Zbůch')
+  const occBrezin = weekLocationOccupancy('Březín')
 
   const periodTotal = periodConfirmed.length + periodCancelled.length
   const cancellationRate = periodTotal > 0 ? Math.round(periodCancelled.length / periodTotal * 100) : 0
@@ -518,9 +526,19 @@ export default function Statistics({ refreshKey }) {
           {totalExpenses > 0 && <div style={{ ...s.statSub, color: '#C8516B' }}>náklady: −{totalExpenses.toLocaleString('cs-CZ')} Kč</div>}
         </div>
         <div style={s.stat}>
-          <div style={s.statLabel}>Obsazenost týden</div>
-          <div style={s.statValue}>{weekOccupancy} %</div>
-          <div style={s.statSub}>{thisWeekBookings.length} z {weekCapacity} míst</div>
+          <div style={s.statLabel}>Obsazenost Stod</div>
+          <div style={s.statValue}>{occStod.pct !== null ? `${occStod.pct} %` : '–'}</div>
+          <div style={s.statSub}>{occStod.cap > 0 ? `${occStod.booked} z ${occStod.cap} míst` : 'žádné termíny'}</div>
+        </div>
+        <div style={s.stat}>
+          <div style={s.statLabel}>Obsazenost Zbůch</div>
+          <div style={s.statValue}>{occZbuch.pct !== null ? `${occZbuch.pct} %` : '–'}</div>
+          <div style={s.statSub}>{occZbuch.cap > 0 ? `${occZbuch.booked} z ${occZbuch.cap} míst` : 'žádné termíny'}</div>
+        </div>
+        <div style={s.stat}>
+          <div style={s.statLabel}>Obsazenost Březín</div>
+          <div style={s.statValue}>{occBrezin.pct !== null ? `${occBrezin.pct} %` : '–'}</div>
+          <div style={s.statSub}>{occBrezin.cap > 0 ? `${occBrezin.booked} z ${occBrezin.cap} míst` : 'žádné termíny'}</div>
         </div>
       </div>
 
