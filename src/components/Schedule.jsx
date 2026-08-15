@@ -221,6 +221,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
 
   function getSlotDefaults(name = '', date = '') {
     if (name === 'Osobní trénink') return { color: '#C8516B', capacity: 1, price: date >= '2026-09-01' ? 300 : 200 }
+    if (name === 'Zahradní párty') return { color: '#F59E0B', capacity: 999, price: 0 }
     if ((name || '').includes('Zbůch') || (name || '').includes('Stod')) return { color: '#E74C3C', capacity: 10, price: (name || '').includes('Zbůch') ? 130 : 120 }
     if (name === 'Tabata - Březín') return { color: '#E74C3C', capacity: 10, price: 150 }
     if ((name || '').includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130 }
@@ -387,6 +388,9 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
               }}>
                 <optgroup label="Osobní">
                   <option>Osobní trénink</option>
+                </optgroup>
+                <optgroup label="Akce">
+                  <option>Zahradní párty</option>
                 </optgroup>
                 <optgroup label="Stod">
                   <option>XXL cvičení - Stod</option>
@@ -563,6 +567,9 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
             }}>
               <optgroup label="Osobní">
                 <option>Osobní trénink</option>
+              </optgroup>
+              <optgroup label="Akce">
+                <option>Zahradní párty</option>
               </optgroup>
               <optgroup label="Stod">
                 <option>XXL cvičení - Stod</option>
