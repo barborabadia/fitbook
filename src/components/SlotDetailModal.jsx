@@ -180,6 +180,25 @@ export default function SlotDetailModal({ slot, onClose }) {
   }
 
   async function unsetPaid(bookingId) {
+    const booking = bookings.find(b => b.id === bookingId)
+    // Pokud bylo zaplaceno kreditem, vrátit kredit zpět
+    if (booking?.payment_method === 'credit' && booking?.price) {
+      let manualClient = null
+      if (booking.client_email) {
+        const { data } = await supabase.from('manual_clients').select('id, credit').eq('email', booking.client_email).single()
+        manualClient = data
+      } else if (booking.client_name) {
+        const { data } = await supabase.from('manual_clients').select('id, credit').eq('name', booking.client_name).is('email', null).single()
+        manualClient = data
+      }
+      if (manualClient) {
+        await supabase.from('manual_clients').update({ credit: (manualClient.credit || 0) + booking.price }).eq('id', manualClient.id)
+        setClientCredits(prev => {
+          const key = booking.client_email || booking.client_name
+          return { ...prev, [key]: { ...prev[key], credit: (prev[key]?.credit || 0) + booking.price } }
+        })
+      }
+    }
     await supabase.from('bookings').update({ paid: false, payment_method: null }).eq('id', bookingId)
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, paid: false, payment_method: null } : b))
   }
