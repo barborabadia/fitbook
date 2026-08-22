@@ -7,7 +7,7 @@ function getPrice(slot, bookingType) {
   const name = slot?.name || ''
   if (name === 'Osobní trénink') {
     const isSep = (slot?.slot_date || '') >= '2026-09-01'
-    return bookingType === 'duo' ? (isSep ? 400 : 300) : (slot?.price || (isSep ? 300 : 200))
+    return bookingType === 'duo' ? (isSep ? 400 : 300) : (isSep ? 300 : 200)
   }
   if (slot?.price) return slot.price
   if (name.includes('Zbůch')) return 130

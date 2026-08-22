@@ -312,8 +312,8 @@ export default function SlotDetailModal({ slot, onClose }) {
   }
 
   function resolveSlotPrice() {
-    if (slot.price) return slot.price
     if (slot.name === 'Osobní trénink') return (slot.slot_date || '') >= '2026-09-01' ? 300 : 200
+    if (slot.price) return slot.price
     if (slot.name?.includes('Holýšov')) return 150
     if (slot.name === 'Tabata - Březín') return 150
     if (slot.name?.includes('Zbůch') || slot.name?.includes('Březín')) return 130
