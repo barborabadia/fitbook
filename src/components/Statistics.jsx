@@ -19,6 +19,7 @@ const TYPE_COLORS = {
   'Osobní trénink': '#C8516B',
   'XXL cvičení - Stod': '#E74C3C',
   'Posilování na hudbu - Stod': '#E74C3C',
+  'Tabata - Stod': '#E74C3C',
   'Funkční trénink - Stod': '#E74C3C',
   'XXL cvičení - Zbůch': '#E74C3C',
   'Posilování na hudbu - Zbůch': '#E74C3C',
@@ -202,9 +203,14 @@ export default function Statistics({ refreshKey }) {
   const unpaidBookings = directPayConfirmed.filter(b => !b.paid && b.price > 0)
 
   // Salon costs for Stod group trainings + Tabata - Březín
-  const stodSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
+  const stodSlotMap = new Map()
+  periodConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).forEach(b => {
+    if (!stodSlotMap.has(b.slot_id)) stodSlotMap.set(b.slot_id, b.training_slots?.slot_date || '')
+  })
+  const stodSlotIds = new Set(stodSlotMap.keys())
   const tabataBrezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
-  const salonCosts = stodSlotIds.size * 200 + tabataBrezinSlotIds.size * 250
+  const stodRentalCost = d => d >= '2026-09-01' ? 300 : 200
+  const salonCosts = Array.from(stodSlotMap.values()).reduce((a, d) => a + stodRentalCost(d), 0) + tabataBrezinSlotIds.size * 250
 
   // Zbůch bracket profit
   const zbuchBySlot = {}
@@ -249,7 +255,11 @@ export default function Statistics({ refreshKey }) {
   const netProfit = netRevenue - totalExpenses
 
   // Previous period net
-  const prevStodSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).map(b => b.slot_id))
+  const prevStodSlotMap = new Map()
+  prevConfirmed.filter(b => b.training_slots?.name?.includes('- Stod')).forEach(b => {
+    if (!prevStodSlotMap.has(b.slot_id)) prevStodSlotMap.set(b.slot_id, b.training_slots?.slot_date || '')
+  })
+  const prevStodSlotIds = new Set(prevStodSlotMap.keys())
   const prevZbuchBySlot = {}
   prevConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
     prevZbuchBySlot[b.slot_id] = (prevZbuchBySlot[b.slot_id] || 0) + 1
@@ -262,7 +272,8 @@ export default function Statistics({ refreshKey }) {
   const prevHolysovProfit = prevConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).length * 80
   const prevHistorical = historicalSessions.filter(h => prevStart && h.session_date >= prevStart && h.session_date <= prevEnd)
   const prevHistoricalRevenue = prevHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
-  const prevNetRevenue = prevPaidRevenue - prevStodSlotIds.size * 200 - prevTabataBrezinSlotIds.size * 250 + prevZbuchProfit + prevBrezinProfit + prevHolysovProfit + prevHistoricalRevenue
+  const prevStodRentalCosts = Array.from(prevStodSlotMap.values()).reduce((a, d) => a + stodRentalCost(d), 0)
+  const prevNetRevenue = prevPaidRevenue - prevStodRentalCosts - prevTabataBrezinSlotIds.size * 250 + prevZbuchProfit + prevBrezinProfit + prevHolysovProfit + prevHistoricalRevenue
 
   const clientKey = b => b.client_email || `__name__${b.client_name}`
   const uniqueClients = new Set(periodConfirmed.map(clientKey)).size
@@ -352,7 +363,7 @@ export default function Statistics({ refreshKey }) {
       if (name?.includes('Holýšov')) monthlyData[key].revenue += 80
     }
   })
-  Object.entries(stodSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 200 })
+  Object.entries(stodSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * (key >= '2026-09' ? 300 : 200) })
   Object.entries(tabataBrezinSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * 250 })
   Object.entries(zbuchSlotsByMonth).forEach(([key, zbuchSlots]) => {
     if (monthlyData[key]) zbuchSlots.forEach(s => {
@@ -436,7 +447,10 @@ export default function Statistics({ refreshKey }) {
     stodSlotsByTypeName[name].add(b.slot_id)
   })
   Object.entries(stodSlotsByTypeName).forEach(([name, slotSet]) => {
-    revenueByType[name] = (revenueByType[name] || 0) - slotSet.size * 200
+    revenueByType[name] = (revenueByType[name] || 0) - Array.from(slotSet).reduce((a, id) => {
+      const date = revTypeConfirmed.find(b => b.slot_id === id)?.training_slots?.slot_date || ''
+      return a + stodRentalCost(date)
+    }, 0)
   })
   // Zbůch: klíč dle počtu za každý slot, seskupeno dle názvu
   const zbuchSlotCountByType = {}

@@ -14,7 +14,7 @@ function getPrice(slot, bookingType) {
   if (name === 'Tabata - Březín') return 150
   if (name.includes('Březín')) return 130
   if (name.includes('Holýšov')) return 150
-  if (name.includes('Stod')) return 120
+  if (name.includes('Stod')) return (slot?.slot_date || '') >= '2026-09-01' ? 150 : 120
   return 0
 }
 
