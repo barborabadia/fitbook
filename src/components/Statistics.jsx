@@ -37,7 +37,13 @@ const TYPE_COLORS = {
   'XXL cvičení - Holýšov': '#E74C3C',
 }
 
-function zbuchProfit(count) {
+function zbuchProfit(count, yearMonth) {
+  if (yearMonth >= '2026-09') {
+    if (count >= 10) return 350
+    if (count >= 6) return 300
+    if (count >= 4) return 250
+    return 200
+  }
   if (count >= 9) return 300
   if (count >= 5) return 250
   return 200
@@ -215,9 +221,10 @@ export default function Statistics({ refreshKey }) {
   // Zbůch bracket profit
   const zbuchBySlot = {}
   periodConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
-    zbuchBySlot[b.slot_id] = (zbuchBySlot[b.slot_id] || 0) + 1
+    if (!zbuchBySlot[b.slot_id]) zbuchBySlot[b.slot_id] = { count: 0, date: b.training_slots?.slot_date?.slice(0, 7) || '' }
+    zbuchBySlot[b.slot_id].count++
   })
-  const zbuchTotalProfit = Object.values(zbuchBySlot).reduce((a, n) => a + zbuchProfit(n), 0)
+  const zbuchTotalProfit = Object.values(zbuchBySlot).reduce((a, s) => a + zbuchProfit(s.count, s.date), 0)
 
   // Březín flat profit (500 Kč per slot with at least 1 booking) - jen Cvičení - Březín, ne Tabata
   const brezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).map(b => b.slot_id))
@@ -262,9 +269,10 @@ export default function Statistics({ refreshKey }) {
   const prevStodSlotIds = new Set(prevStodSlotMap.keys())
   const prevZbuchBySlot = {}
   prevConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
-    prevZbuchBySlot[b.slot_id] = (prevZbuchBySlot[b.slot_id] || 0) + 1
+    if (!prevZbuchBySlot[b.slot_id]) prevZbuchBySlot[b.slot_id] = { count: 0, date: b.training_slots?.slot_date?.slice(0, 7) || '' }
+    prevZbuchBySlot[b.slot_id].count++
   })
-  const prevZbuchProfit = Object.values(prevZbuchBySlot).reduce((a, n) => a + zbuchProfit(n), 0)
+  const prevZbuchProfit = Object.values(prevZbuchBySlot).reduce((a, s) => a + zbuchProfit(s.count, s.date), 0)
   const prevBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).map(b => b.slot_id))
   const prevBrezinProfit = prevBrezinSlotIds.size * 500
   const prevTabataBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
@@ -368,7 +376,7 @@ export default function Statistics({ refreshKey }) {
   Object.entries(zbuchSlotsByMonth).forEach(([key, zbuchSlots]) => {
     if (monthlyData[key]) zbuchSlots.forEach(s => {
       const count = slotAttendance[s.id] || 0
-      if (count > 0) monthlyData[key].revenue += zbuchProfit(count)
+      if (count > 0) monthlyData[key].revenue += zbuchProfit(count, key)
     })
   })
   Object.entries(brezinSlotsByMonth).forEach(([key, brezinSlots]) => {
@@ -457,10 +465,11 @@ export default function Statistics({ refreshKey }) {
   revTypeConfirmed.filter(b => b.training_slots?.name?.includes('Zbůch')).forEach(b => {
     const name = b.training_slots.name
     if (!zbuchSlotCountByType[name]) zbuchSlotCountByType[name] = {}
-    zbuchSlotCountByType[name][b.slot_id] = (zbuchSlotCountByType[name][b.slot_id] || 0) + 1
+    if (!zbuchSlotCountByType[name][b.slot_id]) zbuchSlotCountByType[name][b.slot_id] = { count: 0, date: b.training_slots?.slot_date?.slice(0, 7) || '' }
+    zbuchSlotCountByType[name][b.slot_id].count++
   })
   Object.entries(zbuchSlotCountByType).forEach(([name, slotCounts]) => {
-    revenueByType[name] = (revenueByType[name] || 0) + Object.values(slotCounts).reduce((a, n) => a + zbuchProfit(n), 0)
+    revenueByType[name] = (revenueByType[name] || 0) + Object.values(slotCounts).reduce((a, s) => a + zbuchProfit(s.count, s.date), 0)
   })
   // Březín: 500 Kč za každý slot s alespoň 1 rezervací (jen Cvičení - Březín, ne Tabata)
   const brezinSlotsByType = {}
