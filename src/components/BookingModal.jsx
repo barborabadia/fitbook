@@ -53,12 +53,21 @@ function formatDate(dateStr) {
 
 function generateICS(slot, clientEmail, title, description) {
   const [year, month, day] = slot.slot_date.split('-')
-  const [hour, minute] = slot.start_time.split(':')
-  const end = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute))
-  end.setMinutes(end.getMinutes() + slot.duration_minutes)
+  const [hour, minute] = slot.start_time.split(':').map(Number)
   const pad = n => String(n).padStart(2, '0')
-  const startStr = `${year}${month}${day}T${hour}${minute}00`
-  const endStr = `${end.getFullYear()}${pad(end.getMonth()+1)}${pad(end.getDate())}T${pad(end.getHours())}${pad(end.getMinutes())}00`
+
+  // Konec vypočítán čistou aritmetikou – nezávisle na timezone prohlížeče
+  const endTotal = hour * 60 + minute + slot.duration_minutes
+  const endH = pad(Math.floor(endTotal / 60) % 24)
+  const endM = pad(endTotal % 60)
+  const endDay = pad(Number(day) + (endTotal >= 1440 ? 1 : 0))
+
+  const startStr = `${year}${month}${pad(Number(day))}T${pad(hour)}${pad(minute)}00`
+  const endStr = `${year}${month}${endDay}T${endH}${endM}00`
+
+  const now = new Date()
+  const dtstamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth()+1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`
+
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -83,6 +92,7 @@ function generateICS(slot, clientEmail, title, description) {
     'END:DAYLIGHT',
     'END:VTIMEZONE',
     'BEGIN:VEVENT',
+    `DTSTAMP:${dtstamp}`,
     `DTSTART;TZID=Europe/Prague:${startStr}`,
     `DTEND;TZID=Europe/Prague:${endStr}`,
     `SUMMARY:${title}`,
