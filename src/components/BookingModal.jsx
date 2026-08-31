@@ -51,6 +51,59 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
+function generateICS(slot, clientEmail, title, description) {
+  const [year, month, day] = slot.slot_date.split('-')
+  const [hour, minute] = slot.start_time.split(':')
+  const end = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute))
+  end.setMinutes(end.getMinutes() + slot.duration_minutes)
+  const pad = n => String(n).padStart(2, '0')
+  const startStr = `${year}${month}${day}T${hour}${minute}00`
+  const endStr = `${end.getFullYear()}${pad(end.getMonth()+1)}${pad(end.getDate())}T${pad(end.getHours())}${pad(end.getMinutes())}00`
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//FitBook//CZ',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VTIMEZONE',
+    'TZID:Europe/Prague',
+    'BEGIN:STANDARD',
+    'DTSTART:19701025T030000',
+    'RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10',
+    'TZOFFSETFROM:+0200',
+    'TZOFFSETTO:+0100',
+    'TZNAME:CET',
+    'END:STANDARD',
+    'BEGIN:DAYLIGHT',
+    'DTSTART:19700329T020000',
+    'RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3',
+    'TZOFFSETFROM:+0100',
+    'TZOFFSETTO:+0200',
+    'TZNAME:CEST',
+    'END:DAYLIGHT',
+    'END:VTIMEZONE',
+    'BEGIN:VEVENT',
+    `DTSTART;TZID=Europe/Prague:${startStr}`,
+    `DTEND;TZID=Europe/Prague:${endStr}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${description}`,
+    `UID:fitbook-${slot.id}-${clientEmail}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n')
+}
+
+function downloadICS(slot, clientEmail, title, description) {
+  const ics = generateICS(slot, clientEmail, title, description)
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `rezervace-${slot.slot_date}.ics`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export default function BookingModal({ slot, prefill, onClose }) {
   const [step, setStep] = useState(1)
   const [bookingType, setBookingType] = useState('solo')
@@ -155,6 +208,16 @@ export default function BookingModal({ slot, prefill, onClose }) {
               </div>
             )}
 
+            <button
+              style={{ ...s.btn('secondary'), flex: 'unset', width: '100%', marginBottom: 8 }}
+              onClick={() => {
+                const title = isPersonal ? `${slot.name} – ${bookingType === 'duo' ? 'Duo' : 'Sólo'}` : slot.name
+                const description = isZbuch ? `Platba: ${price} Kč v hotovosti před lekcí` : `Cena: ${price} Kč`
+                downloadICS(slot, form.email, title, description)
+              }}
+            >
+              📅 Přidat do kalendáře
+            </button>
             <button style={{ ...s.btn('primary'), flex: 'unset', width: '100%' }} onClick={onClose}>Zavřít</button>
           </div>
         ) : (
