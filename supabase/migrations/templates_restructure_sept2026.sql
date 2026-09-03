@@ -19,7 +19,9 @@ VALUES
   -- ÚTERÝ – nic
 
   -- STŘEDA
-  ('Osobní trénink', 2, '17:00', 60, 1, '#C8516B', 300, true),
+  ('Osobní trénink',       2, '17:00', 60, 1,  '#C8516B', 300, true),
+  ('XXL cvičení - Stod',   2, '18:15', 60, 10, '#E74C3C', 150, true),
+  ('Tabata - Stod',        2, '19:15', 60, 10, '#E74C3C', 150, true),
 
   -- ČTVRTEK – nic
 
