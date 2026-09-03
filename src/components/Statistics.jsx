@@ -427,6 +427,7 @@ export default function Statistics({ refreshKey }) {
   const occStod = weekLocationOccupancy('Stod')
   const occZbuch = weekLocationOccupancy('Zbůch')
   const occBrezin = weekLocationOccupancy('Březín')
+  const occNyrany = weekLocationOccupancy('Nýřany')
   const occPersonal = weekLocationOccupancy('Osobní trénink')
 
   const periodTotal = periodConfirmed.length + periodCancelled.length
@@ -577,6 +578,11 @@ export default function Statistics({ refreshKey }) {
           <div style={s.statSub}>{occBrezin.cap > 0 ? `${occBrezin.booked} z ${occBrezin.cap} míst` : 'žádné termíny'}</div>
         </div>
         <div style={s.stat}>
+          <div style={s.statLabel}>Obsazenost Nýřany</div>
+          <div style={s.statValue}>{occNyrany.pct !== null ? `${occNyrany.pct} %` : '–'}</div>
+          <div style={s.statSub}>{occNyrany.cap > 0 ? `${occNyrany.booked} z ${occNyrany.cap} míst` : 'žádné termíny'}</div>
+        </div>
+        <div style={s.stat}>
           <div style={s.statLabel}>Osobní tréninky</div>
           <div style={s.statValue}>{occPersonal.pct !== null ? `${occPersonal.pct} %` : '–'}</div>
           <div style={s.statSub}>{occPersonal.cap > 0 ? `${occPersonal.booked} z ${occPersonal.cap} míst` : 'žádné termíny'}</div>
@@ -651,7 +657,7 @@ export default function Statistics({ refreshKey }) {
           .filter(([, v]) => v > 0)
           .sort((a, b) => b[1] - a[1])
           .map(([name, revenue]) => {
-            const isGroup = name.includes('Zbůch') || (name.includes('Březín') && !name.includes('Tabata')) || name.includes('Holýšov')
+            const isGroup = name.includes('Zbůch') || (name.includes('Březín') && !name.includes('Tabata')) || name.includes('Holýšov') || name.includes('Nýřany')
             return (
               <div key={name} style={s.barWrap}>
                 <div style={s.barLabel}>
