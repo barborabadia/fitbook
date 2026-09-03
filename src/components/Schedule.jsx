@@ -148,6 +148,8 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showGenerateModal, setShowGenerateModal] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [excludedTemplates, setExcludedTemplates] = useState(new Set())
+  const [confirmExclude, setConfirmExclude] = useState(null)
   const [templates, setTemplates] = useState([])
   const [bookingTypes, setBookingTypes] = useState({})
   const [paidCounts, setPaidCounts] = useState({})
@@ -197,7 +199,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     const inserts = []
     for (let i = 0; i < 7; i++) {
       const date = addDays(monday, i)
-      const dayTemplates = templates.filter(t => t.day_of_week === i)
+      const dayTemplates = templates.filter(t => t.day_of_week === i && !excludedTemplates.has(t.id))
       for (const t of dayTemplates) {
         const exists = slots.find(s => s.slot_date === toDateStr(date) && s.start_time === t.start_time && s.template_id === t.id)
         if (!exists) {
@@ -207,6 +209,8 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     }
     if (inserts.length > 0) await supabase.from('training_slots').insert(inserts)
     setShowGenerateModal(false)
+    setExcludedTemplates(new Set())
+    setConfirmExclude(null)
     setGenerating(false)
     loadData()
   }
@@ -374,7 +378,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
         })}
 
         {showGenerateModal && (
-          <div style={s.modal} onClick={e => e.target === e.currentTarget && setShowGenerateModal(false)}>
+          <div style={s.modal} onClick={e => { if (e.target === e.currentTarget) { setShowGenerateModal(false); setExcludedTemplates(new Set()); setConfirmExclude(null) } }}>
             <div style={{ ...s.modalBox, maxHeight: '80vh', overflowY: 'auto' }}>
               <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4, color: '#2C1A22' }}>⚡ Generovat týden</div>
               <div style={{ fontSize: 13, color: '#9B7E8A', marginBottom: 16 }}>{formatWeekLabel(monday)}</div>
@@ -407,7 +411,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 })}
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button style={{ ...s.btn(), flex: 1 }} onClick={() => setShowGenerateModal(false)}>Zrušit</button>
+                <button style={{ ...s.btn(), flex: 1 }} onClick={() => { setShowGenerateModal(false); setExcludedTemplates(new Set()); setConfirmExclude(null) }}>Zrušit</button>
                 <button style={{ ...s.btn('primary'), flex: 2 }} onClick={generateWeek} disabled={generating}>{generating ? 'Generuji...' : '⚡ Generovat'}</button>
               </div>
             </div>
@@ -585,7 +589,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
       </div>
 
       {showGenerateModal && (
-        <div style={s.modal} onClick={e => e.target === e.currentTarget && setShowGenerateModal(false)}>
+        <div style={s.modal} onClick={e => { if (e.target === e.currentTarget) { setShowGenerateModal(false); setExcludedTemplates(new Set()); setConfirmExclude(null) } }}>
           <div style={{ ...s.modalBox, maxHeight: '80vh', overflowY: 'auto' }}>
             <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4, color: '#2C1A22' }}>⚡ Generovat týden</div>
             <div style={{ fontSize: 13, color: '#9B7E8A', marginBottom: 16 }}>{formatWeekLabel(monday)}</div>
@@ -602,14 +606,29 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                     </div>
                     {dayTemplates.map(t => {
                       const exists = slots.find(s => s.slot_date === dateStr && s.start_time === t.start_time && s.template_id === t.id)
+                      const excluded = excludedTemplates.has(t.id)
+                      const confirming = confirmExclude === t.id
                       return (
-                        <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, marginBottom: 4, background: exists ? '#F5F5F5' : `${t.color}12`, border: `1px solid ${exists ? '#E0E0E0' : t.color + '40'}`, opacity: exists ? 0.6 : 1 }}>
-                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: exists ? '#C0C0C0' : t.color, flexShrink: 0 }} />
+                        <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, marginBottom: 4, background: excluded ? '#FFF0F0' : exists ? '#F5F5F5' : `${t.color}12`, border: `1px solid ${excluded ? 'rgba(200,81,107,0.3)' : exists ? '#E0E0E0' : t.color + '40'}`, opacity: exists ? 0.6 : 1 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: excluded ? '#C8516B' : exists ? '#C0C0C0' : t.color, flexShrink: 0 }} />
                           <div style={{ flex: 1 }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: exists ? '#9B9B9B' : '#2C1A22' }}>{t.start_time} — {t.name}</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: excluded ? '#C8516B' : exists ? '#9B9B9B' : '#2C1A22', textDecoration: excluded ? 'line-through' : 'none' }}>{t.start_time} — {t.name}</span>
                             <span style={{ fontSize: 11, color: '#BFA0AD', marginLeft: 8 }}>{t.capacity} míst · {getSlotDefaults(t.name, dateStr).price || t.price} Kč</span>
                           </div>
-                          {exists && <span style={{ fontSize: 10, color: '#B0B0B0', fontWeight: 600 }}>už existuje</span>}
+                          {exists && !excluded && <span style={{ fontSize: 10, color: '#B0B0B0', fontWeight: 600 }}>už existuje</span>}
+                          {excluded && (
+                            <button onClick={() => setExcludedTemplates(prev => { const n = new Set(prev); n.delete(t.id); return n })} style={{ fontSize: 11, color: '#C8516B', background: 'none', border: '1px solid rgba(200,81,107,0.3)', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontFamily: 'inherit' }}>Vrátit</button>
+                          )}
+                          {!exists && !excluded && (
+                            confirming ? (
+                              <div style={{ display: 'flex', gap: 4 }}>
+                                <button onClick={() => { setExcludedTemplates(prev => new Set([...prev, t.id])); setConfirmExclude(null) }} style={{ fontSize: 11, color: '#fff', background: '#C8516B', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Ano</button>
+                                <button onClick={() => setConfirmExclude(null)} style={{ fontSize: 11, color: '#9B7E8A', background: 'none', border: '1px solid #EBCFD8', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontFamily: 'inherit' }}>Ne</button>
+                              </div>
+                            ) : (
+                              <button onClick={() => setConfirmExclude(t.id)} style={{ fontSize: 13, color: '#BFA0AD', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}>✕</button>
+                            )
+                          )}
                         </div>
                       )
                     })}
