@@ -123,7 +123,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
   const [error, setError] = useState('')
   const [unpaidWarning, setUnpaidWarning] = useState('')
   const isPersonal = slot?.name === 'Osobní trénink'
-  const isZbuch = (slot?.name || '').includes('Zbůch') || ((slot?.name || '').includes('Březín') && !(slot?.name || '').includes('Tabata')) || (slot?.name || '').includes('Holýšov') || (slot?.name || '').includes('Nýřany')
+  const isZbuch = ((slot?.name || '').includes('Březín') && !(slot?.name || '').includes('Tabata')) || (slot?.name || '').includes('Holýšov')
   const isSep = (slot?.slot_date || '') >= '2026-09-01'
   const price = getPrice(slot, bookingType)
 
@@ -136,7 +136,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
 
   async function checkUnpaid(email) {
     if (!email?.includes('@')) return
-    const isCashTraining = n => n?.includes('Zbůch') || (n?.includes('Březín') && !n?.includes('Tabata')) || n?.includes('Holýšov') || n?.includes('Nýřany')
+    const isCashTraining = n => (n?.includes('Březín') && !n?.includes('Tabata')) || n?.includes('Holýšov')
     const today = new Date().toISOString().slice(0, 10)
     const { data: unpaid } = await supabase
       .from('bookings')
