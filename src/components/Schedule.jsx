@@ -271,6 +271,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
             { label: 'Obsazenost Stod', value: locationOccupancy('Stod') },
             { label: 'Obsazenost Zbůch', value: locationOccupancy('Zbůch') },
             { label: 'Obsazenost Březín', value: locationOccupancy('Březín') },
+            { label: 'Obsazenost Nýřany', value: locationOccupancy('Nýřany') },
             { label: 'Osobní tréninky', value: locationOccupancy('Osobní trénink') },
           ].map((st, i) => (
             <div key={i} style={s.stat}>
@@ -466,6 +467,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
           { label: 'Obsazenost Stod', value: locationOccupancy('Stod'), sub: 'skupinové' },
           { label: 'Obsazenost Zbůch', value: locationOccupancy('Zbůch'), sub: 'skupinové' },
           { label: 'Obsazenost Březín', value: locationOccupancy('Březín'), sub: 'skupinové' },
+          { label: 'Obsazenost Nýřany', value: locationOccupancy('Nýřany'), sub: 'skupinové' },
           { label: 'Osobní tréninky', value: locationOccupancy('Osobní trénink'), sub: 'obsazenost' },
         ].map((s2, i) => (
           <div key={i} style={s.stat}>
