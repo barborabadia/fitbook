@@ -226,6 +226,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     if (name === 'Tabata - Březín') return { color: '#E74C3C', capacity: 10, price: 150 }
     if ((name || '').includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130 }
     if ((name || '').includes('Holýšov')) return { color: '#E74C3C', capacity: 10, price: 150 }
+    if ((name || '').includes('Nýřany')) return { color: '#E74C3C', capacity: 10, price: 135 }
     return { color: '#C8516B', capacity: 1, price: 0 }
   }
 
@@ -419,6 +420,10 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 <optgroup label="Holýšov">
                   <option>XXL cvičení - Holýšov</option>
                 </optgroup>
+                <optgroup label="Nýřany">
+                  <option>XXL cvičení - Nýřany</option>
+                  <option>Tabata - Nýřany</option>
+                </optgroup>
               </select>
               <label style={s.label}>Datum</label>
               <input style={s.input} type="date" value={newSlot.date} onChange={e => setNewSlot({ ...newSlot, date: e.target.value })} />
@@ -599,6 +604,10 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
               </optgroup>
               <optgroup label="Holýšov">
                 <option>XXL cvičení - Holýšov</option>
+              </optgroup>
+              <optgroup label="Nýřany">
+                <option>XXL cvičení - Nýřany</option>
+                <option>Tabata - Nýřany</option>
               </optgroup>
             </select>
             <label style={s.label}>Datum</label>

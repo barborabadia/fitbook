@@ -61,7 +61,7 @@ export default function Clients({ refreshKey }) {
       inq?.forEach(i => { if (i.client_email) inquiryByEmail[i.client_email] = (inquiryByEmail[i.client_email] || 0) + i.price })
 
       const today = new Date().toISOString().slice(0, 10)
-      const isGroupCash = name => name?.includes('Zbůch') || (name?.includes('Březín') && !name?.includes('Tabata')) || name?.includes('Holýšov')
+      const isGroupCash = name => name?.includes('Zbůch') || (name?.includes('Březín') && !name?.includes('Tabata')) || name?.includes('Holýšov') || name?.includes('Nýřany')
       const isGroupStod = name => name?.includes('- Stod')
       const map = {}
       data?.forEach(b => {
