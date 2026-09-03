@@ -375,10 +375,36 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
 
         {showGenerateModal && (
           <div style={s.modal} onClick={e => e.target === e.currentTarget && setShowGenerateModal(false)}>
-            <div style={s.modalBox}>
-              <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: '#2C1A22' }}>⚡ Generovat týden</div>
-              <div style={{ fontSize: 14, color: '#9B7E8A', marginBottom: 24, lineHeight: 1.6 }}>
-                Vygeneruje termíny pro <strong style={{ color: '#2C1A22' }}>{formatWeekLabel(monday)}</strong> ze šablon.
+            <div style={{ ...s.modalBox, maxHeight: '80vh', overflowY: 'auto' }}>
+              <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4, color: '#2C1A22' }}>⚡ Generovat týden</div>
+              <div style={{ fontSize: 13, color: '#9B7E8A', marginBottom: 16 }}>{formatWeekLabel(monday)}</div>
+              <div style={{ marginBottom: 20 }}>
+                {Array.from({ length: 7 }, (_, i) => {
+                  const date = addDays(monday, i)
+                  const dateStr = toDateStr(date)
+                  const dayTemplates = templates.filter(t => t.day_of_week === i)
+                  if (dayTemplates.length === 0) return null
+                  return (
+                    <div key={i} style={{ marginBottom: 10 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>
+                        {DAYS[i]} {date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' })}
+                      </div>
+                      {dayTemplates.map(t => {
+                        const exists = slots.find(s => s.slot_date === dateStr && s.start_time === t.start_time && s.template_id === t.id)
+                        return (
+                          <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, marginBottom: 4, background: exists ? '#F5F5F5' : `${t.color}12`, border: `1px solid ${exists ? '#E0E0E0' : t.color + '40'}`, opacity: exists ? 0.6 : 1 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: exists ? '#C0C0C0' : t.color, flexShrink: 0 }} />
+                            <div style={{ flex: 1 }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: exists ? '#9B9B9B' : '#2C1A22' }}>{t.start_time} — {t.name}</span>
+                              <span style={{ fontSize: 11, color: '#BFA0AD', marginLeft: 8 }}>{t.capacity} míst · {t.price} Kč</span>
+                            </div>
+                            {exists && <span style={{ fontSize: 10, color: '#B0B0B0', fontWeight: 600 }}>už existuje</span>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button style={{ ...s.btn(), flex: 1 }} onClick={() => setShowGenerateModal(false)}>Zrušit</button>
@@ -560,10 +586,36 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
 
       {showGenerateModal && (
         <div style={s.modal} onClick={e => e.target === e.currentTarget && setShowGenerateModal(false)}>
-          <div style={s.modalBox}>
-            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: '#2C1A22' }}>⚡ Generovat týden</div>
-            <div style={{ fontSize: 14, color: '#9B7E8A', marginBottom: 24, lineHeight: 1.6 }}>
-              Vygeneruje všechny termíny pro <strong style={{ color: '#2C1A22' }}>{formatWeekLabel(monday)}</strong> ze šablon.
+          <div style={{ ...s.modalBox, maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4, color: '#2C1A22' }}>⚡ Generovat týden</div>
+            <div style={{ fontSize: 13, color: '#9B7E8A', marginBottom: 16 }}>{formatWeekLabel(monday)}</div>
+            <div style={{ marginBottom: 20 }}>
+              {Array.from({ length: 7 }, (_, i) => {
+                const date = addDays(monday, i)
+                const dateStr = toDateStr(date)
+                const dayTemplates = templates.filter(t => t.day_of_week === i)
+                if (dayTemplates.length === 0) return null
+                return (
+                  <div key={i} style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>
+                      {DAYS[i]} {date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' })}
+                    </div>
+                    {dayTemplates.map(t => {
+                      const exists = slots.find(s => s.slot_date === dateStr && s.start_time === t.start_time && s.template_id === t.id)
+                      return (
+                        <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, marginBottom: 4, background: exists ? '#F5F5F5' : `${t.color}12`, border: `1px solid ${exists ? '#E0E0E0' : t.color + '40'}`, opacity: exists ? 0.6 : 1 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: exists ? '#C0C0C0' : t.color, flexShrink: 0 }} />
+                          <div style={{ flex: 1 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: exists ? '#9B9B9B' : '#2C1A22' }}>{t.start_time} — {t.name}</span>
+                            <span style={{ fontSize: 11, color: '#BFA0AD', marginLeft: 8 }}>{t.capacity} míst · {t.price} Kč</span>
+                          </div>
+                          {exists && <span style={{ fontSize: 10, color: '#B0B0B0', fontWeight: 600 }}>už existuje</span>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })}
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button style={{ ...s.btn(), flex: 1 }} onClick={() => setShowGenerateModal(false)}>Zrušit</button>
