@@ -396,7 +396,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                             <div style={{ width: 8, height: 8, borderRadius: '50%', background: exists ? '#C0C0C0' : t.color, flexShrink: 0 }} />
                             <div style={{ flex: 1 }}>
                               <span style={{ fontSize: 13, fontWeight: 600, color: exists ? '#9B9B9B' : '#2C1A22' }}>{t.start_time} — {t.name}</span>
-                              <span style={{ fontSize: 11, color: '#BFA0AD', marginLeft: 8 }}>{t.capacity} míst · {t.price} Kč</span>
+                              <span style={{ fontSize: 11, color: '#BFA0AD', marginLeft: 8 }}>{t.capacity} míst · {getSlotDefaults(t.name, dateStr).price || t.price} Kč</span>
                             </div>
                             {exists && <span style={{ fontSize: 10, color: '#B0B0B0', fontWeight: 600 }}>už existuje</span>}
                           </div>
@@ -607,7 +607,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                           <div style={{ width: 8, height: 8, borderRadius: '50%', background: exists ? '#C0C0C0' : t.color, flexShrink: 0 }} />
                           <div style={{ flex: 1 }}>
                             <span style={{ fontSize: 13, fontWeight: 600, color: exists ? '#9B9B9B' : '#2C1A22' }}>{t.start_time} — {t.name}</span>
-                            <span style={{ fontSize: 11, color: '#BFA0AD', marginLeft: 8 }}>{t.capacity} míst · {t.price} Kč</span>
+                            <span style={{ fontSize: 11, color: '#BFA0AD', marginLeft: 8 }}>{t.capacity} míst · {getSlotDefaults(t.name, dateStr).price || t.price} Kč</span>
                           </div>
                           {exists && <span style={{ fontSize: 10, color: '#B0B0B0', fontWeight: 600 }}>už existuje</span>}
                         </div>
