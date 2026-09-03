@@ -328,6 +328,13 @@ export default function SlotDetailModal({ slot, onClose }) {
   const dayName = getDayName(slot.slot_date || '')
   const isZbuch = slot.name?.includes('Zbůch')
   function zbuchProfit(count) {
+    const yearMonth = (slot.slot_date || '').slice(0, 7)
+    if (yearMonth >= '2026-09') {
+      if (count >= 10) return 350
+      if (count >= 6) return 300
+      if (count >= 4) return 250
+      return 200
+    }
     if (count >= 9) return 300
     if (count >= 5) return 250
     return 200
