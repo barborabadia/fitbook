@@ -472,7 +472,7 @@ export default function SlotDetailModal({ slot, onClose }) {
                     <span style={s.clientName}>{b.client_name}</span>
                     {isPersonal && <span title="Klikni pro změnu" style={{ ...s.badge(b.booking_type), cursor: 'pointer' }} onClick={() => toggleBookingType(b.id, b.booking_type)}>{b.booking_type === 'duo' ? 'Duo' : 'Sólo'}</span>}
                     {cc?.credit > 0 && <span style={{ fontSize: 10, color: '#5B9E98', fontWeight: 700, background: 'rgba(91,158,152,0.1)', border: '1px solid rgba(91,158,152,0.25)', borderRadius: 12, padding: '2px 7px' }}>💳 {cc.credit} Kč</span>}
-                    {!isZbuch && (editingPriceId === b.id ? (
+                    {(editingPriceId === b.id ? (
                       <input autoFocus type="number" value={editingPriceValue}
                         onChange={e => setEditingPriceValue(e.target.value)}
                         onBlur={() => savePrice(b.id)}
@@ -490,7 +490,7 @@ export default function SlotDetailModal({ slot, onClose }) {
                     📧 {b.client_email}{b.client_phone && <span> · 📱 {b.client_phone}</span>}
                   </div>
                 </div>
-                {!isZbuch && (b.paid ? (
+                {(b.paid ? (
                   <button style={s.paidBtn(true)} onClick={() => unsetPaid(b.id)}>✓ {paymentLabel || 'Zaplaceno'}</button>
                 ) : (
                   <button style={s.paidBtn(false)} onClick={() => setPaymentPickerId(paymentPickerId === b.id ? null : b.id)}>Zaplaceno?</button>
