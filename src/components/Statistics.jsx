@@ -511,6 +511,51 @@ export default function Statistics({ refreshKey }) {
   })
   const maxTypeRevenue = Math.max(...Object.values(revenueByType).filter(v => v > 0), 1)
 
+  // ── Klienti a retence ──────────────────────────────────────────────────────
+  const monthsInPeriod = period === 'month' ? 1 : period === '3months' ? 3 : period === 'year' ? 12 : Math.max(1, (() => {
+    const s = new Set(); pastConfirmed.forEach(b => { const d = b.training_slots?.slot_date; if (d) s.add(d.slice(0,7)) }); historicalSessions.forEach(h => s.add(h.session_date.slice(0,7))); return s.size
+  })())
+
+  const clientPeriodCounts = {}
+  periodConfirmed.forEach(b => { const key = clientKey(b); clientPeriodCounts[key] = (clientPeriodCounts[key] || 0) + 1 })
+  const avgTrainingsPerClient = uniqueClients > 0 ? (periodConfirmed.length / uniqueClients).toFixed(1) : '–'
+
+  const clientFirstBooking = {}
+  confirmed.forEach(b => { const key = clientKey(b); const date = b.training_slots?.slot_date; if (!date) return; if (!clientFirstBooking[key] || date < clientFirstBooking[key]) clientFirstBooking[key] = date })
+  const newClientsInPeriod = start ? Object.entries(clientPeriodCounts).filter(([key]) => clientFirstBooking[key] >= start).length : uniqueClients
+  const returningClientsInPeriod = uniqueClients - newClientsInPeriod
+
+  const freqWeekly = Object.values(clientPeriodCounts).filter(c => c / monthsInPeriod >= 4).length
+  const freqMonthly = Object.values(clientPeriodCounts).filter(c => { const r = c / monthsInPeriod; return r >= 1.5 && r < 4 }).length
+  const freqSporadic = Object.values(clientPeriodCounts).filter(c => c / monthsInPeriod < 1.5).length
+
+  const clientLastBooking = {}
+  confirmed.forEach(b => { const key = clientKey(b); const date = b.training_slots?.slot_date; if (!date) return; if (!clientLastBooking[key] || date > clientLastBooking[key]) clientLastBooking[key] = date })
+  const sixtyDaysAgo = toDateStr(new Date(Date.now() - 60 * 24 * 60 * 60 * 1000))
+  const allInactive = Object.entries(clientLastBooking).filter(([, date]) => date < sixtyDaysAgo).sort((a, b) => a[1].localeCompare(b[1]))
+  const inactiveCount = allInactive.length
+  const inactiveClients = allInactive.slice(0, 5).map(([key, date]) => {
+    const bk = confirmed.find(b => clientKey(b) === key)
+    return { name: bk?.client_name || key, date }
+  })
+
+  // ── Tržby dle lokace ───────────────────────────────────────────────────────
+  const LOCATION_DEFS = [
+    { key: 'Osobní', test: n => n.includes('Osobní'), color: '#C8516B' },
+    { key: 'Stod', test: n => n.includes('Stod'), color: '#E74C3C' },
+    { key: 'Zbůch', test: n => n.includes('Zbůch'), color: '#E8A44A' },
+    { key: 'Březín', test: n => n.includes('Březín'), color: '#5B9E98' },
+    { key: 'Holýšov', test: n => n.includes('Holýšov'), color: '#9B72CF' },
+    { key: 'Nýřany', test: n => n.includes('Nýřany'), color: '#4A90D9' },
+  ]
+  const revenueByLoc = {}
+  LOCATION_DEFS.forEach(l => { revenueByLoc[l.key] = { revenue: 0, color: l.color } })
+  Object.entries(revenueByType).forEach(([name, rev]) => { const loc = LOCATION_DEFS.find(l => l.test(name)); if (loc && rev > 0) revenueByLoc[loc.key].revenue += rev })
+  const locSlotIds = {}
+  LOCATION_DEFS.forEach(l => { locSlotIds[l.key] = new Set() })
+  periodConfirmed.forEach(b => { const name = b.training_slots?.name || ''; const loc = LOCATION_DEFS.find(l => l.test(name)); if (loc) locSlotIds[loc.key].add(b.slot_id) })
+  const maxLocRevenue = Math.max(...Object.values(revenueByLoc).map(v => v.revenue), 1)
+
   // Online spolupráce – poptávky filtrované dle období
   const periodInquiries = inquiries.filter(i => !start || i.created_at.slice(0, 10) >= start)
   const vyzivaInquiries = periodInquiries.filter(i => i.service === 'vyziva')
@@ -587,6 +632,59 @@ export default function Statistics({ refreshKey }) {
           <div style={s.statValue}>{occPersonal.pct !== null ? `${occPersonal.pct} %` : '–'}</div>
           <div style={s.statSub}>{occPersonal.cap > 0 ? `${occPersonal.booked} z ${occPersonal.cap} míst` : 'žádné termíny'}</div>
         </div>
+      </div>
+
+      <div style={{ ...s.card, marginBottom: 16 }}>
+        <div style={s.cardTitle}>Klienti a retence</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+          <div style={{ textAlign: 'center', background: '#FAF0F3', borderRadius: 10, padding: '10px 8px' }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#2C1A22' }}>{avgTrainingsPerClient}</div>
+            <div style={{ fontSize: 10, color: '#9B7E8A', marginTop: 2 }}>prům. tréninků / klient</div>
+          </div>
+          <div style={{ textAlign: 'center', background: '#FAF0F3', borderRadius: 10, padding: '10px 8px' }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#5B9E98' }}>{newClientsInPeriod}</div>
+            <div style={{ fontSize: 10, color: '#9B7E8A', marginTop: 2 }}>nových klientů</div>
+          </div>
+          <div style={{ textAlign: 'center', background: '#FAF0F3', borderRadius: 10, padding: '10px 8px' }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#C8516B' }}>{returningClientsInPeriod}</div>
+            <div style={{ fontSize: 10, color: '#9B7E8A', marginTop: 2 }}>vracejících se</div>
+          </div>
+        </div>
+        {monthsInPeriod > 1 && uniqueClients > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Frekvence návštěv</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[
+                { label: '≥ 1× týdně', count: freqWeekly, color: '#27AE60' },
+                { label: '1–3× měsíčně', count: freqMonthly, color: '#E8A44A' },
+                { label: 'příležitostně', count: freqSporadic, color: '#BFA0AD' },
+              ].map(f => (
+                <div key={f.label} style={{ flex: 1, background: '#FAF0F3', borderRadius: 10, padding: '8px 6px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: f.color }}>{f.count}</div>
+                  <div style={{ fontSize: 10, color: '#9B7E8A', marginTop: 2 }}>{f.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {inactiveCount > 0 && (
+          <div>
+            <div style={{ fontSize: 11, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>
+              Neaktivní 60+ dní
+              <span style={{ background: 'rgba(200,81,107,0.12)', color: '#C8516B', borderRadius: 10, padding: '1px 7px', fontSize: 10, fontWeight: 700, marginLeft: 6 }}>{inactiveCount}</span>
+            </div>
+            {inactiveClients.map((c, i) => {
+              const daysSince = Math.round((new Date(today) - new Date(c.date)) / 86400000)
+              return (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid #FAF0F3' }}>
+                  <div style={{ fontSize: 13, color: '#2C1A22' }}>{c.name}</div>
+                  <div style={{ fontSize: 11, color: '#BFA0AD' }}>naposledy před {daysSince} dny</div>
+                </div>
+              )
+            })}
+            {inactiveCount > 5 && <div style={{ fontSize: 11, color: '#BFA0AD', marginTop: 8 }}>+ dalších {inactiveCount - 5} klientů</div>}
+          </div>
+        )}
       </div>
 
       {totalRevenue > 0 && (
@@ -673,6 +771,33 @@ export default function Statistics({ refreshKey }) {
             )
           })}
       </div>
+
+      {Object.values(revenueByLoc).some(v => v.revenue > 0) && (
+        <div style={{ ...s.card, marginBottom: 16 }}>
+          <div style={s.cardTitle}>Tržby dle lokace</div>
+          {Object.entries(revenueByLoc)
+            .filter(([, v]) => v.revenue > 0)
+            .sort((a, b) => b[1].revenue - a[1].revenue)
+            .map(([loc, v]) => {
+              const slotCount = locSlotIds[loc]?.size || 0
+              const avgPerSlot = slotCount > 0 ? Math.round(v.revenue / slotCount) : null
+              return (
+                <div key={loc} style={s.barWrap}>
+                  <div style={s.barLabel}>
+                    <span style={{ color: '#2C1A22' }}>{loc}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      {avgPerSlot !== null && <span style={{ fontSize: 11, color: '#BFA0AD' }}>⌀ {avgPerSlot.toLocaleString('cs-CZ')} Kč/lekce</span>}
+                      <span style={{ color: v.color, fontWeight: 700 }}>{v.revenue.toLocaleString('cs-CZ')} Kč</span>
+                    </div>
+                  </div>
+                  <div style={s.barTrack}>
+                    <div style={s.barFill(v.color, Math.round(v.revenue / maxLocRevenue * 100))} />
+                  </div>
+                </div>
+              )
+            })}
+        </div>
+      )}
 
       <div style={{ ...s.card, marginBottom: 16 }}>
         <div style={s.cardTitle}>Online spolupráce</div>
