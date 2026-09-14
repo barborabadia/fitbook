@@ -386,6 +386,13 @@ export default function ClientBooking() {
         <div style={s.sub}>Rezervace fitness tréninků</div>
       </div>
 
+      <div style={{ background: 'rgba(200,81,107,0.06)', border: '1px solid rgba(200,81,107,0.2)', borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#C8516B', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>Storno podmínky</div>
+        <div style={{ fontSize: 13, color: '#5A3A44', lineHeight: 1.6 }}>
+          Při zrušení tréninku <strong>24 hodin předem</strong> Vám bude uhrazená částka vrácena. Jestliže bude trénink zrušen později, částka <strong>propadá bez nároku na vrácení</strong>. Pokud ještě není uhrazena, je nutné ji v případě pozdního zrušení doplatit.
+        </div>
+      </div>
+
       <div style={s.tabRow}>
         <button style={s.tab(tab === 'book')} onClick={() => setTab('book')}>📅 Rezervovat trénink</button>
         <button style={s.tab(tab === 'my')} onClick={() => setTab('my')}>📋 Moje rezervace</button>
