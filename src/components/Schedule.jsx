@@ -224,15 +224,15 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
   }
 
   function getSlotDefaults(name = '', date = '') {
-    if (name === 'Osobní trénink') return { color: '#C8516B', capacity: 1, price: date >= '2026-09-01' ? 300 : 200 }
-    if (name === 'Zahradní párty') return { color: '#F59E0B', capacity: 999, price: 0 }
-    if (name === 'Hubneme společně! - Nýřany') return { color: '#E74C3C', capacity: 30, price: 0 }
-    if ((name || '').includes('Zbůch') || (name || '').includes('Stod')) return { color: '#E74C3C', capacity: 10, price: (name || '').includes('Zbůch') ? 130 : (date >= '2026-09-01' ? 150 : 120) }
-    if (name === 'Tabata - Březín') return { color: '#E74C3C', capacity: 10, price: 150 }
-    if ((name || '').includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130 }
-    if ((name || '').includes('Holýšov')) return { color: '#E74C3C', capacity: 10, price: 150 }
-    if ((name || '').includes('Nýřany')) return { color: '#E74C3C', capacity: 10, price: 135 }
-    return { color: '#C8516B', capacity: 1, price: 0 }
+    if (name === 'Osobní trénink') return { color: '#C8516B', capacity: 1, price: date >= '2026-09-01' ? 300 : 200, duration: 60 }
+    if (name === 'Zahradní párty') return { color: '#F59E0B', capacity: 999, price: 0, duration: 60 }
+    if (name === 'Hubneme společně! - Nýřany') return { color: '#E74C3C', capacity: 30, price: 0, duration: 120 }
+    if ((name || '').includes('Zbůch') || (name || '').includes('Stod')) return { color: '#E74C3C', capacity: 10, price: (name || '').includes('Zbůch') ? 130 : (date >= '2026-09-01' ? 150 : 120), duration: 60 }
+    if (name === 'Tabata - Březín') return { color: '#E74C3C', capacity: 10, price: 150, duration: 60 }
+    if ((name || '').includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130, duration: 60 }
+    if ((name || '').includes('Holýšov')) return { color: '#E74C3C', capacity: 10, price: 150, duration: 60 }
+    if ((name || '').includes('Nýřany')) return { color: '#E74C3C', capacity: 10, price: 135, duration: 60 }
+    return { color: '#C8516B', capacity: 1, price: 0, duration: 60 }
   }
 
   function isDonationBased(name = '') {
@@ -655,7 +655,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
             <select style={s.select} value={newSlot.name} onChange={e => {
               const name = e.target.value
               const def = getSlotDefaults(name, newSlot.date)
-              setNewSlot({ ...newSlot, name, color: def.color, capacity: def.capacity, price: def.price })
+              setNewSlot({ ...newSlot, name, color: def.color, capacity: def.capacity, price: def.price, duration: def.duration })
             }}>
               <optgroup label="Osobní">
                 <option>Osobní trénink</option>
