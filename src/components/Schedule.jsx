@@ -235,6 +235,10 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     return { color: '#C8516B', capacity: 1, price: 0 }
   }
 
+  function isDonationBased(name = '') {
+    return name === 'Hubneme společně! - Nýřany'
+  }
+
   async function removeSlot(sl) {
     const booked = bookingCounts[sl.id] || 0
     if (booked > 0) await supabase.from('training_slots').update({ is_cancelled: true }).eq('id', sl.id)
@@ -326,7 +330,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const booked = bookingCounts[sl.id] || 0
                 const ratio = booked / sl.capacity
                 const full = ratio >= 1
-                const allPaid = booked > 0 && (paidCounts[sl.id] || 0) >= booked
+                const allPaid = isDonationBased(sl.name) || (booked > 0 && (paidCounts[sl.id] || 0) >= booked)
                 const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E74C3C')
                 const slotDateTime = new Date(`${sl.slot_date}T${sl.start_time}`)
                 const isPast = slotDateTime < new Date()
@@ -531,7 +535,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const booked = bookingCounts[sl.id] || 0
                 const ratio = booked / sl.capacity
                 const full = ratio >= 1
-                const allPaid = booked > 0 && (paidCounts[sl.id] || 0) >= booked
+                const allPaid = isDonationBased(sl.name) || (booked > 0 && (paidCounts[sl.id] || 0) >= booked)
                 const slotColor = sl.name === 'Osobní trénink' ? '#C8516B' : (sl.color || '#E74C3C')
                 const slotDateTime = new Date(`${sl.slot_date}T${sl.start_time}`)
                 const isPast = slotDateTime < new Date()
