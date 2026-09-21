@@ -9,7 +9,7 @@ function getPrice(slot, bookingType) {
     const isSep = (slot?.slot_date || '') >= '2026-09-01'
     return bookingType === 'duo' ? (isSep ? 400 : 300) : (isSep ? 300 : 200)
   }
-  if (slot?.price) return slot.price
+  if (slot?.price != null) return slot.price
   if (name.includes('Zbůch')) return 130
   if (name === 'Tabata - Březín') return 150
   if (name.includes('Březín')) return 130
