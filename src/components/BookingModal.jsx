@@ -19,6 +19,14 @@ function getPrice(slot, bookingType) {
   return 0
 }
 
+function isDonationBased(name = '') {
+  return name === 'Hubneme společně! - Nýřany'
+}
+
+function priceLabel(name, price) {
+  return isDonationBased(name) ? 'Vstupné dobrovolné' : `${price} Kč`
+}
+
 function buildQrString(price, message) {
   return `SPD*1.0*ACC:${IBAN}*AM:${price.toFixed(2)}*CC:CZK*MSG:${message}`
 }
@@ -123,7 +131,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
   const [error, setError] = useState('')
   const [unpaidWarning, setUnpaidWarning] = useState('')
   const isPersonal = slot?.name === 'Osobní trénink'
-  const isZbuch = ((slot?.name || '').includes('Březín') && !(slot?.name || '').includes('Tabata')) || (slot?.name || '').includes('Holýšov')
+  const isZbuch = ((slot?.name || '').includes('Březín') && !(slot?.name || '').includes('Tabata')) || (slot?.name || '').includes('Holýšov') || isDonationBased(slot?.name)
   const isSep = (slot?.slot_date || '') >= '2026-09-01'
   const price = getPrice(slot, bookingType)
 
@@ -136,7 +144,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
 
   async function checkUnpaid(email) {
     if (!email?.includes('@')) return
-    const isCashTraining = n => (n?.includes('Březín') && !n?.includes('Tabata')) || n?.includes('Holýšov')
+    const isCashTraining = n => (n?.includes('Březín') && !n?.includes('Tabata')) || n?.includes('Holýšov') || isDonationBased(n)
     const today = new Date().toISOString().slice(0, 10)
     const { data: unpaid } = await supabase
       .from('bookings')
@@ -198,7 +206,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
             <div style={s.successBox(slot.color)}>
               <div style={{ fontWeight: 700, color: '#2C1A22' }}>{slot.name}{isPersonal && ` – ${bookingType === 'duo' ? 'Duo' : 'Sólo'}`}</div>
               <div style={{ fontSize: 13, color: '#9B7E8A', marginTop: 2 }}>{formatDate(slot.slot_date)} • {slot.start_time} • {slot.duration_minutes} min</div>
-              <div style={{ fontSize: 14, color: '#C8516B', marginTop: 6, fontWeight: 700 }}>Cena: {price} Kč</div>
+              <div style={{ fontSize: 14, color: '#C8516B', marginTop: 6, fontWeight: 700 }}>Cena: {priceLabel(slot.name, price)}</div>
             </div>
 
             {isZbuch ? (
@@ -206,7 +214,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
                 <div style={{ fontSize: 28, marginBottom: 10 }}>💵</div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#2C1A22' }}>Platbu provedete v hotovosti</div>
                 <div style={{ fontSize: 13, color: '#9B7E8A', marginTop: 6 }}>před zahájením lekce</div>
-                <div style={{ fontSize: 14, color: '#C8516B', fontWeight: 700, marginTop: 8 }}>{price} Kč</div>
+                <div style={{ fontSize: 14, color: '#C8516B', fontWeight: 700, marginTop: 8 }}>{priceLabel(slot.name, price)}</div>
               </div>
             ) : (
               <div style={s.qrBox}>
@@ -223,7 +231,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
               style={{ ...s.btn('secondary'), flex: 'unset', width: '100%', marginBottom: 8 }}
               onClick={() => {
                 const title = isPersonal ? `${slot.name} – ${bookingType === 'duo' ? 'Duo' : 'Sólo'}` : slot.name
-                const description = isZbuch ? `Platba: ${price} Kč v hotovosti před lekcí` : `Cena: ${price} Kč`
+                const description = isDonationBased(slot.name) ? 'Vstupné dobrovolné (platba v hotovosti před lekcí)' : (isZbuch ? `Platba: ${price} Kč v hotovosti před lekcí` : `Cena: ${price} Kč`)
                 downloadICS(slot, form.email, title, description)
               }}
             >
@@ -263,7 +271,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
                 {!isPersonal && (
                   <div style={{ background: `${slot.color}10`, border: `1px solid ${slot.color}30`, borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
                     <div style={{ fontSize: 13, color: '#9B7E8A' }}>Délka: {slot.duration_minutes} min • Volná místa: {slot.capacity >= 999 ? 'neomezeně' : slot.capacity - slot.booked}</div>
-                    <div style={{ fontSize: 14, color: '#C8516B', fontWeight: 700, marginTop: 4 }}>Cena: {price} Kč{isZbuch ? ' – platba v hotovosti' : ''}</div>
+                    <div style={{ fontSize: 14, color: '#C8516B', fontWeight: 700, marginTop: 4 }}>Cena: {priceLabel(slot.name, price)}{isZbuch && !isDonationBased(slot.name) ? ' – platba v hotovosti' : ''}</div>
                   </div>
                 )}
                 <button style={{ ...s.btn('primary'), flex: 'unset', width: '100%' }} onClick={() => setStep(2)}>
@@ -282,7 +290,7 @@ export default function BookingModal({ slot, prefill, onClose }) {
                 <label style={s.label}>Telefon (volitelné)</label>
                 <input style={s.input(false)} placeholder="+420 777 888 999" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
                 <div style={{ fontSize: 13, color: '#C8516B', fontWeight: 600, marginTop: 10 }}>
-                  Cena: {price} Kč{isPersonal && ` – ${bookingType === 'duo' ? 'Duo' : 'Sólo'}`}
+                  Cena: {priceLabel(slot.name, price)}{isPersonal && ` – ${bookingType === 'duo' ? 'Duo' : 'Sólo'}`}
                 </div>
                 {unpaidWarning && (
                   <div style={{ background: 'rgba(212,148,90,0.1)', border: '1px solid rgba(212,148,90,0.35)', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#B8722A', marginTop: 12, whiteSpace: 'pre-line', lineHeight: 1.6 }}>
