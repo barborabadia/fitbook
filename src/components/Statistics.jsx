@@ -201,7 +201,7 @@ export default function Statistics({ refreshKey }) {
   const prevConfirmed = pastConfirmed.filter(b => prevStart && inPeriod(b, prevStart, prevEnd))
 
   // Skupinové tréninky kde klient platí organizátorovi, ne mně
-  const isCash = b => b.training_slots?.name?.includes('Zbůch') || (b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')) || b.training_slots?.name?.includes('Holýšov') || b.training_slots?.name?.includes('Nýřany')
+  const isCash = b => b.training_slots?.name?.includes('Zbůch') || (b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata') && !b.training_slots?.name?.includes('Charitativní')) || b.training_slots?.name?.includes('Holýšov') || b.training_slots?.name?.includes('Nýřany')
 
   // Pouze tréninky kde klient platí přímo mně
   const directPayConfirmed = periodConfirmed.filter(b => !isCash(b))
@@ -229,7 +229,7 @@ export default function Statistics({ refreshKey }) {
   const zbuchTotalProfit = Object.values(zbuchBySlot).reduce((a, s) => a + zbuchProfit(s.count, s.date), 0)
 
   // Březín flat profit (500 Kč per slot with at least 1 booking) - jen Cvičení - Březín, ne Tabata
-  const brezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).map(b => b.slot_id))
+  const brezinSlotIds = new Set(periodConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata') && !b.training_slots?.name?.includes('Charitativní')).map(b => b.slot_id))
   const brezinTotalProfit = brezinSlotIds.size * 500
 
   // Holýšov per-person profit (150 Kč příjem - 70 Kč náklady = 80 Kč čistý zisk/os.)
@@ -278,7 +278,7 @@ export default function Statistics({ refreshKey }) {
     prevZbuchBySlot[b.slot_id].count++
   })
   const prevZbuchProfit = Object.values(prevZbuchBySlot).reduce((a, s) => a + zbuchProfit(s.count, s.date), 0)
-  const prevBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).map(b => b.slot_id))
+  const prevBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata') && !b.training_slots?.name?.includes('Charitativní')).map(b => b.slot_id))
   const prevBrezinProfit = prevBrezinSlotIds.size * 500
   const prevTabataBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
   const prevPaidRevenue = prevConfirmed.filter(b => !isCash(b) && b.paid).reduce((a, b) => a + (b.price || 0), 0)
@@ -353,7 +353,7 @@ export default function Statistics({ refreshKey }) {
 
   // Monthly Březín slot groups (jen proběhlé, jen Cvičení - Březín, ne Tabata)
   const brezinSlotsByMonth = {}
-  slots.filter(s => s.name?.includes('Březín') && !s.name?.includes('Tabata') && s.slot_date <= today).forEach(s => {
+  slots.filter(s => s.name?.includes('Březín') && !s.name?.includes('Tabata') && !s.name?.includes('Charitativní') && s.slot_date <= today).forEach(s => {
     const key = s.slot_date.slice(0, 7)
     if (!brezinSlotsByMonth[key]) brezinSlotsByMonth[key] = []
     brezinSlotsByMonth[key].push(s)
@@ -373,7 +373,7 @@ export default function Statistics({ refreshKey }) {
     if (monthlyData[key]) {
       monthlyData[key].count++
       const name = b.training_slots?.name
-      if (!name?.includes('Zbůch') && !(name?.includes('Březín') && !name?.includes('Tabata')) && !name?.includes('Holýšov') && !name?.includes('Nýřany')) monthlyData[key].revenue += b.paid ? (b.price || 0) : 0
+      if (!name?.includes('Zbůch') && !(name?.includes('Březín') && !name?.includes('Tabata') && !name?.includes('Charitativní')) && !name?.includes('Holýšov') && !name?.includes('Nýřany')) monthlyData[key].revenue += b.paid ? (b.price || 0) : 0
       if (name?.includes('Holýšov')) monthlyData[key].revenue += 80
       if (name?.includes('Nýřany')) monthlyData[key].revenue += 70
     }
@@ -481,7 +481,7 @@ export default function Statistics({ refreshKey }) {
   })
   // Březín: 500 Kč za každý slot s alespoň 1 rezervací (jen Cvičení - Březín, ne Tabata)
   const brezinSlotsByType = {}
-  revTypeConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata')).forEach(b => {
+  revTypeConfirmed.filter(b => b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata') && !b.training_slots?.name?.includes('Charitativní')).forEach(b => {
     const name = b.training_slots.name
     if (!brezinSlotsByType[name]) brezinSlotsByType[name] = new Set()
     brezinSlotsByType[name].add(b.slot_id)

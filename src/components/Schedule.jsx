@@ -229,6 +229,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     if (name === 'Hubneme společně! - Nýřany') return { color: '#E74C3C', capacity: 30, price: 0, duration: 120 }
     if ((name || '').includes('Zbůch') || (name || '').includes('Stod')) return { color: '#E74C3C', capacity: 10, price: (name || '').includes('Zbůch') ? 130 : (date >= '2026-09-01' ? 150 : 120), duration: 60 }
     if (name === 'Tabata - Březín') return { color: '#E74C3C', capacity: 10, price: 150, duration: 60 }
+    if (name === 'Charitativní den zdraví - Březín') return { color: '#E74C3C', capacity: 20, price: 500, duration: 180 }
     if ((name || '').includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130, duration: 60 }
     if ((name || '').includes('Holýšov')) return { color: '#E74C3C', capacity: 10, price: 150, duration: 60 }
     if ((name || '').includes('Nýřany')) return { color: '#E74C3C', capacity: 10, price: 135, duration: 60 }
@@ -449,6 +450,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 <optgroup label="Březín">
                   <option>Cvičení - Březín</option>
                   <option>Tabata - Březín</option>
+                  <option>Charitativní den zdraví - Březín</option>
                 </optgroup>
                 <optgroup label="Holýšov">
                   <option>XXL cvičení - Holýšov</option>
@@ -677,6 +679,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
               <optgroup label="Březín">
                 <option>Cvičení - Březín</option>
                 <option>Tabata - Březín</option>
+                <option>Charitativní den zdraví - Březín</option>
               </optgroup>
               <optgroup label="Holýšov">
                 <option>XXL cvičení - Holýšov</option>
