@@ -39,6 +39,9 @@ const TYPE_COLORS = {
   'Tabata - Nýřany': '#E74C3C',
 }
 
+// Akce, které se do statistik nepočítají vůbec (dobrovolné vstupné)
+const isExcluded = (name) => (name || '').includes('Hubneme')
+
 function zbuchProfit(count, yearMonth) {
   if (yearMonth >= '2026-09') {
     if (count >= 10) return 350
@@ -146,9 +149,9 @@ export default function Statistics({ refreshKey }) {
       const { data: hs } = await supabase.from('historical_sessions').select('*').order('session_date')
       const { data: inq } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false })
       const { data: exp } = await supabase.from('expenses').select('*').order('expense_date', { ascending: false })
-      if (bk) setBookings(bk)
-      if (sl) setSlots(sl)
-      if (hs) setHistoricalSessions(hs)
+      if (bk) setBookings(bk.filter(b => !isExcluded(b.training_slots?.name)))
+      if (sl) setSlots(sl.filter(x => !isExcluded(x.name)))
+      if (hs) setHistoricalSessions(hs.filter(h => !isExcluded(h.session_name)))
       if (inq) setInquiries(inq)
       if (exp) setExpenses(exp)
     } catch (err) {
