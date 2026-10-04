@@ -45,6 +45,9 @@ const s = {
   saveBtn: { marginTop: 8, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#C8516B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
 }
 
+// Nýřany (XXL, Tabata): rezervace a platba běží přes externí web, odměna = 70 Kč za osobu
+const isNyranyReward = (name) => (name || '').includes('Nýřany') && name !== 'Hubneme společně! - Nýřany'
+
 function CopyLinkBtn({ slotId, slotName, slotDate }) {
   const [copied, setCopied] = useState(false)
   const handleShare = () => {
@@ -327,6 +330,7 @@ export default function SlotDetailModal({ slot, onClose }) {
   const ratio = confirmed.length / slot.capacity
   const dayName = getDayName(slot.slot_date || '')
   const isZbuch = slot.name?.includes('Zbůch')
+  const isNyranyCash = isNyranyReward(slot.name)
   function zbuchProfit(count) {
     const yearMonth = (slot.slot_date || '').slice(0, 7)
     if (yearMonth >= '2026-09') {
@@ -363,7 +367,12 @@ export default function SlotDetailModal({ slot, onClose }) {
             <div style={s.statLabel}>Rezervováno</div>
             <div style={{ ...s.statVal, color: ratio >= 1 ? '#C8516B' : '#2C1A22' }}>{confirmed.length}</div>
           </div>
-          {isZbuch ? (
+          {isNyranyCash ? (
+            <div style={s.stat}>
+              <div style={s.statLabel}>Odměna za lekci</div>
+              <div style={{ ...s.statVal, color: '#5B9E98' }}>{confirmed.length > 0 ? `${confirmed.length * 70} Kč` : '–'}</div>
+            </div>
+          ) : isZbuch ? (
             <div style={s.stat}>
               <div style={s.statLabel}>Odměna za lekci</div>
               <div style={{ ...s.statVal, color: '#5B9E98' }}>{confirmed.length > 0 ? `${zbuchProfit(confirmed.length)} Kč` : '–'}</div>
@@ -472,7 +481,7 @@ export default function SlotDetailModal({ slot, onClose }) {
                     <span style={s.clientName}>{b.client_name}</span>
                     {isPersonal && <span title="Klikni pro změnu" style={{ ...s.badge(b.booking_type), cursor: 'pointer' }} onClick={() => toggleBookingType(b.id, b.booking_type)}>{b.booking_type === 'duo' ? 'Duo' : 'Sólo'}</span>}
                     {cc?.credit > 0 && <span style={{ fontSize: 10, color: '#5B9E98', fontWeight: 700, background: 'rgba(91,158,152,0.1)', border: '1px solid rgba(91,158,152,0.25)', borderRadius: 12, padding: '2px 7px' }}>💳 {cc.credit} Kč</span>}
-                    {(editingPriceId === b.id ? (
+                    {!isNyranyCash && (editingPriceId === b.id ? (
                       <input autoFocus type="number" value={editingPriceValue}
                         onChange={e => setEditingPriceValue(e.target.value)}
                         onBlur={() => savePrice(b.id)}
@@ -490,7 +499,7 @@ export default function SlotDetailModal({ slot, onClose }) {
                     📧 {b.client_email}{b.client_phone && <span> · 📱 {b.client_phone}</span>}
                   </div>
                 </div>
-                {(b.paid ? (
+                {!isNyranyCash && (b.paid ? (
                   <button style={s.paidBtn(true)} onClick={() => unsetPaid(b.id)}>✓ {paymentLabel || 'Zaplaceno'}</button>
                 ) : (
                   <button style={s.paidBtn(false)} onClick={() => setPaymentPickerId(paymentPickerId === b.id ? null : b.id)}>Zaplaceno?</button>

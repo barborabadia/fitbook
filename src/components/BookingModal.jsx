@@ -19,6 +19,11 @@ function getPrice(slot, bookingType) {
   return 0
 }
 
+// Nýřany (XXL, Tabata): rezervace a platba běží přes externí web, odměna = 70 Kč za osobu
+const isNyranyReward = (name) => (name || '').includes('Nýřany') && name !== 'Hubneme společně! - Nýřany'
+
+const NYRANY_URL = 'https://www.jumpinghravezdrave.cz/?martina'
+
 function isDonationBased(name = '') {
   return name === 'Hubneme společně! - Nýřany'
 }
@@ -190,6 +195,28 @@ export default function BookingModal({ slot, prefill, onClose }) {
     if (err) setError('Chyba při ukládání. Zkus to znovu.')
     else setStep(3)
     setLoading(false)
+  }
+
+  if (isNyranyReward(slot?.name)) {
+    return (
+      <div style={s.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+        <div style={{ ...s.box, textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button style={s.closeBtn} onClick={onClose}>✕</button>
+          </div>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🌸</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#2C1A22', marginBottom: 6 }}>{slot.name}</div>
+          <div style={{ fontSize: 13, color: '#9B7E8A', marginBottom: 16 }}>{formatDate(slot.slot_date)} • {slot.start_time}</div>
+          <div style={{ fontSize: 14, color: '#2C1A22', lineHeight: 1.6, marginBottom: 16 }}>
+            {'Pro rezervaci a platbu využijte web Jumping hravě&zdravě Nýřany na odkazu'}
+          </div>
+          <a href={NYRANY_URL} target="_blank" rel="noopener noreferrer" style={{ display: 'block', wordBreak: 'break-all', fontSize: 14, fontWeight: 700, color: '#C8516B', marginBottom: 20 }}>
+            {NYRANY_URL}
+          </a>
+          <button style={{ ...s.btn('primary'), flex: 'unset', width: '100%' }} onClick={onClose}>Zavřít</button>
+        </div>
+      </div>
+    )
   }
 
   const qrString = buildQrString(price, `Rezervace ${slot.name} ${slot.slot_date}`)

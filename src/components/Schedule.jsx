@@ -26,6 +26,9 @@ function toDateStr(date) {
   return `${y}-${m}-${d}`
 }
 
+// Nýřany (XXL, Tabata): rezervace a platba běží přes externí web, odměna = 70 Kč za osobu
+const isNyranyReward = (name) => (name || '').includes('Nýřany') && name !== 'Hubneme společně! - Nýřany'
+
 function formatWeekLabel(monday) {
   const end = addDays(monday, 6)
   const opts = { day: 'numeric', month: 'long' }
@@ -336,13 +339,15 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const slotDateTime = new Date(`${sl.slot_date}T${sl.start_time}`)
                 const isPast = slotDateTime < new Date()
                 const trainingHappened = !sl.is_cancelled && booked > 0
-                const isPastUnpaid = isPast && trainingHappened && !allPaid
+                const isPastUnpaid = isPast && trainingHappened && !allPaid && !isNyranyReward(sl.name)
                 const isPastNoTraining = isPast && !sl.is_cancelled && booked === 0
                 let cardBg, cardBorder, cardOpacity
                 if (sl.is_cancelled) {
                   cardBg = '#f5f5f5'; cardBorder = '#EBCFD8'; cardOpacity = 0.4
                 } else if (isPastNoTraining) {
                   cardBg = '#9E9E9E'; cardBorder = '#9E9E9E'; cardOpacity = 0.6
+                } else if (isPast && isNyranyReward(sl.name) && trainingHappened) {
+                  cardBg = '#27AE60'; cardBorder = '#27AE60'; cardOpacity = 1
                 } else if (isPastUnpaid) {
                   cardBg = '#E67E22'; cardBorder = '#E67E22'; cardOpacity = 1
                 } else if (allPaid) {
@@ -543,14 +548,14 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const isPast = slotDateTime < new Date()
                 const isZbuch = (sl.name || '').includes('Zbůch')
                 const trainingHappened = !sl.is_cancelled && booked > 0
-                const isPastUnpaid = isPast && trainingHappened && !allPaid && !isZbuch
+                const isPastUnpaid = isPast && trainingHappened && !allPaid && !isZbuch && !isNyranyReward(sl.name)
                 const isPastNoTraining = isPast && !sl.is_cancelled && booked === 0
                 let cardBg, cardBorder, cardOpacity
                 if (sl.is_cancelled) {
                   cardBg = 'transparent'; cardBorder = '#EBCFD8'; cardOpacity = 0.4
                 } else if (isPastNoTraining) {
                   cardBg = '#9E9E9E'; cardBorder = '#9E9E9E'; cardOpacity = 0.6
-                } else if (isPast && isZbuch && trainingHappened) {
+                } else if (isPast && (isZbuch || isNyranyReward(sl.name)) && trainingHappened) {
                   cardBg = '#27AE60'; cardBorder = '#27AE60'; cardOpacity = 1
                 } else if (isPastUnpaid) {
                   cardBg = '#E67E22'; cardBorder = '#E67E22'; cardOpacity = 1
