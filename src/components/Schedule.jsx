@@ -235,7 +235,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     if (name === 'Charitativní den zdraví - Březín') return { color: '#E74C3C', capacity: 20, price: 500, duration: 180 }
     if ((name || '').includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130, duration: 60 }
     if ((name || '').includes('Holýšov')) return { color: '#E74C3C', capacity: 10, price: 150, duration: 60 }
-    if ((name || '').includes('Nýřany')) return { color: '#E74C3C', capacity: 10, price: 135, duration: 60 }
+    if ((name || '').includes('Nýřany')) return { color: '#E74C3C', capacity: 15, price: 135, duration: 60 }
     return { color: '#C8516B', capacity: 1, price: 0, duration: 60 }
   }
 
