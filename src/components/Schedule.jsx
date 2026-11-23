@@ -200,7 +200,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
 
   async function generateWeek() {
     setGenerating(true)
-    const inserts = 
+    const inserts = []
     for (let i = 0; i < 7; i++) {
       const date = addDays(monday, i)
       const dayTemplates = templates.filter(t => t.day_of_week === i && !excludedTemplates.has(t.id))
