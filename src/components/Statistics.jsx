@@ -40,7 +40,12 @@ const TYPE_COLORS = {
 }
 
 // Akce, které se do statistik nepočítají vůbec (dobrovolné vstupné)
+// – výjimka: ruční výdělek a náklady zadané v detailu termínu se počítají vždy
 const isExcluded = (name) => (name || '').includes('Hubneme')
+
+// Termín s ručně zadaným výdělkem / náklady (detail termínu)
+const hasManual = (o) => o?.manual_revenue != null || o?.manual_costs != null
+const manualNet = (sl) => (sl.manual_revenue || 0) - (sl.manual_costs || 0)
 
 function zbuchProfit(count, yearMonth) {
   if (yearMonth >= '2026-09') {
@@ -125,6 +130,7 @@ function getPeriodRange(period) {
 export default function Statistics({ refreshKey }) {
   const [bookings, setBookings] = useState([])
   const [slots, setSlots] = useState([])
+  const [manualSlots, setManualSlots] = useState([])
   const [historicalSessions, setHistoricalSessions] = useState([])
   const [inquiries, setInquiries] = useState([])
   const [expenses, setExpenses] = useState([])
@@ -144,13 +150,14 @@ export default function Statistics({ refreshKey }) {
   async function loadData() {
     setLoading(true)
     try {
-      const { data: bk } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, is_cancelled)').order('created_at', { ascending: false })
+      const { data: bk } = await supabase.from('bookings').select('*, training_slots(name, slot_date, start_time, is_cancelled, manual_revenue, manual_costs)').order('created_at', { ascending: false })
       const { data: sl } = await supabase.from('training_slots').select('*').order('slot_date')
       const { data: hs } = await supabase.from('historical_sessions').select('*').order('session_date')
       const { data: inq } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false })
       const { data: exp } = await supabase.from('expenses').select('*').order('expense_date', { ascending: false })
       if (bk) setBookings(bk.filter(b => !isExcluded(b.training_slots?.name)))
       if (sl) setSlots(sl.filter(x => !isExcluded(x.name)))
+      if (sl) setManualSlots(sl.filter(x => hasManual(x) && !x.is_cancelled))
       if (hs) setHistoricalSessions(hs.filter(h => !isExcluded(h.session_name)))
       if (inq) setInquiries(inq)
       if (exp) setExpenses(exp)
@@ -203,8 +210,14 @@ export default function Statistics({ refreshKey }) {
   const periodConfirmed = pastConfirmed.filter(b => !start || inPeriod(b, start, today))
   const prevConfirmed = pastConfirmed.filter(b => prevStart && inPeriod(b, prevStart, prevEnd))
 
-  // Skupinové tréninky kde klient platí organizátorovi, ne mně
-  const isCash = b => b.training_slots?.name?.includes('Zbůch') || (b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata') && !b.training_slots?.name?.includes('Charitativní')) || b.training_slots?.name?.includes('Holýšov') || b.training_slots?.name?.includes('Nýřany')
+  // Termíny s ručně zadaným výdělkem a náklady (čistý zisk = výdělek − náklady)
+  const manualSlotsPast = manualSlots.filter(sl => sl.slot_date <= today)
+  const periodManualSlots = manualSlotsPast.filter(sl => !start || sl.slot_date >= start)
+  const manualProfit = periodManualSlots.reduce((a, sl) => a + manualNet(sl), 0)
+  const prevManualProfit = manualSlotsPast.filter(sl => prevStart && sl.slot_date >= prevStart && sl.slot_date <= prevEnd).reduce((a, sl) => a + manualNet(sl), 0)
+
+  // Skupinové tréninky kde klient platí organizátorovi, ne mně (+ termíny s ručními hodnotami – ty se počítají zvlášť)
+  const isCash = b => b.training_slots?.name?.includes('Zbůch') || (b.training_slots?.name?.includes('Březín') && !b.training_slots?.name?.includes('Tabata') && !b.training_slots?.name?.includes('Charitativní')) || b.training_slots?.name?.includes('Holýšov') || b.training_slots?.name?.includes('Nýřany') || hasManual(b.training_slots)
 
   // Pouze tréninky kde klient platí přímo mně
   const directPayConfirmed = periodConfirmed.filter(b => !isCash(b))
@@ -239,7 +252,7 @@ export default function Statistics({ refreshKey }) {
   const holysovProfit = periodConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).length * 80
 
   // Nýřany per-person profit (135 Kč příjem - 65 Kč náklady = 70 Kč čistý zisk/os.)
-  const nyranyProfit = periodConfirmed.filter(b => b.training_slots?.name?.includes('Nýřany')).length * 70
+  const nyranyProfit = periodConfirmed.filter(b => b.training_slots?.name?.includes('Nýřany') && !hasManual(b.training_slots)).length * 70
 
   // Historical sessions for period
   const periodHistorical = historicalSessions.filter(h => !start || h.session_date >= start)
@@ -249,6 +262,7 @@ export default function Statistics({ refreshKey }) {
   const revenueMonthSet = new Set()
   periodConfirmed.forEach(b => { const d = b.training_slots?.slot_date; if (d) revenueMonthSet.add(d.slice(0, 7)) })
   periodHistorical.forEach(h => { if (h.session_date) revenueMonthSet.add(h.session_date.slice(0, 7)) })
+  periodManualSlots.forEach(sl => { if (sl.slot_date) revenueMonthSet.add(sl.slot_date.slice(0, 7)) })
   const availableRevenueMonths = Array.from(revenueMonthSet).sort().reverse()
 
   // Filtrovaná data pro výpočet příjmů podle typu (dle zvoleného měsíce)
@@ -261,8 +275,8 @@ export default function Statistics({ refreshKey }) {
   const revTypeDirectPay = revTypeConfirmed.filter(b => !isCash(b))
   const revTypeTabataBrezinSlotIds = new Set(revTypeConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
 
-  // Čistý příjem = pouze zaplacené přímé platby + skupinové dle klíče + historická data
-  const netRevenue = paidRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + holysovProfit + nyranyProfit + historicalRevenue
+  // Čistý příjem = pouze zaplacené přímé platby + skupinové dle klíče + historická data + ruční termíny
+  const netRevenue = paidRevenue - salonCosts + zbuchTotalProfit + brezinTotalProfit + holysovProfit + nyranyProfit + historicalRevenue + manualProfit
 
   // Náklady za období
   const periodExpenses = expenses.filter(e => !start || e.expense_date >= start)
@@ -286,11 +300,11 @@ export default function Statistics({ refreshKey }) {
   const prevTabataBrezinSlotIds = new Set(prevConfirmed.filter(b => b.training_slots?.name?.includes('Tabata') && b.training_slots?.name?.includes('Březín')).map(b => b.slot_id))
   const prevPaidRevenue = prevConfirmed.filter(b => !isCash(b) && b.paid).reduce((a, b) => a + (b.price || 0), 0)
   const prevHolysovProfit = prevConfirmed.filter(b => b.training_slots?.name?.includes('Holýšov')).length * 80
-  const prevNyranyProfit = prevConfirmed.filter(b => b.training_slots?.name?.includes('Nýřany')).length * 70
+  const prevNyranyProfit = prevConfirmed.filter(b => b.training_slots?.name?.includes('Nýřany') && !hasManual(b.training_slots)).length * 70
   const prevHistorical = historicalSessions.filter(h => prevStart && h.session_date >= prevStart && h.session_date <= prevEnd)
   const prevHistoricalRevenue = prevHistorical.reduce((a, h) => a + (h.revenue || 0), 0)
   const prevStodRentalCosts = Array.from(prevStodSlotMap.values()).reduce((a, d) => a + stodRentalCost(d), 0)
-  const prevNetRevenue = prevPaidRevenue - prevStodRentalCosts - prevTabataBrezinSlotIds.size * 250 + prevZbuchProfit + prevBrezinProfit + prevHolysovProfit + prevNyranyProfit + prevHistoricalRevenue
+  const prevNetRevenue = prevPaidRevenue - prevStodRentalCosts - prevTabataBrezinSlotIds.size * 250 + prevZbuchProfit + prevBrezinProfit + prevHolysovProfit + prevNyranyProfit + prevHistoricalRevenue + prevManualProfit
 
   const clientKey = b => b.client_email || `__name__${b.client_name}`
   const uniqueClients = new Set(periodConfirmed.map(clientKey)).size
@@ -376,9 +390,9 @@ export default function Statistics({ refreshKey }) {
     if (monthlyData[key]) {
       monthlyData[key].count++
       const name = b.training_slots?.name
-      if (!name?.includes('Zbůch') && !(name?.includes('Březín') && !name?.includes('Tabata') && !name?.includes('Charitativní')) && !name?.includes('Holýšov') && !name?.includes('Nýřany')) monthlyData[key].revenue += b.paid ? (b.price || 0) : 0
+      if (!name?.includes('Zbůch') && !(name?.includes('Březín') && !name?.includes('Tabata') && !name?.includes('Charitativní')) && !name?.includes('Holýšov') && !name?.includes('Nýřany') && !hasManual(b.training_slots)) monthlyData[key].revenue += b.paid ? (b.price || 0) : 0
       if (name?.includes('Holýšov')) monthlyData[key].revenue += 80
-      if (name?.includes('Nýřany')) monthlyData[key].revenue += 70
+      if (name?.includes('Nýřany') && !hasManual(b.training_slots)) monthlyData[key].revenue += 70
     }
   })
   Object.entries(stodSlotsByMonth).forEach(([key, slotSet]) => { if (monthlyData[key]) monthlyData[key].revenue -= slotSet.size * (key >= '2026-09' ? 300 : 200) })
@@ -394,6 +408,11 @@ export default function Statistics({ refreshKey }) {
       const count = slotAttendance[s.id] || 0
       if (count > 0) monthlyData[key].revenue += 500
     })
+  })
+  // Ruční termíny do měsíčního grafu
+  manualSlotsPast.forEach(sl => {
+    const key = sl.slot_date.slice(0, 7)
+    if (monthlyData[key]) monthlyData[key].revenue += manualNet(sl)
   })
   // Historická data do měsíčního grafu
   historicalSessions.forEach(h => {
@@ -503,10 +522,16 @@ export default function Statistics({ refreshKey }) {
     revenueByType[name] = (revenueByType[name] || 0) + 80
   })
   // Nýřany: 70 Kč čistého za osobu
-  revTypeConfirmed.filter(b => b.training_slots?.name?.includes('Nýřany')).forEach(b => {
+  revTypeConfirmed.filter(b => b.training_slots?.name?.includes('Nýřany') && !hasManual(b.training_slots)).forEach(b => {
     const name = b.training_slots.name
     revenueByType[name] = (revenueByType[name] || 0) + 70
   })
+  // Ruční termíny: výdělek mínus náklady zadané v detailu termínu
+  periodManualSlots
+    .filter(sl => !revenueMonth || sl.slot_date.startsWith(revenueMonth))
+    .forEach(sl => {
+      revenueByType[sl.name] = (revenueByType[sl.name] || 0) + manualNet(sl)
+    })
   // Historická data – revenue je již čistý zisk (u Stod po odečtení nájmu)
   revTypeHistorical.forEach(h => {
     const name = normalizeSessionName(h.session_name)

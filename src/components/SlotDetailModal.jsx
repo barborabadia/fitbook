@@ -43,6 +43,8 @@ const s = {
   cancelBtn: { background: 'none', border: '1px solid #EBCFD8', borderRadius: 8, padding: '5px 10px', color: '#9B7E8A', cursor: 'pointer', fontSize: 11, fontFamily: 'inherit', whiteSpace: 'nowrap' },
   textarea: { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', resize: 'vertical', minHeight: 80 },
   saveBtn: { marginTop: 8, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#C8516B', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
+  manualInput: { width: '100%', background: '#FBF6F8', border: '1px solid #EBCFD8', borderRadius: 10, padding: '10px 14px', color: '#2C1A22', fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' },
+  manualLabel: { fontSize: 10, color: '#BFA0AD', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4, display: 'block' },
 }
 
 // Nýřany (XXL, Tabata): rezervace a platba běží přes externí web, odměna = 70 Kč za osobu
@@ -70,6 +72,10 @@ export default function SlotDetailModal({ slot, onClose }) {
   const [loading, setLoading] = useState(true)
   const [notes, setNotes] = useState(slot.notes || '')
   const [notesSaved, setNotesSaved] = useState(false)
+  const [manualRevenue, setManualRevenue] = useState(slot.manual_revenue != null ? String(slot.manual_revenue) : '')
+  const [manualCosts, setManualCosts] = useState(slot.manual_costs != null ? String(slot.manual_costs) : '')
+  const [manualSaved, setManualSaved] = useState(false)
+  const [manualError, setManualError] = useState('')
   const [showAddBooking, setShowAddBooking] = useState(false)
   const [allClients, setAllClients] = useState([])
   const [clientSearch, setClientSearch] = useState('')
@@ -255,6 +261,29 @@ export default function SlotDetailModal({ slot, onClose }) {
     setTimeout(() => setNotesSaved(false), 2000)
   }
 
+  // Ruční výdělek a náklady – prázdné pole = nepoužito (statistiky počítají z rezervací)
+  async function saveManual() {
+    setManualError('')
+    const rev = manualRevenue.trim() === '' ? null : parseInt(manualRevenue, 10)
+    const costs = manualCosts.trim() === '' ? null : parseInt(manualCosts, 10)
+    if ((rev !== null && (isNaN(rev) || rev < 0)) || (costs !== null && (isNaN(costs) || costs < 0))) {
+      setManualError('Zadej prosím nezáporná čísla.')
+      return
+    }
+    const { error } = await supabase.from('training_slots').update({ manual_revenue: rev, manual_costs: costs }).eq('id', slot.id)
+    if (error) { setManualError('Chyba při ukládání: ' + error.message); return }
+    setManualSaved(true)
+    setTimeout(() => setManualSaved(false), 2000)
+  }
+
+  async function clearManual() {
+    setManualError('')
+    const { error } = await supabase.from('training_slots').update({ manual_revenue: null, manual_costs: null }).eq('id', slot.id)
+    if (error) { setManualError('Chyba při ukládání: ' + error.message); return }
+    setManualRevenue('')
+    setManualCosts('')
+  }
+
   async function openAddBooking() {
     setShowAddBooking(true)
     setClientSearch('')
@@ -344,6 +373,9 @@ export default function SlotDetailModal({ slot, onClose }) {
     return 200
   }
 
+  const manualActive = manualRevenue.trim() !== '' || manualCosts.trim() !== ''
+  const manualProfitPreview = (parseInt(manualRevenue, 10) || 0) - (parseInt(manualCosts, 10) || 0)
+
   return (
     <div style={s.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={s.box}>
@@ -400,6 +432,53 @@ export default function SlotDetailModal({ slot, onClose }) {
           <button style={s.saveBtn} onClick={saveNotes}>
             {notesSaved ? '✓ Uloženo' : 'Uložit poznámku'}
           </button>
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <div style={s.sectionLabel}>Ruční výdělek a náklady</div>
+          <div style={{ fontSize: 12, color: '#9B7E8A', marginBottom: 10, lineHeight: 1.5 }}>
+            Pokud vyplníš, statistiky použijí tyto hodnoty místo plateb z rezervací. Prázdná pole = počítá se automaticky.
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={s.manualLabel}>Výdělek (Kč)</label>
+              <input
+                style={s.manualInput}
+                type="number"
+                min="0"
+                placeholder="např. 1500"
+                value={manualRevenue}
+                onChange={e => setManualRevenue(e.target.value)}
+              />
+            </div>
+            <div>
+              <label style={s.manualLabel}>Náklady (Kč)</label>
+              <input
+                style={s.manualInput}
+                type="number"
+                min="0"
+                placeholder="např. 400"
+                value={manualCosts}
+                onChange={e => setManualCosts(e.target.value)}
+              />
+            </div>
+          </div>
+          {manualActive && (
+            <div style={{ fontSize: 13, color: '#2C1A22', marginTop: 10 }}>
+              Čistý zisk z termínu: <strong style={{ color: manualProfitPreview >= 0 ? '#5B9E98' : '#C8516B' }}>{manualProfitPreview} Kč</strong>
+            </div>
+          )}
+          {manualError && <div style={{ fontSize: 12, color: '#C8516B', marginTop: 8, fontWeight: 600 }}>⚠️ {manualError}</div>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={s.saveBtn} onClick={saveManual}>
+              {manualSaved ? '✓ Uloženo' : 'Uložit'}
+            </button>
+            {manualActive && (
+              <button style={{ ...s.saveBtn, background: 'none', border: '1px solid #EBCFD8', color: '#9B7E8A' }} onClick={clearManual}>
+                Zrušit ruční hodnoty
+              </button>
+            )}
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>

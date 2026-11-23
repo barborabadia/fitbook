@@ -35,6 +35,7 @@ function formatWeekLabel(monday) {
   return `${monday.toLocaleDateString('cs-CZ', opts)} – ${end.toLocaleDateString('cs-CZ', { ...opts, year: 'numeric' })}`
 }
 
+
 const s = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32, flexWrap: 'wrap', gap: 16 },
   title: { fontSize: 32, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.1, color: '#2C1A22', fontFamily: "'Plus Jakarta Sans', sans-serif" },
@@ -199,7 +200,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
 
   async function generateWeek() {
     setGenerating(true)
-    const inserts = []
+    const inserts = 
     for (let i = 0; i < 7; i++) {
       const date = addDays(monday, i)
       const dayTemplates = templates.filter(t => t.day_of_week === i && !excludedTemplates.has(t.id))
