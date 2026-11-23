@@ -157,7 +157,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
   const [templates, setTemplates] = useState([])
   const [bookingTypes, setBookingTypes] = useState({})
   const [paidCounts, setPaidCounts] = useState({})
-  const [newSlot, setNewSlot] = useState({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B', price: 200 })
+  const [newSlot, setNewSlot] = useState({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B', price: 200, notes: '' })
 
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(monday, i)))
 
@@ -221,23 +221,24 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
 
   async function addSlot() {
     if (!newSlot.date || !newSlot.time) return
-    await supabase.from('training_slots').insert({ name: newSlot.name, slot_date: newSlot.date, start_time: newSlot.time, duration_minutes: parseInt(newSlot.duration), capacity: parseInt(newSlot.capacity), color: newSlot.color, price: newSlot.price })
+    await supabase.from('training_slots').insert({ name: newSlot.name, slot_date: newSlot.date, start_time: newSlot.time, duration_minutes: parseInt(newSlot.duration), capacity: parseInt(newSlot.capacity), color: newSlot.color, price: newSlot.price, notes: newSlot.notes || null })
     setShowAddModal(false)
-    setNewSlot({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B', price: 200 })
+    setNewSlot({ date: '', time: '', name: 'Osobní trénink', duration: 60, capacity: 1, color: '#C8516B', price: 200, notes: '' })
     loadData()
   }
 
   function getSlotDefaults(name = '', date = '') {
-    if (name === 'Osobní trénink') return { color: '#C8516B', capacity: 1, price: date >= '2026-09-01' ? 300 : 200, duration: 60 }
-    if (name === 'Zahradní párty') return { color: '#F59E0B', capacity: 999, price: 0, duration: 60 }
-    if (name === 'Hubneme společně! - Nýřany') return { color: '#E74C3C', capacity: 30, price: 0, duration: 120 }
-    if ((name || '').includes('Zbůch') || (name || '').includes('Stod')) return { color: '#E74C3C', capacity: 10, price: (name || '').includes('Zbůch') ? 130 : (date >= '2026-09-01' ? 150 : 120), duration: 60 }
-    if (name === 'Tabata - Březín') return { color: '#E74C3C', capacity: 10, price: 150, duration: 60 }
-    if (name === 'Charitativní den zdraví - Březín') return { color: '#E74C3C', capacity: 20, price: 500, duration: 180 }
-    if ((name || '').includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130, duration: 60 }
-    if ((name || '').includes('Holýšov')) return { color: '#E74C3C', capacity: 10, price: 150, duration: 60 }
-    if ((name || '').includes('Nýřany')) return { color: '#E74C3C', capacity: 15, price: 135, duration: 60 }
-    return { color: '#C8516B', capacity: 1, price: 0, duration: 60 }
+    if (name === 'Osobní trénink') return { color: '#C8516B', capacity: 1, price: date >= '2026-09-01' ? 300 : 200, duration: 60, notes: '' }
+    if (name === 'Zahradní párty') return { color: '#F59E0B', capacity: 999, price: 0, duration: 60, notes: '' }
+    if (name === 'Hubneme společně! - Nýřany') return { color: '#E74C3C', capacity: 30, price: 0, duration: 120, notes: '' }
+    if ((name || '').includes('Zbůch') || (name || '').includes('Stod')) return { color: '#E74C3C', capacity: 10, price: (name || '').includes('Zbůch') ? 130 : (date >= '2026-09-01' ? 150 : 120), duration: 60, notes: '' }
+    if (name === 'Tabata - Březín') return { color: '#E74C3C', capacity: 10, price: 150, duration: 60, notes: '' }
+    if (name === 'Charitativní den zdraví - Březín') return { color: '#E74C3C', capacity: 20, price: 500, duration: 180, notes: '' }
+    if ((name || '').includes('Březín')) return { color: '#E74C3C', capacity: 10, price: 130, duration: 60, notes: '' }
+    if (name === 'Fit dopoledne - Holýšov') return { color: '#E74C3C', capacity: 30, price: 500, duration: 180, notes: 'Lektorky: Barbora Knížková a Gábina Nejedlá\nMísto: Kulturní dům Holýšov' }
+    if ((name || '').includes('Holýšov')) return { color: '#E74C3C', capacity: 10, price: 150, duration: 60, notes: '' }
+    if ((name || '').includes('Nýřany')) return { color: '#E74C3C', capacity: 15, price: 135, duration: 60, notes: '' }
+    return { color: '#C8516B', capacity: 1, price: 0, duration: 60, notes: '' }
   }
 
   function isDonationBased(name = '') {
@@ -460,6 +461,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 </optgroup>
                 <optgroup label="Holýšov">
                   <option>XXL cvičení - Holýšov</option>
+                  <option>Fit dopoledne - Holýšov</option>
                 </optgroup>
                 <optgroup label="Nýřany">
                   <option>XXL cvičení - Nýřany</option>
