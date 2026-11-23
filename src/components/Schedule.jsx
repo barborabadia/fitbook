@@ -214,8 +214,8 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     for (let i = 0; i < 7; i++) {
       const date = addDays(monday, i)
       const dateStr = toDateStr(date)
-      // Skupinové tréninky ze šablon
-      const dayTemplates = templates.filter(t => t.day_of_week === i && !excludedTemplates.has(t.id))
+      // Skupinové tréninky ze šablon (osobní tréninky se generují z pevného rozvrhu níže)
+      const dayTemplates = templates.filter(t => t.day_of_week === i && !excludedTemplates.has(t.id) && t.name !== 'Osobní trénink')
       for (const t of dayTemplates) {
         const exists = slots.find(s => s.slot_date === dateStr && s.start_time === t.start_time && s.template_id === t.id)
         if (!exists) {
@@ -415,7 +415,7 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 {Array.from({ length: 7 }, (_, i) => {
                   const date = addDays(monday, i)
                   const dateStr = toDateStr(date)
-                  const dayTemplates = templates.filter(t => t.day_of_week === i)
+                  const dayTemplates = templates.filter(t => t.day_of_week === i && t.name !== 'Osobní trénink')
                   const osobniTimes = OSOBNI_TRENINKY[i] || []
                   if (dayTemplates.length === 0 && osobniTimes.length === 0) return null
                   return (
