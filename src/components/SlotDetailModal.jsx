@@ -52,18 +52,44 @@ const isNyranyReward = (name) => (name || '').includes('Nýřany') && name !== '
 
 function CopyLinkBtn({ slotId, slotName, slotDate }) {
   const [copied, setCopied] = useState(false)
+  const [showQR, setShowQR] = useState(false)
+  const url = `${window.location.origin}/book?slot=${slotId}`
+
   const handleShare = () => {
-    const url = `${window.location.origin}/book?slot=${slotId}`
     if (navigator.share) {
       navigator.share({ title: slotName, text: `Rezervuj si místo: ${slotName} (${slotDate})`, url })
     } else {
       navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
     }
   }
+
   return (
-    <button onClick={handleShare} style={{ padding: '5px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: copied ? 'rgba(91,158,152,0.1)' : '#FBF6F8', color: copied ? '#5B9E98' : '#9B7E8A', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}>
-      {copied ? '✓ Zkopírováno' : '🔗 Sdílet'}
-    </button>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button onClick={() => setShowQR(v => !v)} style={{ padding: '5px 12px', borderRadius: 8, border: `1px solid ${showQR ? '#C8516B' : '#EBCFD8'}`, background: showQR ? 'rgba(200,81,107,0.08)' : '#FBF6F8', color: showQR ? '#C8516B' : '#9B7E8A', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}>
+          QR kód
+        </button>
+        <button onClick={handleShare} style={{ padding: '5px 12px', borderRadius: 8, border: '1px solid #EBCFD8', background: copied ? 'rgba(91,158,152,0.1)' : '#FBF6F8', color: copied ? '#5B9E98' : '#9B7E8A', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}>
+          {copied ? '✓ Zkopírováno' : '🔗 Sdílet'}
+        </button>
+      </div>
+      {showQR && (
+        <div style={{ background: '#fff', border: '1px solid #EBCFD8', borderRadius: 12, padding: 16, textAlign: 'center', boxShadow: '0 4px 16px rgba(200,81,107,0.08)' }}>
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}&bgcolor=FFFFFF&color=C8516B&margin=10`}
+            alt="QR kód"
+            style={{ width: 180, height: 180, display: 'block', borderRadius: 8 }}
+          />
+          <div style={{ fontSize: 11, color: '#BFA0AD', marginTop: 8, wordBreak: 'break-all', maxWidth: 180 }}>{url}</div>
+          <button
+            onClick={() => { const a = document.createElement('a'); a.href = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(url)}&bgcolor=FFFFFF&color=C8516B&margin=20`; a.download = `qr-${slotName.replace(/\s+/g, '-').toLowerCase()}.png`; a.target = '_blank'; a.click() }}
+            style={{ marginTop: 8, padding: '6px 14px', borderRadius: 8, border: 'none', background: '#C8516B', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Stáhnout QR
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
