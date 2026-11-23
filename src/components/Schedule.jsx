@@ -29,6 +29,16 @@ function toDateStr(date) {
 // Nýřany (XXL, Tabata): rezervace a platba běží přes externí web, odměna = 70 Kč za osobu
 const isNyranyReward = (name) => (name || '').includes('Nýřany') && name !== 'Hubneme společně! - Nýřany'
 
+// Pevný rozvrh osobních tréninků (index 0=Po, 1=Út, 2=St, 3=Čt, 4=Pá, 5=So, 6=Ne)
+const OSOBNI_TRENINKY = {
+  0: ['19:50'],
+  1: ['15:00', '16:00'],
+  2: ['17:00'],
+  3: ['17:30', '18:30', '19:30'],
+  5: ['06:30', '07:30', '08:30', '09:30', '10:30', '11:30', '12:30', '13:30', '14:30', '15:30'],
+  6: ['06:30'],
+}
+
 function formatWeekLabel(monday) {
   const end = addDays(monday, 6)
   const opts = { day: 'numeric', month: 'long' }
@@ -203,11 +213,20 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
     const inserts = []
     for (let i = 0; i < 7; i++) {
       const date = addDays(monday, i)
+      const dateStr = toDateStr(date)
+      // Skupinové tréninky ze šablon
       const dayTemplates = templates.filter(t => t.day_of_week === i && !excludedTemplates.has(t.id))
       for (const t of dayTemplates) {
-        const exists = slots.find(s => s.slot_date === toDateStr(date) && s.start_time === t.start_time && s.template_id === t.id)
+        const exists = slots.find(s => s.slot_date === dateStr && s.start_time === t.start_time && s.template_id === t.id)
         if (!exists) {
-          inserts.push({ template_id: t.id, name: t.name, slot_date: toDateStr(date), start_time: t.start_time, duration_minutes: t.duration_minutes, capacity: t.capacity, color: t.color, description: t.description, price: t.price })
+          inserts.push({ template_id: t.id, name: t.name, slot_date: dateStr, start_time: t.start_time, duration_minutes: t.duration_minutes, capacity: t.capacity, color: t.color, description: t.description, price: t.price })
+        }
+      }
+      // Osobní tréninky – pevný rozvrh
+      for (const time of (OSOBNI_TRENINKY[i] || [])) {
+        const exists = slots.find(s => s.slot_date === dateStr && s.start_time === time && s.name === 'Osobní trénink')
+        if (!exists) {
+          inserts.push({ name: 'Osobní trénink', slot_date: dateStr, start_time: time, duration_minutes: 60, capacity: 1, color: '#C8516B', price: dateStr >= '2026-09-01' ? 300 : 200 })
         }
       }
     }
@@ -397,7 +416,8 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                   const date = addDays(monday, i)
                   const dateStr = toDateStr(date)
                   const dayTemplates = templates.filter(t => t.day_of_week === i)
-                  if (dayTemplates.length === 0) return null
+                  const osobniTimes = OSOBNI_TRENINKY[i] || []
+                  if (dayTemplates.length === 0 && osobniTimes.length === 0) return null
                   return (
                     <div key={i} style={{ marginBottom: 10 }}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>
@@ -411,6 +431,19 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                             <div style={{ flex: 1 }}>
                               <span style={{ fontSize: 13, fontWeight: 600, color: exists ? '#9B9B9B' : '#2C1A22' }}>{t.start_time} — {t.name}</span>
                               <span style={{ fontSize: 11, color: '#BFA0AD', marginLeft: 8 }}>{t.capacity} míst · {getSlotDefaults(t.name, dateStr).price || t.price} Kč</span>
+                            </div>
+                            {exists && <span style={{ fontSize: 10, color: '#B0B0B0', fontWeight: 600 }}>už existuje</span>}
+                          </div>
+                        )
+                      })}
+                      {osobniTimes.map(time => {
+                        const exists = slots.find(s => s.slot_date === dateStr && s.start_time === time && s.name === 'Osobní trénink')
+                        return (
+                          <div key={time} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, marginBottom: 4, background: exists ? '#F5F5F5' : 'rgba(200,81,107,0.07)', border: `1px solid ${exists ? '#E0E0E0' : 'rgba(200,81,107,0.3)'}`, opacity: exists ? 0.6 : 1 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: exists ? '#C0C0C0' : '#C8516B', flexShrink: 0 }} />
+                            <div style={{ flex: 1 }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: exists ? '#9B9B9B' : '#2C1A22' }}>{time} — Osobní trénink</span>
+                              <span style={{ fontSize: 11, color: '#BFA0AD', marginLeft: 8 }}>1 místo · {dateStr >= '2026-09-01' ? 300 : 200} Kč</span>
                             </div>
                             {exists && <span style={{ fontSize: 10, color: '#B0B0B0', fontWeight: 600 }}>už existuje</span>}
                           </div>
@@ -611,7 +644,8 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                 const date = addDays(monday, i)
                 const dateStr = toDateStr(date)
                 const dayTemplates = templates.filter(t => t.day_of_week === i)
-                if (dayTemplates.length === 0) return null
+                const osobniTimes = OSOBNI_TRENINKY[i] || []
+                if (dayTemplates.length === 0 && osobniTimes.length === 0) return null
                 return (
                   <div key={i} style={{ marginBottom: 10 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: '#9B7E8A', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>
@@ -642,6 +676,19 @@ export default function Schedule({ onSelectSlot, refreshKey, isMobile }) {
                               <button onClick={() => setConfirmExclude(t.id)} style={{ fontSize: 13, color: '#BFA0AD', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}>✕</button>
                             )
                           )}
+                        </div>
+                      )
+                    })}
+                    {osobniTimes.map(time => {
+                      const exists = slots.find(s => s.slot_date === dateStr && s.start_time === time && s.name === 'Osobní trénink')
+                      return (
+                        <div key={time} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 8, marginBottom: 4, background: exists ? '#F5F5F5' : 'rgba(200,81,107,0.07)', border: `1px solid ${exists ? '#E0E0E0' : 'rgba(200,81,107,0.3)'}`, opacity: exists ? 0.6 : 1 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: exists ? '#C0C0C0' : '#C8516B', flexShrink: 0 }} />
+                          <div style={{ flex: 1 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: exists ? '#9B9B9B' : '#2C1A22' }}>{time} — Osobní trénink</span>
+                            <span style={{ fontSize: 11, color: '#BFA0AD', marginLeft: 8 }}>1 místo · {dateStr >= '2026-09-01' ? 300 : 200} Kč</span>
+                          </div>
+                          {exists && <span style={{ fontSize: 10, color: '#B0B0B0', fontWeight: 600 }}>už existuje</span>}
                         </div>
                       )
                     })}
